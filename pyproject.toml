@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "investir"
+version = "0.1alpha1"
+dependencies = [
+  "python-dateutil"
+]
+requires-python = ">=3.8"
+authors = [
+  {name = "Tiago Gomes", email = "tiago.avv+oss@gmail.com"},
+]
+maintainers = [
+  {name = "Tiago Gomes", email = "tiago.avv+oss@gmail.com"}
+]
+description = "Calculate UK capital gains tax for Freetrade"
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["HMRC", "Shares", "Stock", "Tax", "Capital Gains", "Freetrade"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Office/Business :: Financial :: Accounting",
+  "Topic :: Office/Business :: Financial :: Investment"
+]
+
+[project.scripts]
+investir = "investir.investir:main"
+
+[project.urls]
+Homepage = "https://github.com/tacgomes/investir"
+Repository = "https://github.com/tacgomes/investir"
+"Bug Tracker" = "https://github.com/tacgomes/investir/issues"
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = ["C0114, C0115, C0116"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
