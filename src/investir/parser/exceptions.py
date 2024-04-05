@@ -20,7 +20,7 @@ class CalculatedAmountError(Exception):
 
 class FeeError(Exception):
 
-    def __init__(self, file: str):
+    def __init__(self, file: str) -> None:
         super().__init__(
             f'Both stamp duty and forex fee fields are non-zero'
             f', while parsing {file}')

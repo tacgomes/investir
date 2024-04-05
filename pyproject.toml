@@ -8,7 +8,7 @@ version = "0.1alpha1"
 dependencies = [
   "python-dateutil"
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
   {name = "Tiago Gomes", email = "tiago.avv+oss@gmail.com"},
 ]

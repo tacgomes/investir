@@ -1,7 +1,6 @@
-import datetime
-
 from enum import Enum
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 
 
@@ -12,7 +11,7 @@ class TransactionType(Enum):
 
 @dataclass
 class Transaction:
-    timestamp: datetime.time
+    timestamp: datetime
     ticker: str
     type: TransactionType
     price: Decimal

@@ -2,6 +2,7 @@ import csv
 import logging
 
 from decimal import Decimal
+from pathlib import Path
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -12,6 +13,7 @@ from .exceptions import (
 from .factory import ParserFactory
 from .parser import Parser
 from .utils import read_decimal
+from ..config import Config
 from ..transaction import Transaction, TransactionType
 
 logger = logging.getLogger(__name__)
@@ -50,30 +52,34 @@ class FreetradeParser(Parser):
         'Dividend Withheld Tax Amount'
     )
 
-    def __init__(self, input_file, config):
+    def __init__(self, input_file: Path, config: Config) -> None:
         self.input_file = input_file
         self.config = config
 
-    def name(self):
+    def name(self) -> str:
         return 'Freetrade'
 
-    def can_parse(self):
+    def can_parse(self) -> bool:
         with open(self.input_file, encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            return tuple(reader.fieldnames) == self.FIELDS
+            if reader.fieldnames:
+                return tuple(reader.fieldnames) == self.FIELDS
 
-    def parse(self):
+        return False
+
+    def parse(self) -> list[Transaction]:
+        transactions = []
         with open(self.input_file, encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            transactions = []
             for row in reader:
                 transact = self._parse_row(row)
                 if transact is not None:
                     logger.debug('Parsed %s as %s\n', row, transact)
                     transactions.append(transact)
-            return transactions
 
-    def _parse_row(self, row):
+        return transactions
+
+    def _parse_row(self, row: dict[str, str]) -> Transaction | None:
         if row['Type'] == 'ORDER':
             return self._parse_row_order_type(row)
 
@@ -85,12 +91,12 @@ class FreetradeParser(Parser):
             'MONTHLY_STATEMENT'
         ):
             raise ParserError(
-                self.input_file,
+                self.input_file.name,
                 f'Unrecognised value for `Type` field: {row["Type"]}')
 
         return None
 
-    def _parse_row_order_type(self, row):
+    def _parse_row_order_type(self, row: dict[str, str]) -> Transaction:
         action = row['Buy / Sell']
 
         if action == 'BUY':
@@ -99,12 +105,13 @@ class FreetradeParser(Parser):
             transact_type = TransactionType.DISPOSAL
         else:
             raise ParserError(
-                self.input_file,
+                self.input_file.name,
                 f'Unrecognised value for `Buy / Sell` field: {action}')
 
         if row['Account Currency'] != 'GBP':
             raise ParserError(
-                self.input_file, '`Account currency` field must be set to GBP')
+                self.input_file.name,
+                '`Account currency` field must be set to GBP')
 
         timestamp = parse_timestamp(row['Timestamp'])
         total_amount = Decimal(row['Total Amount'])
@@ -115,7 +122,7 @@ class FreetradeParser(Parser):
         fx_fee_amount = read_decimal(row['FX Fee Amount'])
 
         if stamp_duty and fx_fee_amount:
-            raise FeeError(self.input_file)
+            raise FeeError(self.input_file.name)
 
         fees = stamp_duty + fx_fee_amount
 
@@ -128,7 +135,7 @@ class FreetradeParser(Parser):
 
         if total_amount != calculated_ta:
             raise CalculatedAmountError(
-                self.input_file, calculated_ta, total_amount)
+                self.input_file.name, calculated_ta, total_amount)
 
         return Transaction(
             timestamp,

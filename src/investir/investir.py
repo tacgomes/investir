@@ -6,17 +6,19 @@ import pathlib
 from .config import Config
 from .parser.factory import ParserFactory
 
+logger = logging.getLogger(__name__)
 
-def path(parser, file):
+
+def path(parser: argparse.ArgumentParser, file: str) -> pathlib.Path:
     try:
         with open(file, encoding='utf-8'):
             pass
     except IOError as err:
-        parser.error(err)
+        parser.error(str(err))
     return pathlib.Path(file)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -50,8 +52,10 @@ def main():
     transactions = []
 
     for csv_file in args.input_files:
-        parser = ParserFactory.create_parser(csv_file, config)
-        transactions.extend(parser.parse())
+        if csv_parser := ParserFactory.create_parser(csv_file, config):
+            transactions.extend(csv_parser.parse())
+        else:
+            logger.warning(f'Failed to find a parser for {csv_file}')
 
     for t in transactions:
         print(t)

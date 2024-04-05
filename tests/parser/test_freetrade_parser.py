@@ -23,7 +23,7 @@ def create_parser(tmp_path):
             writer.writeheader()
             writer.writerows(rows)
         config = Config(strict=True)
-        return FreetradeParser(str(input_file), config)
+        return FreetradeParser(input_file, config)
     return _create_parser
 
 
@@ -38,7 +38,7 @@ def create_parser_format_unrecognised(tmp_path):
             'Field2': "B",
         })
     config = Config(strict=True)
-    return FreetradeParser(str(input_file), config)
+    return FreetradeParser(input_file, config)
 
 
 def test_parser_happy_path(create_parser):
