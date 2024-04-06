@@ -18,7 +18,7 @@ class TransactionLog:
         for tr in self._transactions:
             tr_type = 'Yes' if tr.type == TransactionType.DISPOSAL else ' '
             table.add_row([
-                tr.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 tr.ticker,
                 tr_type,
                 tr.price,
