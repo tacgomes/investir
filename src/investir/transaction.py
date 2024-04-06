@@ -17,3 +17,7 @@ class Transaction:
     price: Decimal
     quantity: Decimal
     fees: Decimal
+    order_id: str
+
+    def __hash__(self) -> int:
+        return hash((self.order_id))

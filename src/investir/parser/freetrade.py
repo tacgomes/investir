@@ -118,6 +118,7 @@ class FreetradeParser(Parser):
         ticker = row['Ticker']
         price = Decimal(row['Price per Share in Account Currency'])
         quantity = Decimal(row['Quantity'])
+        order_id = row['Order ID']
         stamp_duty = read_decimal(row['Stamp Duty'])
         fx_fee_amount = read_decimal(row['FX Fee Amount'])
 
@@ -143,7 +144,8 @@ class FreetradeParser(Parser):
             transact_type,
             price,
             quantity,
-            fees)
+            fees,
+            order_id)
 
 
 ParserFactory.register_parser(FreetradeParser)

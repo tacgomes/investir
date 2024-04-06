@@ -54,7 +54,7 @@ def main() -> None:
 
     for csv_file in args.input_files:
         if csv_parser := ParserFactory.create_parser(csv_file, config):
-            trlog.add(csv_parser.parse())
+            trlog.insert(csv_parser.parse())
         else:
             logger.warning('Failed to find a parser for %s', csv_file)
 
