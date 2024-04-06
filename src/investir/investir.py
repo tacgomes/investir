@@ -5,6 +5,7 @@ import pathlib
 
 from .config import Config
 from .parser.factory import ParserFactory
+from .transactionlog import TransactionLog
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +50,12 @@ def main() -> None:
 
     config = Config(strict=True)
 
-    transactions = []
+    trlog = TransactionLog()
 
     for csv_file in args.input_files:
         if csv_parser := ParserFactory.create_parser(csv_file, config):
-            transactions.extend(csv_parser.parse())
+            trlog.add(csv_parser.parse())
         else:
             logger.warning(f'Failed to find a parser for {csv_file}')
 
-    for t in transactions:
-        print(t)
+    trlog.show()
