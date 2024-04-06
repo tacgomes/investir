@@ -22,7 +22,7 @@ class TransactionLog:
         table = PrettyTable(
             field_names=(
                 'Date', 'Ticker', 'Disposal', 'Price',
-                'Quantity', 'Fees', 'Order ID'))
+                'Quantity', 'Fees', 'Total', 'Order ID'))
 
         for tr in self._transactions:
             tr_type = 'Yes' if tr.type == TransactionType.DISPOSAL else ' '
@@ -33,6 +33,7 @@ class TransactionLog:
                 tr.price,
                 tr.quantity,
                 tr.fees,
+                round(tr.total_amount(), 2),
                 tr.order_id])
 
         print(table)

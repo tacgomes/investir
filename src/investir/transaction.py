@@ -19,5 +19,13 @@ class Transaction:
     fees: Decimal
     order_id: str
 
+    def total_amount(self) -> Decimal:
+        amount = self.price * self.quantity
+        if self.type == TransactionType.ACQUISITION:
+            amount += self.fees
+        else:
+            amount -= self.fees
+        return amount
+
     def __hash__(self) -> int:
         return hash((self.order_id))
