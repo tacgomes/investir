@@ -1,6 +1,7 @@
 from prettytable import PrettyTable
 
 from .transaction import Transaction, TransactionType
+from .utils import date_to_tax_year
 
 
 class TransactionLog:
@@ -18,18 +19,32 @@ class TransactionLog:
     def to_list(self) -> list[Transaction]:
         return self._transactions[:]
 
-    def show(self) -> None:
+    def show(
+            self, tax_year: int | None = None,
+            ticker: str | None = None,
+            tr_type: TransactionType | None = None) -> None:
+
         table = PrettyTable(
             field_names=(
                 'Date', 'Ticker', 'Disposal', 'Price',
                 'Quantity', 'Fees', 'Total', 'Order ID'))
 
         for tr in self._transactions:
-            tr_type = 'Yes' if tr.type == TransactionType.DISPOSAL else ' '
+            if tax_year and date_to_tax_year(tr.timestamp.date()) != tax_year:
+                continue
+
+            if ticker and tr.ticker != ticker:
+                continue
+
+            if tr_type and tr.type != tr_type:
+                continue
+
+            tr_type_str = 'Yes' if tr.type == TransactionType.DISPOSAL else ' '
+
             table.add_row([
                 tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 tr.ticker,
-                tr_type,
+                tr_type_str,
                 tr.price,
                 tr.quantity,
                 tr.fees,
