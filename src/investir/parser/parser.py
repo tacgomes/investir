@@ -1,6 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import NamedTuple
 
-from ..transaction import Transaction
+from ..transaction import Order, Dividend, Transfer, Interest
+
+
+class ParsingResult(NamedTuple):
+    orders: list[Order]
+    dividends: list[Dividend]
+    transfers: list[Transfer]
+    interest: list[Interest]
 
 
 class Parser(ABC):
@@ -13,5 +21,5 @@ class Parser(ABC):
         pass
 
     @abstractmethod
-    def parse(self) -> list[Transaction]:
+    def parse(self) -> ParsingResult:
         pass

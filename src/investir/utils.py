@@ -1,5 +1,8 @@
 import datetime
 
+from collections.abc import Iterable
+
+
 TAX_YEAR_MONTH = 4
 TAX_YEAR_START_DAY = 6
 TAX_YEAR_END_DAY = 5
@@ -18,3 +21,9 @@ def date_to_tax_year(date: datetime.date) -> int:
     if date >= tax_year_start:
         return tax_year_start.year
     return tax_year_start.year - 1
+
+
+def multiple_filter(filters, iterable: Iterable):
+    if not filters:
+        return iterable
+    return filter(lambda x: all(f(x) for f in filters), iterable)

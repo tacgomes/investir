@@ -11,7 +11,7 @@ from investir.parser.exceptions import (
     CalculatedAmountError,
     FeeError)
 from investir.parser.freetrade import FreetradeParser
-from investir.transaction import TransactionType
+from investir.transaction import OrderType, TransferType
 
 
 @pytest.fixture
@@ -42,10 +42,13 @@ def create_parser_format_unrecognised(tmp_path):
 
 
 def test_parser_happy_path(create_parser):
+    timestamp = datetime.datetime(
+        2021, 7, 26, 7, 41, 32, 582, tzinfo=datetime.UTC)
+
     parser = create_parser([
         {
             'Type': 'ORDER',
-            'Timestamp': '2024-03-08T17:53:45.673Z',
+            'Timestamp': timestamp,
             'Account Currency': 'GBP',
             'Total Amount': Decimal('1330.20'),
             'Buy / Sell': 'BUY',
@@ -57,7 +60,7 @@ def test_parser_happy_path(create_parser):
         },
         {
             'Type': 'ORDER',
-            'Timestamp': '2024-02-15T15:43:01.342Z',
+            'Timestamp': timestamp,
             'Account Currency': 'GBP',
             'Total Amount': Decimal('1111.85'),
             'Buy / Sell': 'SELL',
@@ -67,37 +70,95 @@ def test_parser_happy_path(create_parser):
             'Quantity': Decimal('2.1'),
             'FX Fee Amount': Decimal('6.4')
         },
-        {'Type': 'TOP_UP'},
-        {'Type': 'WITHDRAW'},
-        {'Type': 'DIVIDEND'},
-        {'Type': 'MONTHLY_STATEMENT'},
-        {'Type': 'INTEREST_FROM_CASH'}
+        {
+            'Type': 'DIVIDEND',
+            'Timestamp': timestamp,
+            'Account Currency': 'GBP',
+            'Total Amount': '2.47',
+            'Ticker': 'SWKS',
+            'ISIN': 'US83088M1027',
+            'Base FX Rate': '0.75440000',
+            'FX Fee Amount': '0.00',
+            'Dividend Ex Date': '2021-11-22',
+            'Dividend Pay Date': '2021-12-14',
+            'Dividend Eligible Quantity': '6.88764135',
+            'Dividend Amount Per Share': '0.56000000',
+            'Dividend Gross Distribution Amount': '3.86',
+            'Dividend Net Distribution Amount': '3.28',
+            'Dividend Withheld Tax Percentage': '15',
+            'Dividend Withheld Tax Amount': '0.58'
+        },
+        {
+            'Type': 'TOP_UP',
+            'Timestamp': timestamp,
+            'Account Currency': 'GBP',
+            'Total Amount': '1000.00',
+        },
+        {
+            'Type': 'WITHDRAW',
+            'Timestamp': timestamp,
+            'Account Currency': 'GBP',
+            'Total Amount': '500.25',
+        },
+        {
+            'Type': 'INTEREST_FROM_CASH',
+            'Timestamp': timestamp,
+            'Account Currency': 'GBP',
+            'Total Amount': '4.65',
+        },
+        {
+            'Type': 'MONTHLY_STATEMENT'
+        },
     ])
 
     assert parser.name() == 'Freetrade'
 
     assert parser.can_parse()
 
-    transactions = parser.parse()
-    assert len(transactions) == 2
+    parser_result = parser.parse()
 
-    t = transactions[0]
-    assert t.timestamp == datetime.datetime(
-        2024, 3, 8, 17, 53, 45, 673000, tzinfo=datetime.UTC)
-    assert t.ticker == 'AMZN'
-    assert t.type == TransactionType.ACQUISITION
-    assert t.price == Decimal('132.5')
-    assert t.quantity == Decimal('10')
-    assert t.fees == Decimal('5.2')
+    assert len(parser_result.orders) == 2
 
-    t = transactions[1]
-    assert t.timestamp == datetime.datetime(
-        2024, 2, 15, 15, 43, 1, 342000, tzinfo=datetime.UTC)
-    assert t.ticker == 'SWKS'
-    assert t.type == TransactionType.DISPOSAL
-    assert t.price == Decimal('532.5')
-    assert t.quantity == Decimal('2.1')
-    assert t.fees == Decimal('6.4')
+    order = parser_result.orders[0]
+    assert order.timestamp == timestamp
+    assert order.ticker == 'AMZN'
+    assert order.type == OrderType.ACQUISITION
+    assert order.price == Decimal('132.5')
+    assert order.quantity == Decimal('10')
+    assert order.fees == Decimal('5.2')
+
+    order = parser_result.orders[1]
+    assert order.timestamp == timestamp
+    assert order.ticker == 'SWKS'
+    assert order.type == OrderType.DISPOSAL
+    assert order.price == Decimal('532.5')
+    assert order.quantity == Decimal('2.1')
+    assert order.fees == Decimal('6.4')
+
+    assert len(parser_result.dividends) == 1
+    dividend = parser_result.dividends[0]
+
+    assert dividend.timestamp == timestamp
+    assert dividend.ticker == 'SWKS'
+    assert dividend.amount == Decimal('2.47')
+    assert dividend.withheld == Decimal('0.4375520000')
+
+    assert len(parser_result.transfers) == 2
+    transfer = parser_result.transfers[0]
+
+    assert transfer.timestamp == timestamp
+    assert transfer.type == TransferType.DEPOSIT
+    assert transfer.amount == Decimal('1000.00')
+
+    transfer = parser_result.transfers[1]
+    assert transfer.timestamp == timestamp
+    assert transfer.type == TransferType.WITHDRAW
+    assert transfer.amount == Decimal('500.25')
+
+    assert len(parser_result.interest) == 1
+    interest = parser_result.interest[0]
+    assert interest.timestamp == timestamp
+    assert interest.amount == Decimal('4.65')
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):

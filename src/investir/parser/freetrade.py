@@ -1,7 +1,7 @@
 import csv
 import logging
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
 
 from dateutil.parser import parse as parse_timestamp
@@ -11,10 +11,14 @@ from .exceptions import (
     CalculatedAmountError,
     FeeError)
 from .factory import ParserFactory
-from .parser import Parser
+from .parser import Parser, ParsingResult
 from .utils import read_decimal
 from ..config import Config
-from ..transaction import Transaction, TransactionType
+from ..transaction import (
+    Order, OrderType,
+    Dividend,
+    Transfer, TransferType,
+    Interest)
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +59,10 @@ class FreetradeParser(Parser):
     def __init__(self, input_file: Path, config: Config) -> None:
         self.input_file = input_file
         self.config = config
+        self._orders: list[Order] = []
+        self._dividends: list[Dividend] = []
+        self._transfers: list[Transfer] = []
+        self._interest: list[Interest] = []
 
     def name(self) -> str:
         return 'Freetrade'
@@ -67,42 +75,37 @@ class FreetradeParser(Parser):
 
         return False
 
-    def parse(self) -> list[Transaction]:
-        transactions = []
+    def parse(self) -> ParsingResult:
+        parse_fn = {
+            'ORDER': self._parse_order,
+            'DIVIDEND': self._parse_dividend,
+            'TOP_UP': self._parse_transfer,
+            'WITHDRAW': self._parse_transfer,
+            'INTEREST_FROM_CASH': self._parse_interest,
+            'MONTHLY_STATEMENT': lambda _: None
+        }
+
         with open(self.input_file, encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                transact = self._parse_row(row)
-                if transact is not None:
-                    logger.debug('Parsed %s as %s\n', row, transact)
-                    transactions.append(transact)
+                tr_type = row['Type']
+                if fn := parse_fn.get(tr_type):
+                    fn(row)
+                else:
+                    raise ParserError(
+                        self.input_file.name,
+                        f'Unrecognised value for `Type` field: {tr_type}')
 
-        return transactions
+        return ParsingResult(
+            self._orders, self._dividends, self._transfers, self._interest)
 
-    def _parse_row(self, row: dict[str, str]) -> Transaction | None:
-        if row['Type'] == 'ORDER':
-            return self._parse_row_order_type(row)
-
-        if row['Type'] not in (
-            'TOP_UP',
-            'WITHDRAW',
-            'DIVIDEND',
-            'INTEREST_FROM_CASH',
-            'MONTHLY_STATEMENT'
-        ):
-            raise ParserError(
-                self.input_file.name,
-                f'Unrecognised value for `Type` field: {row["Type"]}')
-
-        return None
-
-    def _parse_row_order_type(self, row: dict[str, str]) -> Transaction:
+    def _parse_order(self, row: dict[str, str]) -> None:
         action = row['Buy / Sell']
 
         if action == 'BUY':
-            transact_type = TransactionType.ACQUISITION
+            transact_type = OrderType.ACQUISITION
         elif action == 'SELL':
-            transact_type = TransactionType.DISPOSAL
+            transact_type = OrderType.DISPOSAL
         else:
             raise ParserError(
                 self.input_file.name,
@@ -128,7 +131,7 @@ class FreetradeParser(Parser):
         fees = stamp_duty + fx_fee_amount
 
         calculated_ta = price * quantity
-        if transact_type == TransactionType.ACQUISITION:
+        if transact_type == OrderType.ACQUISITION:
             calculated_ta += fees
         else:
             calculated_ta -= fees
@@ -138,14 +141,81 @@ class FreetradeParser(Parser):
             raise CalculatedAmountError(
                 self.input_file.name, calculated_ta, total_amount)
 
-        return Transaction(
+        self._orders.append(Order(
             timestamp,
             ticker,
             transact_type,
             price,
             quantity,
             fees,
-            order_id)
+            order_id))
+
+        logging.debug('Parsed row %s as %s\n', row, self._orders[-1])
+
+    def _parse_dividend(self, row: dict[str, str]):
+        timestamp = parse_timestamp(row['Timestamp'])
+        total_amount = Decimal(row['Total Amount'])
+        ticker = row['Ticker']
+        base_fx_rate = Decimal(row['Base FX Rate'])
+        eligible_quantity = Decimal(row['Dividend Eligible Quantity'])
+        amount_per_share = Decimal(row['Dividend Amount Per Share'])
+        withheld_tax_percentage = Decimal(
+            row['Dividend Withheld Tax Percentage'])
+        withheld_tax_amount = Decimal(row['Dividend Withheld Tax Amount'])
+
+        calculated_ta = (
+            amount_per_share
+            * eligible_quantity
+            * ((Decimal(100) - withheld_tax_percentage) / 100)
+            * base_fx_rate)
+
+        rounded_calculated_ta = calculated_ta.quantize(
+            Decimal('1.00'), rounding=ROUND_DOWN)
+
+        if total_amount != rounded_calculated_ta:
+            # Warning instead of exception because on Freetrade
+            # the total amount is occasionally off by one cent.
+            logger.warning(
+                'Calculated amount (£%s ~= £%s) differs from the amount read '
+                '(£%s) for row %s',
+                calculated_ta, rounded_calculated_ta, total_amount, row)
+
+        self._dividends.append(Dividend(
+            timestamp,
+            ticker,
+            total_amount,
+            withheld_tax_amount * base_fx_rate))
+
+        logging.debug('Parsed row %s as %s\n', row, self._dividends[-1])
+
+    def _parse_transfer(self, row: dict[str, str]):
+        timestamp = parse_timestamp(row['Timestamp'])
+        tr_type = row['Type']
+        total_amount = Decimal(row['Total Amount'])
+
+        if tr_type == 'TOP_UP':
+            transfer_type = TransferType.DEPOSIT
+        elif tr_type == 'WITHDRAW':
+            transfer_type = TransferType.WITHDRAW
+        else:
+            assert False
+
+        self._transfers.append(Transfer(
+            timestamp,
+            transfer_type,
+            total_amount))
+
+        logging.debug('Parsed row %s as %s\n', row, self._transfers[-1])
+
+    def _parse_interest(self, row: dict[str, str]):
+        timestamp = parse_timestamp(row['Timestamp'])
+        total_amount = Decimal(row['Total Amount'])
+
+        self._interest.append(Interest(
+            timestamp,
+            total_amount))
+
+        logging.debug('Parsed row %s as %s\n', row, self._interest[-1])
 
 
 ParserFactory.register_parser(FreetradeParser)

@@ -41,7 +41,7 @@ Repository = "https://github.com/tacgomes/investir"
 "Bug Tracker" = "https://github.com/tacgomes/investir/issues"
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["C0114, C0115, C0116"]
+disable = ["C0114, C0115, C0116", "W0511"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
