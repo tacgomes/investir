@@ -34,7 +34,7 @@ jobs:
 
     - name: Run Mypy
       run: |
-        mypy . --install-types
+        mypy --non-interactive --install-types .
 
     - name: Run Pytest
       run: |
