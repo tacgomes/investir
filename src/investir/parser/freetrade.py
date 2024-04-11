@@ -10,7 +10,6 @@ from .exceptions import (
     ParserError,
     CalculatedAmountError,
     FeeError)
-from .factory import ParserFactory
 from .parser import Parser, ParsingResult
 from .utils import read_decimal
 from ..config import Config
@@ -216,6 +215,3 @@ class FreetradeParser(Parser):
             total_amount))
 
         logging.debug('Parsed row %s as %s\n', row, self._interest[-1])
-
-
-ParserFactory.register_parser(FreetradeParser)
