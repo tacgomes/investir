@@ -63,7 +63,8 @@ class FreetradeParser(Parser):
         self._transfers: list[Transfer] = []
         self._interest: list[Interest] = []
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return 'Freetrade'
 
     def can_parse(self) -> bool:

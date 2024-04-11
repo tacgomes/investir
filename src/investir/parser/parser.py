@@ -12,8 +12,9 @@ class ParsingResult(NamedTuple):
 
 
 class Parser(ABC):
+    @staticmethod
     @abstractmethod
-    def name(self) -> str:
+    def name() -> str:
         pass
 
     @abstractmethod
