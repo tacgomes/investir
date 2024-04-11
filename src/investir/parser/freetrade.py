@@ -177,7 +177,7 @@ class FreetradeParser(Parser):
             # the total amount is occasionally off by one cent.
             logger.warning(
                 'Calculated amount (£%s ~= £%s) differs from the amount read '
-                '(£%s) for row %s',
+                '(£%s) for row %s\n',
                 calculated_ta, rounded_calculated_ta, total_amount, row)
 
         self._dividends.append(Dividend(

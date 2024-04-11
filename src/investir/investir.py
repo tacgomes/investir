@@ -4,6 +4,7 @@ import logging
 import pathlib
 
 from .config import Config
+from .logging import setup_logging
 from .parser.factory import ParserFactory
 from .transaction import OrderType, TransferType
 from .trhistory import TrHistory
@@ -119,9 +120,16 @@ def main() -> None:
     )
 
     parser.add_argument(
-        '-d', '--debug',
+        '--verbose',
         action='store_true',
-        help='Enable debug logging')
+        help='enable verbose logging')
+
+    parser.add_argument(
+        '--no-colour',
+        action='store_false',
+        dest='colour',
+        default=True,
+        help='disable coloured output')
 
     parser.add_argument(
         '-v', '--version',
@@ -131,10 +139,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    logging.basicConfig(
-        format='[%(asctime)s] [%(levelname)-8s] %(message)s',
-        level=logging.DEBUG if args.debug else logging.WARNING
-    )
+    setup_logging(args.verbose, args.colour)
 
     config = Config(strict=True)
 
