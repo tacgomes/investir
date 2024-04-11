@@ -155,7 +155,7 @@ class FreetradeParser(Parser):
         timestamp = parse_timestamp(row['Timestamp'])
         total_amount = Decimal(row['Total Amount'])
         ticker = row['Ticker']
-        base_fx_rate = Decimal(row['Base FX Rate'])
+        base_fx_rate = read_decimal(row['Base FX Rate'], Decimal('1.0'))
         eligible_quantity = Decimal(row['Dividend Eligible Quantity'])
         amount_per_share = Decimal(row['Dividend Amount Per Share'])
         withheld_tax_percentage = Decimal(
