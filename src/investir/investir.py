@@ -96,29 +96,6 @@ def create_interest_command(subparser, parent_parser) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
 
-    subparser = parser.add_subparsers(
-        dest='command',
-        required=True)
-
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument(
-        '--tax-year',
-        type=int,
-        help='filter by tax year')
-
-    create_orders_command(subparser, parent_parser)
-    create_dividends_command(subparser, parent_parser)
-    create_transfers_command(subparser, parent_parser)
-    create_interest_command(subparser, parent_parser)
-
-    parser.add_argument(
-        'input_files',
-        type=lambda file: path(parser, file),
-        nargs='+',
-        metavar='INPUT',
-        help='Input CSV file with the transaction records'
-    )
-
     parser.add_argument(
         '--verbose',
         action='store_true',
@@ -136,6 +113,27 @@ def main() -> None:
         action='version',
         version=f'{parser.prog} v{importlib.metadata.version("investir")}',
     )
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+
+    parent_parser.add_argument(
+        '--tax-year',
+        type=int,
+        help='filter by tax year')
+
+    parent_parser.add_argument(
+        'input_files',
+        type=lambda file: path(parser, file),
+        nargs='+',
+        metavar='INPUT',
+        help='input CSV file with the transaction records'
+    )
+
+    subparser = parser.add_subparsers(dest='command', required=True)
+    create_orders_command(subparser, parent_parser)
+    create_dividends_command(subparser, parent_parser)
+    create_transfers_command(subparser, parent_parser)
+    create_interest_command(subparser, parent_parser)
 
     args = parser.parse_args()
 
