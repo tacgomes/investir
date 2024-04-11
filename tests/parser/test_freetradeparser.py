@@ -1,9 +1,8 @@
 import csv
-import pytest
-
 from decimal import Decimal
 
 import datetime
+import pytest
 
 from investir.config import Config
 from investir.parser.exceptions import (
@@ -14,11 +13,11 @@ from investir.parser.freetrade import FreetradeParser
 from investir.transaction import OrderType, TransferType
 
 
-@pytest.fixture
-def create_parser(tmp_path):
+@pytest.fixture(name='create_parser')
+def fixture_create_parser(tmp_path):
     def _create_parser(rows):
         input_file = tmp_path / 'transactions.csv'
-        with open(input_file, 'w') as file:
+        with open(input_file, 'w', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=FreetradeParser.FIELDS)
             writer.writeheader()
             writer.writerows(rows)
@@ -27,10 +26,10 @@ def create_parser(tmp_path):
     return _create_parser
 
 
-@pytest.fixture
-def create_parser_format_unrecognised(tmp_path):
+@pytest.fixture(name='create_parser_format_unrecognised')
+def fixture_create_parser_format_unrecognised(tmp_path):
     input_file = tmp_path / 'transactions.csv'
-    with open(input_file, 'w') as file:
+    with open(input_file, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=('Field1', 'Field2'))
         writer.writeheader()
         writer.writerow({
