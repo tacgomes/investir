@@ -55,9 +55,9 @@ class FreetradeParser(Parser):
         'Dividend Withheld Tax Amount'
     )
 
-    def __init__(self, input_file: Path, config: Config) -> None:
-        self.input_file = input_file
-        self.config = config
+    def __init__(self, csv_file: Path, config: Config) -> None:
+        self._csv_file = csv_file
+        self._config = config
         self._orders: list[Order] = []
         self._dividends: list[Dividend] = []
         self._transfers: list[Transfer] = []
@@ -68,8 +68,8 @@ class FreetradeParser(Parser):
         return 'Freetrade'
 
     def can_parse(self) -> bool:
-        with open(self.input_file, encoding='utf-8') as f:
-            reader = csv.DictReader(f)
+        with self._csv_file.open(encoding='utf-8') as file:
+            reader = csv.DictReader(file)
             if reader.fieldnames:
                 return tuple(reader.fieldnames) == self.FIELDS
 
@@ -85,15 +85,15 @@ class FreetradeParser(Parser):
             'MONTHLY_STATEMENT': lambda _: None
         }
 
-        with open(self.input_file, encoding='utf-8') as f:
-            reader = csv.DictReader(f)
+        with self._csv_file.open(encoding='utf-8') as file:
+            reader = csv.DictReader(file)
             for row in reader:
                 tr_type = row['Type']
                 if fn := parse_fn.get(tr_type):
                     fn(row)
                 else:
                     raise ParserError(
-                        self.input_file.name,
+                        self._csv_file.name,
                         f'Unrecognised value for `Type` field: {tr_type}')
 
         return ParsingResult(
@@ -108,12 +108,12 @@ class FreetradeParser(Parser):
             transact_type = OrderType.DISPOSAL
         else:
             raise ParserError(
-                self.input_file.name,
+                self._csv_file.name,
                 f'Unrecognised value for `Buy / Sell` field: {action}')
 
         if row['Account Currency'] != 'GBP':
             raise ParserError(
-                self.input_file.name,
+                self._csv_file.name,
                 '`Account currency` field must be set to GBP')
 
         timestamp = parse_timestamp(row['Timestamp'])
@@ -126,7 +126,7 @@ class FreetradeParser(Parser):
         fx_fee_amount = read_decimal(row['FX Fee Amount'])
 
         if stamp_duty and fx_fee_amount:
-            raise FeeError(self.input_file.name)
+            raise FeeError(self._csv_file.name)
 
         fees = stamp_duty + fx_fee_amount
 
@@ -139,7 +139,7 @@ class FreetradeParser(Parser):
 
         if total_amount != calculated_ta:
             raise CalculatedAmountError(
-                self.input_file.name, calculated_ta, total_amount)
+                self._csv_file.name, calculated_ta, total_amount)
 
         self._orders.append(Order(
             timestamp,

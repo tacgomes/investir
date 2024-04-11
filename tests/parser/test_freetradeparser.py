@@ -16,20 +16,20 @@ from investir.transaction import OrderType, TransferType
 @pytest.fixture(name='create_parser')
 def fixture_create_parser(tmp_path):
     def _create_parser(rows):
-        input_file = tmp_path / 'transactions.csv'
-        with open(input_file, 'w', encoding='utf-8') as file:
+        csv_file = tmp_path / 'transactions.csv'
+        with csv_file.open('w', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=FreetradeParser.FIELDS)
             writer.writeheader()
             writer.writerows(rows)
         config = Config(strict=True)
-        return FreetradeParser(input_file, config)
+        return FreetradeParser(csv_file, config)
     return _create_parser
 
 
 @pytest.fixture(name='create_parser_format_unrecognised')
 def fixture_create_parser_format_unrecognised(tmp_path):
-    input_file = tmp_path / 'transactions.csv'
-    with open(input_file, 'w', encoding='utf-8') as file:
+    csv_file = tmp_path / 'transactions.csv'
+    with csv_file.open('w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=('Field1', 'Field2'))
         writer.writeheader()
         writer.writerow({
@@ -37,7 +37,7 @@ def fixture_create_parser_format_unrecognised(tmp_path):
             'Field2': "B",
         })
     config = Config(strict=True)
-    return FreetradeParser(input_file, config)
+    return FreetradeParser(csv_file, config)
 
 
 def test_parser_happy_path(create_parser):
