@@ -1,3 +1,5 @@
+![Continuous integration check on the main branch](https://github.com/tacgomes/investir/actions/workflows/ci.yml/badge.svg)
+
 # Investir
 
 `investir` is a tool to view stock broker transactions in a more
