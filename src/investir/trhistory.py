@@ -8,7 +8,7 @@ from .transaction import (
 from .utils import multiple_filter
 
 
-class TransactionLog:
+class TrHistory:
     def __init__(self) -> None:
         self._orders: list[Order] = []
         self._dividends: list[Dividend] = []
@@ -16,16 +16,16 @@ class TransactionLog:
         self._interest: list[Interest] = []
 
     def insert_orders(self, orders: list[Order]) -> None:
-        self._orders = TransactionLog._insert(self._orders, orders)
+        self._orders = TrHistory._insert(self._orders, orders)
 
     def insert_dividends(self, dividends: list[Dividend]) -> None:
-        self._dividends = TransactionLog._insert(self._dividends, dividends)
+        self._dividends = TrHistory._insert(self._dividends, dividends)
 
     def insert_transfers(self, transfers: list[Transfer]) -> None:
-        self._transfers = TransactionLog._insert(self._transfers, transfers)
+        self._transfers = TrHistory._insert(self._transfers, transfers)
 
     def insert_interest(self, interest: list[Interest]) -> None:
-        self._interest = TransactionLog._insert(self._interest, interest)
+        self._interest = TrHistory._insert(self._interest, interest)
 
     def orders(self) -> list[Order]:
         return self._orders[:]

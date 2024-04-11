@@ -6,7 +6,7 @@ import pathlib
 from .config import Config
 from .parser.factory import ParserFactory
 from .transaction import OrderType, TransferType
-from .transactionlog import TransactionLog
+from .trhistory import TrHistory
 
 logger = logging.getLogger(__name__)
 
@@ -138,15 +138,15 @@ def main() -> None:
 
     config = Config(strict=True)
 
-    trlog = TransactionLog()
+    tr_hist = TrHistory()
 
     for csv_file in args.input_files:
         if csv_parser := ParserFactory.create_parser(csv_file, config):
             result = csv_parser.parse()
-            trlog.insert_orders(result.orders)
-            trlog.insert_dividends(result.dividends)
-            trlog.insert_transfers(result.transfers)
-            trlog.insert_interest(result.interest)
+            tr_hist.insert_orders(result.orders)
+            tr_hist.insert_dividends(result.dividends)
+            tr_hist.insert_transfers(result.transfers)
+            tr_hist.insert_interest(result.interest)
         else:
             logger.warning('Failed to find a parser for %s', csv_file)
 
@@ -162,10 +162,10 @@ def main() -> None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
     if args.command == 'orders':
-        trlog.show_orders(filters)
+        tr_hist.show_orders(filters)
     elif args.command == 'dividends':
-        trlog.show_dividends(filters)
+        tr_hist.show_dividends(filters)
     elif args.command == 'transfers':
-        trlog.show_transfers(filters)
+        tr_hist.show_transfers(filters)
     elif args.command == 'interest':
-        trlog.show_interest(filters)
+        tr_hist.show_interest(filters)
