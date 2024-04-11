@@ -42,7 +42,7 @@ def fixture_create_parser_format_unrecognised(tmp_path):
 
 def test_parser_happy_path(create_parser):
     timestamp = datetime.datetime(
-        2021, 7, 26, 7, 41, 32, 582, tzinfo=datetime.UTC)
+        2021, 7, 26, 7, 41, 32, 582, tzinfo=datetime.timezone.utc)
 
     parser = create_parser([
         {
