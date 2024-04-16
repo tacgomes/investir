@@ -6,7 +6,7 @@ import pathlib
 from .config import Config
 from .logging import setup_logging
 from .parser.factory import ParserFactory
-from .transaction import OrderType, TransferType
+from .transaction import Acquisition, Disposal
 from .trhistory import TrHistory
 
 logger = logging.getLogger(__name__)
@@ -38,14 +38,14 @@ def create_orders_command(subparser, parent_parser) -> None:
         '--acquisitions',
         action='store_const',
         dest='order_type',
-        const=OrderType.ACQUISITION,
+        const=Acquisition,
         help='show only acquisitions',
     )
     type_group.add_argument(
         '--disposals',
         action='store_const',
         dest='order_type',
-        const=OrderType.DISPOSAL,
+        const=Disposal,
         help='show only disposals',
     )
 
@@ -73,15 +73,15 @@ def create_transfers_command(subparser, parent_parser) -> None:
     type_group.add_argument(
         '--deposits',
         action='store_const',
-        dest='transfer_type',
-        const=TransferType.DEPOSIT,
+        dest='amount_filter',
+        const=lambda tr: tr.amount > 0.0,
         help='show only acquisitions',
     )
     type_group.add_argument(
         '--widthdraws',
         action='store_const',
-        dest='transfer_type',
-        const=TransferType.WITHDRAW,
+        dest='amount_filter',
+        const=lambda tr: tr.amount < 0.0,
         help='show only disposals'
     )
 
@@ -159,7 +159,7 @@ def main() -> None:
         filters.append(lambda tr: tr.ticker == args.ticker)
 
     if hasattr(args, 'order_type') and args.order_type is not None:
-        filters.append(lambda tr: tr.type == args.order_type)
+        filters.append(lambda tr: isinstance(tr, args.order_type))
 
     if args.tax_year is not None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)

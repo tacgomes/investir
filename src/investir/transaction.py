@@ -1,80 +1,73 @@
-from enum import Enum
+from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from typing import ClassVar
 
 from .utils import date_to_tax_year
 
 
-class OrderType(Enum):
-    ACQUISITION = 1
-    DISPOSAL = 2
-
-
-class TransferType(Enum):
-    DEPOSIT = 1
-    WITHDRAW = 2
-
-
 @dataclass
-class Order:
+class Transaction(ABC):
     timestamp: datetime
+    amount: Decimal
+
+    def tax_year(self) -> int:
+        return date_to_tax_year(self.timestamp.date())
+
+
+@dataclass(kw_only=True)
+class Order(Transaction, ABC):
     ticker: str
-    type: OrderType
-    price: Decimal
     quantity: Decimal
     fees: Decimal
     order_id: str
+    notes: str = ''
+    id: int = 0
 
-    def total_amount(self) -> Decimal:
-        amount = self.price * self.quantity
-        if self.type == OrderType.ACQUISITION:
-            amount += self.fees
-        else:
-            amount -= self.fees
-        return amount
+    order_count: ClassVar[int] = 0
 
-    def tax_year(self) -> int:
-        return date_to_tax_year(self.timestamp.date())
+    def __post_init__(self):
+        Order.order_count += 1
+        self.id = Order.order_count
+
+    @property
+    def price(self) -> Decimal:
+        return self.amount / self.quantity
+
+
+class Acquisition(Order):
+    @property
+    def total_cost(self) -> Decimal:
+        return self.amount + self.fees
 
     def __hash__(self) -> int:
-        return hash(self.order_id)
+        return hash((self.timestamp, self.order_id))
 
 
-@dataclass
-class Dividend:
-    timestamp: datetime
+class Disposal(Order):
+    @property
+    def net_proceeds(self) -> Decimal:
+        return self.amount - self.fees
+
+    def __hash__(self) -> int:
+        return hash((self.timestamp, self.order_id))
+
+
+@dataclass(kw_only=True)
+class Dividend(Transaction):
     ticker: str
-    amount: Decimal
     withheld: Decimal
 
-    def tax_year(self) -> int:
-        return date_to_tax_year(self.timestamp.date())
-
     def __hash__(self) -> int:
-        return hash(self.timestamp) + hash(self.amount)
+        return hash((self.timestamp, self.amount))
 
 
-@dataclass
-class Transfer:
-    timestamp: datetime
-    type: TransferType
-    amount: Decimal
-
-    def tax_year(self) -> int:
-        return date_to_tax_year(self.timestamp.date())
-
+class Transfer(Transaction):
     def __hash__(self) -> int:
-        return hash(self.timestamp) + hash(self.amount)
+        return hash((self.timestamp, self.amount))
 
 
-@dataclass
-class Interest:
-    timestamp: datetime
-    amount: Decimal
-
-    def tax_year(self) -> int:
-        return date_to_tax_year(self.timestamp.date())
-
+class Interest(Transaction):
     def __hash__(self) -> int:
-        return hash(self.timestamp) + hash(self.amount)
+        return hash((self.timestamp, self.amount))
