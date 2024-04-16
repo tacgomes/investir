@@ -2,52 +2,45 @@ from datetime import datetime
 from decimal import Decimal
 
 from investir.transaction import (
-    Order, OrderType,
-    Dividend,
-    Transfer, TransferType,
-    Interest)
+    Acquisition, Disposal, Dividend, Transfer, Interest)
 from investir.trhistory import TrHistory
 
 
-ORDER1 = Order(
+ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
-    'AMZN',
-    OrderType.ACQUISITION,
-    Decimal(1.0),
-    Decimal(2.0),
-    Decimal(3.0),
-    'ORDER1')
+    ticker='AMZN',
+    amount=Decimal(10.0),
+    quantity=Decimal(1.0),
+    fees=Decimal(0.5),
+    order_id='ORDER1')
 
-ORDER2 = Order(
+ORDER2 = Disposal(
     datetime(2024, 2, 5, 14, 7, 20),
-    'GOOG',
-    OrderType.DISPOSAL,
-    Decimal(3.0),
-    Decimal(2.0),
-    Decimal(1.0),
-    'ORDER2')
+    ticker='GOOG',
+    amount=Decimal(15.0),
+    quantity=Decimal(2.0),
+    fees=Decimal(1.0),
+    order_id='ORDER2')
 
 DIVIDEND1 = Dividend(
     datetime(2023, 2, 5, 14, 7, 20),
-    'AMZN',
-    Decimal(5.0),
-    Decimal(2.0))
+    ticker='AMZN',
+    amount=Decimal(5.0),
+    withheld=Decimal(2.0))
 
 DIVIDEND2 = Dividend(
     datetime(2024, 2, 5, 14, 7, 20),
-    'GOOG',
-    Decimal(5.0),
-    Decimal(2.0))
+    ticker='GOOG',
+    amount=Decimal(5.0),
+    withheld=Decimal(2.0))
 
 TRANSFER1 = Transfer(
     datetime(2023, 2, 5, 14, 7, 20),
-    TransferType.DEPOSIT,
     Decimal(3000.0))
 
 TRANSFER2 = Transfer(
     datetime(2024, 2, 5, 14, 7, 20),
-    TransferType.WITHDRAW,
-    Decimal(1000.0))
+    Decimal(-1000.0))
 
 INTEREST1 = Interest(
     datetime(2023, 2, 5, 14, 7, 20),
@@ -104,8 +97,8 @@ def test_trhistory_transfers_are_sorted_by_timestamp():
 
     transfers = tr_hist.transfers()
     assert len(transfers) == 2
-    assert transfers[0].type == TransferType.DEPOSIT
-    assert transfers[1].type == TransferType.WITHDRAW
+    assert transfers[0].amount == Decimal('3000')
+    assert transfers[1].amount == Decimal('-1000')
 
 
 def test_trhistory_interest_is_sorted_by_timestamp():

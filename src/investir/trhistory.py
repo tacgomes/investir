@@ -1,9 +1,10 @@
 from prettytable import PrettyTable
 
 from .transaction import (
-    Order, OrderType,
+    Order,
+    Acquisition,
     Dividend,
-    Transfer, TransferType,
+    Transfer,
     Interest)
 from .utils import multiple_filter
 
@@ -42,21 +43,26 @@ class TrHistory:
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
             field_names=(
-                'Date', 'Ticker', 'Disposal', 'Price',
-                'Quantity', 'Fees', 'Total', 'Order ID'))
+                'ID', 'Date', 'Ticker', 'Total Cost', 'Net Proceeds',
+                'Quantity', 'Price', 'Fees'))
 
         for tr in multiple_filter(filters, self._orders):
-            type_str = 'Yes' if tr.type == OrderType.DISPOSAL else ' '
+            net_proceeds = ''
+            total_cost = ''
+            if isinstance(tr, Acquisition):
+                total_cost = str(round(tr.total_cost, 2))
+            else:
+                net_proceeds = str(round(tr.net_proceeds, 2))
 
             table.add_row([
+                tr.id,
                 tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 tr.ticker,
-                type_str,
-                tr.price,
+                total_cost,
+                net_proceeds,
                 tr.quantity,
-                tr.fees,
-                round(tr.total_amount(), 2),
-                tr.order_id])
+                round(tr.price, 2),
+                tr.fees])
 
         print(table)
 
@@ -75,14 +81,11 @@ class TrHistory:
 
     def show_transfers(self, filters=None):
         table = PrettyTable(
-            field_names=('Date', 'Withdraw', 'Amount'))
+            field_names=('Date', 'Amount'))
 
         for tr in multiple_filter(filters, self._transfers):
-            type_str = 'Yes' if tr.type == TransferType.WITHDRAW else ' '
-
             table.add_row([
                 tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                type_str,
                 tr.amount])
 
         print(table)

@@ -10,7 +10,7 @@ from investir.parser.exceptions import (
     CalculatedAmountError,
     FeeError)
 from investir.parser.freetrade import FreetradeParser
-from investir.transaction import OrderType, TransferType
+from investir.transaction import Acquisition, Disposal
 
 
 @pytest.fixture(name='create_parser')
@@ -119,18 +119,18 @@ def test_parser_happy_path(create_parser):
     assert len(parser_result.orders) == 2
 
     order = parser_result.orders[0]
+    assert isinstance(order, Acquisition)
     assert order.timestamp == timestamp
+    assert order.amount == Decimal('1325.00')
     assert order.ticker == 'AMZN'
-    assert order.type == OrderType.ACQUISITION
-    assert order.price == Decimal('132.5')
     assert order.quantity == Decimal('10')
     assert order.fees == Decimal('5.2')
 
     order = parser_result.orders[1]
+    assert isinstance(order, Disposal)
     assert order.timestamp == timestamp
+    assert order.amount == Decimal('1118.25')
     assert order.ticker == 'SWKS'
-    assert order.type == OrderType.DISPOSAL
-    assert order.price == Decimal('532.5')
     assert order.quantity == Decimal('2.1')
     assert order.fees == Decimal('6.4')
 
@@ -138,21 +138,19 @@ def test_parser_happy_path(create_parser):
     dividend = parser_result.dividends[0]
 
     assert dividend.timestamp == timestamp
-    assert dividend.ticker == 'SWKS'
     assert dividend.amount == Decimal('2.47')
+    assert dividend.ticker == 'SWKS'
     assert dividend.withheld == Decimal('0.4375520000')
 
     assert len(parser_result.transfers) == 2
     transfer = parser_result.transfers[0]
 
     assert transfer.timestamp == timestamp
-    assert transfer.type == TransferType.DEPOSIT
     assert transfer.amount == Decimal('1000.00')
 
     transfer = parser_result.transfers[1]
     assert transfer.timestamp == timestamp
-    assert transfer.type == TransferType.WITHDRAW
-    assert transfer.amount == Decimal('500.25')
+    assert transfer.amount == Decimal('-500.25')
 
     assert len(parser_result.interest) == 1
     interest = parser_result.interest[0]
