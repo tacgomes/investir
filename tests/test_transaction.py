@@ -17,7 +17,6 @@ def test_acquisition_order():
 
     assert order.tax_year() == 2022
     assert order.id == count + 1
-    assert order.tax_year() == 2022
     assert order.price == order.amount / order.quantity
     assert order.total_cost == order.amount + order.fees
 
@@ -35,6 +34,5 @@ def test_disposal_order():
 
     assert order.tax_year() == 2023
     assert order.id == count + 1
-    assert order.tax_year() == 2023
     assert order.price == order.amount / order.quantity
     assert order.net_proceeds == order.amount - order.fees
