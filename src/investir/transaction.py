@@ -18,12 +18,12 @@ class Transaction(ABC):
 
 @dataclass(kw_only=True)
 class Order(Transaction, ABC):
+    id: int = 0
     ticker: str
     quantity: Decimal
     fees: Decimal
-    order_id: str
+    order_id: str = ''
     note: str = ''
-    id: int = 0
 
     order_count: ClassVar[int] = 0
 
