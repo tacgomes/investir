@@ -161,6 +161,9 @@ def main() -> None:
     if hasattr(args, 'order_type') and args.order_type is not None:
         filters.append(lambda tr: isinstance(tr, args.order_type))
 
+    if hasattr(args, 'amount_filter') and args.amount_filter is not None:
+        filters.append(args.amount_filter)
+
     if args.tax_year is not None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
