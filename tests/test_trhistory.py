@@ -9,46 +9,46 @@ from investir.trhistory import TrHistory
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
     ticker='AMZN',
-    amount=Decimal(10.0),
-    quantity=Decimal(1.0),
-    fees=Decimal(0.5),
+    amount=Decimal('10.0'),
+    quantity=Decimal('1.0'),
+    fees=Decimal('0.5'),
     order_id='ORDER1')
 
 ORDER2 = Disposal(
     datetime(2024, 2, 5, 14, 7, 20),
     ticker='GOOG',
-    amount=Decimal(15.0),
-    quantity=Decimal(2.0),
-    fees=Decimal(1.0),
+    amount=Decimal('15.0'),
+    quantity=Decimal('2.0'),
+    fees=Decimal('1.0'),
     order_id='ORDER2')
 
 DIVIDEND1 = Dividend(
     datetime(2023, 2, 5, 14, 7, 20),
     ticker='AMZN',
-    amount=Decimal(5.0),
-    withheld=Decimal(2.0))
+    amount=Decimal('5.0'),
+    withheld=Decimal('2.0'))
 
 DIVIDEND2 = Dividend(
     datetime(2024, 2, 5, 14, 7, 20),
     ticker='GOOG',
-    amount=Decimal(5.0),
-    withheld=Decimal(2.0))
+    amount=Decimal('5.0'),
+    withheld=Decimal('2.0'))
 
 TRANSFER1 = Transfer(
     datetime(2023, 2, 5, 14, 7, 20),
-    Decimal(3000.0))
+    Decimal('3000.0'))
 
 TRANSFER2 = Transfer(
     datetime(2024, 2, 5, 14, 7, 20),
-    Decimal(-1000.0))
+    Decimal('-1000.0'))
 
 INTEREST1 = Interest(
     datetime(2023, 2, 5, 14, 7, 20),
-    Decimal(1000.0))
+    Decimal('1000.0'))
 
 INTEREST2 = Interest(
     datetime(2024, 2, 5, 14, 7, 20),
-    Decimal(500.0))
+    Decimal('500.0'))
 
 
 def test_trhistory_duplicates_are_removed():

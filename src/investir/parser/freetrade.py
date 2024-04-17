@@ -152,7 +152,7 @@ class FreetradeParser(Parser):
         calculated_ta = (
             amount_per_share
             * eligible_quantity
-            * ((Decimal(100) - withheld_tax_percentage) / 100)
+            * ((Decimal('100') - withheld_tax_percentage) / 100)
             * base_fx_rate)
 
         rounded_calculated_ta = calculated_ta.quantize(
