@@ -22,7 +22,7 @@ class Order(Transaction, ABC):
     quantity: Decimal
     fees: Decimal
     order_id: str
-    notes: str = ''
+    note: str = ''
     id: int = 0
 
     order_count: ClassVar[int] = 0
