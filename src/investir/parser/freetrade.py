@@ -84,7 +84,13 @@ class FreetradeParser(Parser):
 
         with self._csv_file.open(encoding='utf-8') as file:
             reader = csv.DictReader(file)
-            for row in reader:
+
+            # Freetrade transactions are ordered from most recent to
+            # oldest but we want the order ID to increase from the
+            # oldest to the most recent.
+            rows = reversed(list(reader))
+
+            for row in rows:
                 tr_type = row['Type']
                 if fn := parse_fn.get(tr_type):
                     fn(row)

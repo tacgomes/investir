@@ -1,7 +1,7 @@
 import csv
 from decimal import Decimal
+from datetime import datetime, timedelta, timezone
 
-import datetime
 import pytest
 
 from investir.config import Config
@@ -41,13 +41,13 @@ def fixture_create_parser_format_unrecognised(tmp_path):
 
 
 def test_parser_happy_path(create_parser):
-    timestamp = datetime.datetime(
-        2021, 7, 26, 7, 41, 32, 582, tzinfo=datetime.timezone.utc)
+    timestamp = datetime(
+        2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
     parser = create_parser([
         {
             'Type': 'ORDER',
-            'Timestamp': timestamp,
+            'Timestamp': timestamp + timedelta(hours=1),
             'Account Currency': 'GBP',
             'Total Amount': Decimal('1330.20'),
             'Buy / Sell': 'BUY',
@@ -89,7 +89,7 @@ def test_parser_happy_path(create_parser):
         },
         {
             'Type': 'TOP_UP',
-            'Timestamp': timestamp,
+            'Timestamp': timestamp + timedelta(hours=1),
             'Account Currency': 'GBP',
             'Total Amount': '1000.00',
         },
@@ -119,20 +119,20 @@ def test_parser_happy_path(create_parser):
     assert len(parser_result.orders) == 2
 
     order = parser_result.orders[0]
-    assert isinstance(order, Acquisition)
-    assert order.timestamp == timestamp
-    assert order.amount == Decimal('1325.00')
-    assert order.ticker == 'AMZN'
-    assert order.quantity == Decimal('10')
-    assert order.fees == Decimal('5.2')
-
-    order = parser_result.orders[1]
     assert isinstance(order, Disposal)
     assert order.timestamp == timestamp
     assert order.amount == Decimal('1118.25')
     assert order.ticker == 'SWKS'
     assert order.quantity == Decimal('2.1')
     assert order.fees == Decimal('6.4')
+
+    order = parser_result.orders[1]
+    assert isinstance(order, Acquisition)
+    assert order.timestamp == timestamp + timedelta(hours=1)
+    assert order.amount == Decimal('1325.00')
+    assert order.ticker == 'AMZN'
+    assert order.quantity == Decimal('10')
+    assert order.fees == Decimal('5.2')
 
     assert len(parser_result.dividends) == 1
     dividend = parser_result.dividends[0]
@@ -143,14 +143,14 @@ def test_parser_happy_path(create_parser):
     assert dividend.withheld == Decimal('0.4375520000')
 
     assert len(parser_result.transfers) == 2
+
     transfer = parser_result.transfers[0]
-
-    assert transfer.timestamp == timestamp
-    assert transfer.amount == Decimal('1000.00')
-
-    transfer = parser_result.transfers[1]
     assert transfer.timestamp == timestamp
     assert transfer.amount == Decimal('-500.25')
+
+    transfer = parser_result.transfers[1]
+    assert transfer.timestamp == timestamp + timedelta(hours=1)
+    assert transfer.amount == Decimal('1000.00')
 
     assert len(parser_result.interest) == 1
     interest = parser_result.interest[0]
