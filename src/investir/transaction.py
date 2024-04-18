@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from typing import ClassVar
 
@@ -12,8 +12,12 @@ class Transaction(ABC):
     timestamp: datetime
     amount: Decimal
 
+    @property
+    def date(self) -> date:
+        return self.timestamp.date()
+
     def tax_year(self) -> int:
-        return date_to_tax_year(self.timestamp.date())
+        return date_to_tax_year(self.date)
 
 
 @dataclass(kw_only=True)
