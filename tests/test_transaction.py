@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from investir.transaction import Order, Acquisition, Disposal
@@ -15,6 +15,7 @@ def test_acquisition_order():
         fees=Decimal('1.4'),
         order_id='ORDER')
 
+    assert order.date == date(2022, 4, 6)
     assert order.tax_year() == 2022
     assert order.id == count + 1
     assert order.price == order.amount / order.quantity
@@ -32,6 +33,7 @@ def test_disposal_order():
         fees=Decimal('1.7'),
         order_id='ORDER')
 
+    assert order.date == date(2023, 4, 6)
     assert order.tax_year() == 2023
     assert order.id == count + 1
     assert order.price == order.amount / order.quantity
