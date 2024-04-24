@@ -25,7 +25,7 @@ class Order(Transaction, ABC):
     id: int = 0
     ticker: str
     quantity: Decimal
-    fees: Decimal
+    fees: Decimal = Decimal('0.0')
     order_id: str = ''
     note: str = ''
 
