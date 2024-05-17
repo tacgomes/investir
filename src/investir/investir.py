@@ -6,6 +6,7 @@ import pathlib
 from .config import Config
 from .logging import setup_logging
 from .parser.factory import ParserFactory
+from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal
 from .trhistory import TrHistory
 
@@ -93,6 +94,33 @@ def create_interest_command(subparser, parent_parser) -> None:
         parents=[parent_parser])
 
 
+def create_tax_command(subparser, parent_parser) -> None:
+    parser = subparser.add_parser(
+        'capital-gains',
+        help='show capital gains report',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        '--ticker',
+        help='filter by a ticker',
+        dest='ticker'
+    )
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '--gains',
+        action='store_true',
+        dest='gains_only',
+        help='show only capital gains',
+    )
+    group.add_argument(
+        '--losses',
+        action='store_true',
+        dest='losses_only',
+        help='show only capital losses'
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
 
@@ -134,6 +162,7 @@ def main() -> None:
     create_dividends_command(subparser, parent_parser)
     create_transfers_command(subparser, parent_parser)
     create_interest_command(subparser, parent_parser)
+    create_tax_command(subparser, parent_parser)
 
     args = parser.parse_args()
 
@@ -175,3 +204,7 @@ def main() -> None:
         tr_hist.show_transfers(filters)
     elif args.command == 'interest':
         tr_hist.show_interest(filters)
+    elif args.command == 'capital-gains':
+        calculator = TaxCalculator(tr_hist)
+        calculator.show_capital_gains(
+            args.tax_year, args.ticker, args.gains_only, args.losses_only)

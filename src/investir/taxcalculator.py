@@ -6,6 +6,8 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Callable
 
+from prettytable import PrettyTable
+
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
 
@@ -93,6 +95,39 @@ class TaxCalculator:
 
     def holdings(self) -> dict[str, Section104Holding]:
         return self._holdings
+
+    def show_capital_gains(
+            self, tax_year: int | None, ticker: str | None,
+            gains_only: bool, losses_only: bool):
+        assert not (gains_only and losses_only)
+
+        table = PrettyTable(
+            field_names=(
+                'Date Disposed', 'Date Acquired', 'Ticker', 'Quantity',
+                'Cost (£)', 'Proceeds (£)', 'Gain/loss (£)'))
+
+        capital_gains = self.capital_gains(tax_year)
+
+        for cg in capital_gains:
+            if ticker is not None and cg.disposal.ticker != ticker:
+                continue
+
+            if gains_only and cg.gain_loss < 0.0:
+                continue
+
+            if losses_only and cg.gain_loss > 0.0:
+                continue
+
+            table.add_row([
+                cg.disposal.date,
+                cg.date_acquired or 'Section 104',
+                cg.disposal.ticker,
+                cg.disposal.quantity,
+                f'{cg.cost:.2f}',
+                f'{cg.disposal.amount:.2f}',
+                f'{cg.gain_loss:.2f}'])
+
+        print(table)
 
     def _calculate_capital_gains(self) -> None:
         logging.info('Calculating capital gains')
