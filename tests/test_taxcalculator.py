@@ -41,8 +41,9 @@ def test_section_104_disposal():
     tr_hist.insert_orders([order1, order2, order3, order4])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2023)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
+    assert capital_gains == tax_calculator.capital_gains(2023)
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2023, 5, 1)
@@ -120,7 +121,7 @@ def test_same_day_rule():
         order1, order2, order3, order4, order5, order6])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
@@ -155,7 +156,7 @@ def test_bed_and_breakfast_rule(days_elapsed):
     tr_hist.insert_orders([order1, order2, order3])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
@@ -188,7 +189,7 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date():
     tr_hist.insert_orders([order1, order2, order3])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
@@ -221,7 +222,7 @@ def test_acquisitions_are_not_matched_before_disposal_date():
     tr_hist.insert_orders([order1, order2, order3])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
@@ -270,7 +271,7 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule():
     tr_hist.insert_orders([order1, order2, order3, order4, order5])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]  # Bed and breakfast disposal event
@@ -317,7 +318,7 @@ def test_matching_disposals_with_larger_acquisition():
     tr_hist.insert_orders([order1, order2, order3, order4])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]
@@ -382,7 +383,7 @@ def test_matching_disposal_with_multiple_smaller_acquisitions():
         order1, order2, order3, order4, order5, order6])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 5
 
     cg = capital_gains[0]  # Same day
@@ -444,7 +445,7 @@ def test_capital_gains_on_orders_with_fees_included():
     tr_hist.insert_orders([order1, order2, order3, order4])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
     # Acquisition cost = 40.0 + 0.4 + 0.5 = 40.9
@@ -505,7 +506,7 @@ def test_disposals_on_different_tickers():
         order1, order2, order3, order4, order5, order6])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]
@@ -611,7 +612,7 @@ def test_rppaccounts_example():
         order6, order7, order8, order9, order10])
 
     tax_calculator = TaxCalculator(tr_hist)
-    capital_gains = tax_calculator.capital_gains(2018)
+    capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 5
 
     cg = capital_gains[0]
