@@ -121,7 +121,26 @@ def create_tax_command(subparser, parent_parser) -> None:
     )
 
 
+def create_holdings_command(subparser, parent_parser) -> None:
+    parser = subparser.add_parser(
+        'holdings',
+        help='show holdings',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        '--ticker',
+        help='filter by a ticker'
+    )
+
+    parser.add_argument(
+        '--show-avg-cost',
+        action='store_true',
+        help='show the average cost per share')
+
+
 def main() -> None:
+    # pylint: disable=R0912
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -163,6 +182,7 @@ def main() -> None:
     create_transfers_command(subparser, parent_parser)
     create_interest_command(subparser, parent_parser)
     create_tax_command(subparser, parent_parser)
+    create_holdings_command(subparser, parent_parser)
 
     args = parser.parse_args()
 
@@ -208,3 +228,6 @@ def main() -> None:
         calculator = TaxCalculator(tr_hist)
         calculator.show_capital_gains(
             args.tax_year, args.ticker, args.gains_only, args.losses_only)
+    elif args.command == 'holdings':
+        calculator = TaxCalculator(tr_hist)
+        calculator.show_holdings(args.ticker, args.show_avg_cost)

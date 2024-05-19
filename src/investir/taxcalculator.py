@@ -129,6 +129,32 @@ class TaxCalculator:
 
         print(table)
 
+    def show_holdings(self, ticker: str | None, show_avg_cost: bool):
+        fields = ['Ticker', 'Cost (£)', 'Quantity', 'Avg Cost (£)']
+
+        table = PrettyTable(field_names=fields)
+
+        if not show_avg_cost:
+            table.fields = fields[:-1]
+
+        if ticker is None:
+            holdings = sorted(
+                self._holdings.items(),
+                key=lambda x: x[1].cost, reverse=True)
+        elif ticker in self._holdings:
+            holdings = [(ticker, self._holdings[ticker])]
+        else:
+            holdings = []
+
+        for ticker_, holding in holdings:
+            table.add_row([
+                ticker_,
+                f'{holding.cost:.2f}',
+                holding.quantity,
+                f'{holding.cost / holding.quantity:.2f}'])
+
+        print(table)
+
     def _calculate_capital_gains(self) -> None:
         logging.info('Calculating capital gains')
 
