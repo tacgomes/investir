@@ -139,8 +139,6 @@ def create_holdings_command(subparser, parent_parser) -> None:
 
 
 def main() -> None:
-    # pylint: disable=R0912
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -216,18 +214,22 @@ def main() -> None:
     if args.tax_year is not None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
-    if args.command == 'orders':
-        tr_hist.show_orders(filters)
-    elif args.command == 'dividends':
-        tr_hist.show_dividends(filters)
-    elif args.command == 'transfers':
-        tr_hist.show_transfers(filters)
-    elif args.command == 'interest':
-        tr_hist.show_interest(filters)
-    elif args.command == 'capital-gains':
-        calculator = TaxCalculator(tr_hist)
-        calculator.show_capital_gains(
-            args.tax_year, args.ticker, args.gains_only, args.losses_only)
-    elif args.command == 'holdings':
-        calculator = TaxCalculator(tr_hist)
-        calculator.show_holdings(args.ticker, args.show_avg_cost)
+    match args.command:
+        case 'orders':
+            tr_hist.show_orders(filters)
+        case 'dividends':
+            tr_hist.show_dividends(filters)
+        case 'transfers':
+            tr_hist.show_transfers(filters)
+        case 'interest':
+            tr_hist.show_interest(filters)
+        case 'capital-gains':
+            calculator = TaxCalculator(tr_hist)
+            calculator.show_capital_gains(
+                args.tax_year, args.ticker,
+                args.gains_only, args.losses_only)
+        case 'holdings':
+            calculator = TaxCalculator(tr_hist)
+            calculator.show_holdings(args.ticker, args.show_avg_cost)
+        case _:
+            raise AssertionError(f'Unknown command: {args.command}')
