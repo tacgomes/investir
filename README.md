@@ -2,30 +2,94 @@
 
 # Investir
 
-`investir` is a tool to view stock broker transactions in a more
-readable way than the wide CSV file exported by the broker. At the
-moment, the only broker supported is Freetrade.
+This software permits to view the list of stock buy or sell orders
+placed in a stock broker, dividends paid out, interest on cash given,
+deposits/withdraws made, cost basis of the current holdings, and the
+realised capital gains (or losses) calculated in accordance to the HMRC
+share identification rules [1] [2]. It requires as input a CSV export of
+your activity feed that can be obtained from the broker. Currently, only
+the [Freetrade] broker is supported.
 
-In the future, the tool will also provide a capital gains tax report
-based on the United Kingdom HM Revenue & Customs share identification
-rules [1] [2].
+## Disclaimer
+
+The reporting provided by this software is intended for informational
+purposes only, and it should not be relied upon for any serious tax
+related matter, such as filling the Self Assessment tax return. The
+author of this software is not a tax accountant or has any affinity with
+tax law. The information provided can be erroneous or not correct for
+your specific circumstances.
 
 ## Installation
 
-This project is not distributed on the Python Package Index (PyPI). You
-can install it from source by executing:
+This software is not distributed on the Python Package Index (PyPI). You
+will have to install it from its source which can be achieved by cloning
+this repo and executing the following command:
 
     pip3 install --user --editable .
 
 ## Usage
 
-To import a CSV file with a list of transactions and view them, run
+Some examples in how to use this software are described next.
 
-    investir transactions.csv
+View the stock buy or sell orders placed:
 
-Replace `transactions.csv` with the location for your CSV file. More
-than one CSV input file can be given.
+    investir orders data/freetrade.csv
 
+View the stock sell orders for Microsoft placed in the 2021/2022 tax
+year:
 
+    investir orders --tax-year 2021 --ticker MSFT --disposals data/freetrade.csv
+
+View the dividends paid out:
+
+    investir dividends data/freetrade.csv
+
+View the dividends paid out by Microsoft:
+
+    investir dividends --ticker MSFT data/freetrade.csv
+
+View the interest on cash paid out:
+
+    investir interest data/freetrade.csv
+
+View the cash deposits and cash withdrawals made:
+
+    investir transfers data/freetrade.csv
+
+View the capital gains or losses:
+
+    investir capital-gains data/freetrade.csv
+
+View the capital gains or losses for the 2021/2022 tax year:
+
+    investir capital-gains --tax-year 2021 data/freetrade.csv
+
+View the capital losses for any tax year:
+
+    investir capital-gains --losses data/freetrade.csv
+
+View the cost basis of the current holdings:
+
+    investir holdings data/freetrade.csv
+
+View the cost basis for the Microsoft holding and show the average cost
+per share as well:
+
+    investir holdings --ticker MSFT --show-avg-cost data/freetrade.csv
+
+Use the `-h` option for a subcommand view all the available options and
+filters.
+
+More than one CSV export can be used as input.
+
+## Issues
+
+Freetrade does not provide detail regarding stock splits events on the
+CSV export, and therefore the information provided for companies whose
+stock has been splitted will not be correct unless the CSV is manually
+adjusted for these events. A similar issue can be encountered for
+companies that had their ticker symbol changed (e.g `FB` to `META`).
+
+[Freetrade]: https://freetrade.io/
 [1]: https://www.gov.uk/government/publications/shares-and-capital-gains-tax-hs284-self-assessment-helpsheet/hs284-shares-and-capital-gains-tax-2023#rule
 [2]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
