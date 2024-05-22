@@ -7,7 +7,7 @@ from typing import ClassVar
 from .utils import date_to_tax_year
 
 
-@dataclass
+@dataclass(frozen=True)
 class Transaction(ABC):
     timestamp: datetime
     amount: Decimal
@@ -20,7 +20,7 @@ class Transaction(ABC):
         return date_to_tax_year(self.date)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
     ticker: str
@@ -33,7 +33,7 @@ class Order(Transaction, ABC):
 
     def __post_init__(self):
         Order.order_count += 1
-        self.id = Order.order_count
+        object.__setattr__(self, 'id', Order.order_count)
 
     @property
     def price(self) -> Decimal:
@@ -96,38 +96,31 @@ class Order(Transaction, ABC):
             note=note)
 
 
+@dataclass(frozen=True)
 class Acquisition(Order):
     @property
     def total_cost(self) -> Decimal:
         return self.amount + self.fees
 
-    def __hash__(self) -> int:
-        return hash((self.timestamp, self.order_id))
 
-
+@dataclass(frozen=True)
 class Disposal(Order):
     @property
     def net_proceeds(self) -> Decimal:
         return self.amount - self.fees
 
-    def __hash__(self) -> int:
-        return hash((self.timestamp, self.order_id))
 
-
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class Dividend(Transaction):
     ticker: str
     withheld: Decimal
 
-    def __hash__(self) -> int:
-        return hash((self.timestamp, self.amount))
 
-
+@dataclass(frozen=True)
 class Transfer(Transaction):
-    def __hash__(self) -> int:
-        return hash((self.timestamp, self.amount))
+    pass
 
 
+@dataclass(frozen=True)
 class Interest(Transaction):
-    def __hash__(self) -> int:
-        return hash((self.timestamp, self.amount))
+    pass
