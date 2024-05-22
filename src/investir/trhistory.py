@@ -43,7 +43,7 @@ class TrHistory:
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
             field_names=(
-                'ID', 'Date', 'Ticker', 'Total Cost (£)', 'Net Proceeds (£)',
+                'Date', 'Ticker', 'Total Cost (£)', 'Net Proceeds (£)',
                 'Quantity', 'Price (£)', 'Fees (£)'))
 
         for tr in multiple_filter(filters, self._orders):
@@ -55,7 +55,6 @@ class TrHistory:
                 net_proceeds = str(round(tr.net_proceeds, 2))
 
             table.add_row([
-                tr.id,
                 tr.date,
                 tr.ticker,
                 total_cost,
