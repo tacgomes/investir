@@ -43,8 +43,8 @@ class TrHistory:
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
             field_names=(
-                'ID', 'Date', 'Ticker', 'Total Cost', 'Net Proceeds',
-                'Quantity', 'Price', 'Fees'))
+                'ID', 'Date', 'Ticker', 'Total Cost (£)', 'Net Proceeds (£)',
+                'Quantity', 'Price (£)', 'Fees (£)'))
 
         for tr in multiple_filter(filters, self._orders):
             net_proceeds = ''
@@ -56,7 +56,7 @@ class TrHistory:
 
             table.add_row([
                 tr.id,
-                tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                tr.date,
                 tr.ticker,
                 total_cost,
                 net_proceeds,
@@ -68,11 +68,11 @@ class TrHistory:
 
     def show_dividends(self, filters=None):
         table = PrettyTable(
-            field_names=('Date', 'Ticker', 'Amount', 'Tax widhheld'))
+            field_names=('Date', 'Ticker', 'Amount (£)', 'Tax widhheld (£)'))
 
         for tr in multiple_filter(filters, self._dividends):
             table.add_row([
-                tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                tr.date,
                 tr.ticker,
                 tr.amount,
                 round(tr.withheld, 2)])
@@ -81,22 +81,22 @@ class TrHistory:
 
     def show_transfers(self, filters=None):
         table = PrettyTable(
-            field_names=('Date', 'Amount'))
+            field_names=('Date', 'Amount (£)'))
 
         for tr in multiple_filter(filters, self._transfers):
             table.add_row([
-                tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                tr.date,
                 tr.amount])
 
         print(table)
 
     def show_interest(self, filters=None) -> None:
         table = PrettyTable(
-            field_names=('Date', 'Amount'))
+            field_names=('Date', 'Amount (£)'))
 
         for tr in multiple_filter(filters,  self._interest):
             table.add_row([
-                tr.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                tr.date,
                 tr.amount])
 
         print(table)
