@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, date
 from decimal import Decimal
 from typing import ClassVar
@@ -22,7 +22,7 @@ class Transaction(ABC):
 
 @dataclass(kw_only=True)
 class Order(Transaction, ABC):
-    id: int = 0
+    id: int = field(default=0, compare=False)
     ticker: str
     quantity: Decimal
     fees: Decimal = Decimal('0.0')
