@@ -54,8 +54,19 @@ INTEREST2 = Interest(
 def test_trhistory_duplicates_are_removed():
     tr_hist = TrHistory()
 
-    tr_hist.insert_orders([ORDER1, ORDER1])
-    tr_hist.insert_orders([ORDER1])
+    # Create an order almost identical to ORDER1 other than the `id`
+    # field which is automatically populated and it will be different.
+    # For comparison purposes, the orders should be equivalent.
+    order1b = Acquisition(
+        ORDER1.timestamp,
+        ticker=ORDER1.ticker,
+        amount=ORDER1.amount,
+        quantity=ORDER1.quantity,
+        fees=ORDER1.fees,
+        order_id=ORDER1.order_id)
+
+    tr_hist.insert_orders([ORDER1, order1b])
+    tr_hist.insert_orders([order1b])
     assert len(tr_hist.orders()) == 1
 
     tr_hist.insert_dividends([DIVIDEND1, DIVIDEND1])
