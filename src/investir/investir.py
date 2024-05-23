@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def path(parser: argparse.ArgumentParser, file: str) -> pathlib.Path:
     try:
-        with open(file, encoding='utf-8'):
+        with open(file, encoding="utf-8"):
             pass
     except IOError as err:
         parser.error(str(err))
@@ -24,157 +24,131 @@ def path(parser: argparse.ArgumentParser, file: str) -> pathlib.Path:
 
 def create_orders_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
-        'orders',
-        help='show share buy/sell orders',
-        parents=[parent_parser])
-
-    parser.add_argument(
-        '--ticker',
-        help='filter by a ticker',
-        dest='ticker'
+        "orders", help="show share buy/sell orders", parents=[parent_parser]
     )
+
+    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
 
     type_group = parser.add_mutually_exclusive_group()
     type_group.add_argument(
-        '--acquisitions',
-        action='store_const',
-        dest='order_type',
+        "--acquisitions",
+        action="store_const",
+        dest="order_type",
         const=Acquisition,
-        help='show only acquisitions',
+        help="show only acquisitions",
     )
     type_group.add_argument(
-        '--disposals',
-        action='store_const',
-        dest='order_type',
+        "--disposals",
+        action="store_const",
+        dest="order_type",
         const=Disposal,
-        help='show only disposals',
+        help="show only disposals",
     )
 
 
 def create_dividends_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
-        'dividends',
-        help='show share dividends',
-        parents=[parent_parser])
-
-    parser.add_argument(
-        '--ticker',
-        help='filter by a ticker',
-        dest='ticker'
+        "dividends", help="show share dividends", parents=[parent_parser]
     )
+
+    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
 
 
 def create_transfers_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
-        'transfers',
-        help='show cash transfers',
-        parents=[parent_parser])
+        "transfers", help="show cash transfers", parents=[parent_parser]
+    )
 
     type_group = parser.add_mutually_exclusive_group()
     type_group.add_argument(
-        '--deposits',
-        action='store_const',
-        dest='amount_filter',
+        "--deposits",
+        action="store_const",
+        dest="amount_filter",
         const=lambda tr: tr.amount > 0.0,
-        help='show only acquisitions',
+        help="show only acquisitions",
     )
     type_group.add_argument(
-        '--widthdraws',
-        action='store_const',
-        dest='amount_filter',
+        "--widthdraws",
+        action="store_const",
+        dest="amount_filter",
         const=lambda tr: tr.amount < 0.0,
-        help='show only disposals'
+        help="show only disposals",
     )
 
 
 def create_interest_command(subparser, parent_parser) -> None:
     subparser.add_parser(
-        'interest',
-        help='show interest earned on cash',
-        parents=[parent_parser])
+        "interest", help="show interest earned on cash", parents=[parent_parser]
+    )
 
 
 def create_tax_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
-        'capital-gains',
-        help='show capital gains report',
-        parents=[parent_parser])
-
-    parser.add_argument(
-        '--ticker',
-        help='filter by a ticker',
-        dest='ticker'
+        "capital-gains", help="show capital gains report", parents=[parent_parser]
     )
+
+    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        '--gains',
-        action='store_true',
-        dest='gains_only',
-        help='show only capital gains',
+        "--gains",
+        action="store_true",
+        dest="gains_only",
+        help="show only capital gains",
     )
     group.add_argument(
-        '--losses',
-        action='store_true',
-        dest='losses_only',
-        help='show only capital losses'
+        "--losses",
+        action="store_true",
+        dest="losses_only",
+        help="show only capital losses",
     )
 
 
 def create_holdings_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
-        'holdings',
-        help='show holdings',
-        parents=[parent_parser])
-
-    parser.add_argument(
-        '--ticker',
-        help='filter by a ticker'
+        "holdings", help="show holdings", parents=[parent_parser]
     )
 
+    parser.add_argument("--ticker", help="filter by a ticker")
+
     parser.add_argument(
-        '--show-avg-cost',
-        action='store_true',
-        help='show the average cost per share')
+        "--show-avg-cost", action="store_true", help="show the average cost per share"
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        help='enable verbose logging')
+    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
 
     parser.add_argument(
-        '--no-colour',
-        action='store_false',
-        dest='colour',
+        "--no-colour",
+        action="store_false",
+        dest="colour",
         default=True,
-        help='disable coloured output')
+        help="disable coloured output",
+    )
 
     parser.add_argument(
-        '-v', '--version',
-        action='version',
+        "-v",
+        "--version",
+        action="version",
         version=f'{parser.prog} v{importlib.metadata.version("investir")}',
     )
 
     parent_parser = argparse.ArgumentParser(add_help=False)
 
-    parent_parser.add_argument(
-        '--tax-year',
-        type=int,
-        help='filter by tax year')
+    parent_parser.add_argument("--tax-year", type=int, help="filter by tax year")
 
     parent_parser.add_argument(
-        'input_files',
+        "input_files",
         type=lambda file: path(parser, file),
-        nargs='+',
-        metavar='INPUT',
-        help='input CSV file with the transaction records'
+        nargs="+",
+        metavar="INPUT",
+        help="input CSV file with the transaction records",
     )
 
-    subparser = parser.add_subparsers(dest='command', required=True)
+    subparser = parser.add_subparsers(dest="command", required=True)
     create_orders_command(subparser, parent_parser)
     create_dividends_command(subparser, parent_parser)
     create_transfers_command(subparser, parent_parser)
@@ -198,38 +172,38 @@ def main() -> None:
             tr_hist.insert_transfers(result.transfers)
             tr_hist.insert_interest(result.interest)
         else:
-            logger.warning('Failed to find a parser for %s', csv_file)
+            logger.warning("Failed to find a parser for %s", csv_file)
 
     filters = []
 
-    if hasattr(args, 'ticker') and args.ticker is not None:
+    if hasattr(args, "ticker") and args.ticker is not None:
         filters.append(lambda tr: tr.ticker == args.ticker)
 
-    if hasattr(args, 'order_type') and args.order_type is not None:
+    if hasattr(args, "order_type") and args.order_type is not None:
         filters.append(lambda tr: isinstance(tr, args.order_type))
 
-    if hasattr(args, 'amount_filter') and args.amount_filter is not None:
+    if hasattr(args, "amount_filter") and args.amount_filter is not None:
         filters.append(args.amount_filter)
 
     if args.tax_year is not None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
     match args.command:
-        case 'orders':
+        case "orders":
             tr_hist.show_orders(filters)
-        case 'dividends':
+        case "dividends":
             tr_hist.show_dividends(filters)
-        case 'transfers':
+        case "transfers":
             tr_hist.show_transfers(filters)
-        case 'interest':
+        case "interest":
             tr_hist.show_interest(filters)
-        case 'capital-gains':
+        case "capital-gains":
             calculator = TaxCalculator(tr_hist)
             calculator.show_capital_gains(
-                args.tax_year, args.ticker,
-                args.gains_only, args.losses_only)
-        case 'holdings':
+                args.tax_year, args.ticker, args.gains_only, args.losses_only
+            )
+        case "holdings":
             calculator = TaxCalculator(tr_hist)
             calculator.show_holdings(args.ticker, args.show_avg_cost)
         case _:
-            raise AssertionError(f'Unknown command: {args.command}')
+            raise AssertionError(f"Unknown command: {args.command}")

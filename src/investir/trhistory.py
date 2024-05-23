@@ -1,11 +1,6 @@
 from prettytable import PrettyTable
 
-from .transaction import (
-    Order,
-    Acquisition,
-    Dividend,
-    Transfer,
-    Interest)
+from .transaction import Order, Acquisition, Dividend, Transfer, Interest
 from .utils import multiple_filter
 
 
@@ -43,66 +38,67 @@ class TrHistory:
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
             field_names=(
-                'Date', 'Ticker', 'Total Cost (£)', 'Net Proceeds (£)',
-                'Quantity', 'Price (£)', 'Fees (£)'))
+                "Date",
+                "Ticker",
+                "Total Cost (£)",
+                "Net Proceeds (£)",
+                "Quantity",
+                "Price (£)",
+                "Fees (£)",
+            )
+        )
 
         for tr in multiple_filter(filters, self._orders):
-            net_proceeds = ''
-            total_cost = ''
+            net_proceeds = ""
+            total_cost = ""
             if isinstance(tr, Acquisition):
                 total_cost = str(round(tr.total_cost, 2))
             else:
                 net_proceeds = str(round(tr.net_proceeds, 2))
 
-            table.add_row([
-                tr.date,
-                tr.ticker,
-                total_cost,
-                net_proceeds,
-                tr.quantity,
-                round(tr.price, 2),
-                tr.fees])
+            table.add_row(
+                [
+                    tr.date,
+                    tr.ticker,
+                    total_cost,
+                    net_proceeds,
+                    tr.quantity,
+                    round(tr.price, 2),
+                    tr.fees,
+                ]
+            )
 
         print(table)
 
     def show_dividends(self, filters=None):
         table = PrettyTable(
-            field_names=('Date', 'Ticker', 'Amount (£)', 'Tax widhheld (£)'))
+            field_names=("Date", "Ticker", "Amount (£)", "Tax widhheld (£)")
+        )
 
         for tr in multiple_filter(filters, self._dividends):
-            table.add_row([
-                tr.date,
-                tr.ticker,
-                tr.amount,
-                round(tr.withheld, 2)])
+            table.add_row([tr.date, tr.ticker, tr.amount, round(tr.withheld, 2)])
 
         print(table)
 
     def show_transfers(self, filters=None):
-        table = PrettyTable(
-            field_names=('Date', 'Amount (£)'))
+        table = PrettyTable(field_names=("Date", "Amount (£)"))
 
         for tr in multiple_filter(filters, self._transfers):
-            table.add_row([
-                tr.date,
-                tr.amount])
+            table.add_row([tr.date, tr.amount])
 
         print(table)
 
     def show_interest(self, filters=None) -> None:
-        table = PrettyTable(
-            field_names=('Date', 'Amount (£)'))
+        table = PrettyTable(field_names=("Date", "Amount (£)"))
 
-        for tr in multiple_filter(filters,  self._interest):
-            table.add_row([
-                tr.date,
-                tr.amount])
+        for tr in multiple_filter(filters, self._interest):
+            table.add_row([tr.date, tr.amount])
 
         print(table)
 
     @staticmethod
     def _insert(l1, l2):
-        """ Remove duplicates and sort by timestamp. """
+        """Remove duplicates and sort by timestamp."""
         # FIXME: this is not very efficient but it will do for now.
         result = list(set(l1 + l2))
         return sorted(result, key=lambda tr: tr.timestamp)
