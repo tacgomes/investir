@@ -1,9 +1,6 @@
 import datetime
 
-from investir.utils import (
-    tax_year_period,
-    date_to_tax_year,
-    multiple_filter)
+from investir.utils import tax_year_period, date_to_tax_year, multiple_filter
 
 
 def test_tax_year_period():
@@ -28,6 +25,5 @@ def test_multiple_filter():
     nums_filtered = multiple_filter([], nums)
     assert nums_filtered == nums
 
-    nums_filtered = multiple_filter([
-        lambda x: x % 2 == 0, lambda x: x > 3], nums)
+    nums_filtered = multiple_filter([lambda x: x % 2 == 0, lambda x: x > 3], nums)
     assert list(nums_filtered) == [4, 6]

@@ -9,10 +9,8 @@ TAX_YEAR_END_DAY: Final = 5
 
 
 def tax_year_period(tax_year: int) -> tuple[datetime.date, datetime.date]:
-    tax_year_start = datetime.date(
-        tax_year, TAX_YEAR_MONTH, TAX_YEAR_START_DAY)
-    tax_year_end = datetime.date(
-        tax_year + 1, TAX_YEAR_MONTH, TAX_YEAR_END_DAY)
+    tax_year_start = datetime.date(tax_year, TAX_YEAR_MONTH, TAX_YEAR_START_DAY)
+    tax_year_end = datetime.date(tax_year + 1, TAX_YEAR_MONTH, TAX_YEAR_END_DAY)
     return tax_year_start, tax_year_end
 
 

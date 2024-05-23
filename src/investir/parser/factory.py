@@ -20,8 +20,7 @@ class ParserFactory:
         for parser_class in cls._parsers:
             parser = parser_class(filename, config)  # type: ignore[operator]
             if parser.can_parse():
-                logger.info(
-                    'Found parser for %s: %s', filename, type(parser).name())
+                logger.info("Found parser for %s: %s", filename, type(parser).name())
                 return parser
 
         return None

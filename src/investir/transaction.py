@@ -25,15 +25,15 @@ class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
     ticker: str
     quantity: Decimal
-    fees: Decimal = Decimal('0.0')
-    order_id: str = ''
-    note: str = ''
+    fees: Decimal = Decimal("0.0")
+    order_id: str = ""
+    note: str = ""
 
     order_count: ClassVar[int] = 0
 
     def __post_init__(self):
         Order.order_count += 1
-        object.__setattr__(self, 'id', Order.order_count)
+        object.__setattr__(self, "id", Order.order_count)
 
     @property
     def price(self) -> Decimal:
@@ -56,7 +56,8 @@ class Order(Transaction, ABC):
             ticker=self.ticker,
             quantity=match_quantity,
             fees=match_fees,
-            note=f'Splitted from order {self.id}')
+            note=f"Splitted from order {self.id}",
+        )
 
         remainder = type(self)(
             self.timestamp,
@@ -64,12 +65,13 @@ class Order(Transaction, ABC):
             ticker=self.ticker,
             quantity=remainder_quantity,
             fees=remainder_fees,
-            note=f'Splitted from order {self.id}')
+            note=f"Splitted from order {self.id}",
+        )
 
         return match, remainder
 
     @staticmethod
-    def merge(*orders: 'Order') -> 'Order':
+    def merge(*orders: "Order") -> "Order":
         assert len(orders) > 1
 
         ticker = orders[0].ticker
@@ -78,14 +80,15 @@ class Order(Transaction, ABC):
         order_class = type(orders[0])
 
         timestamp = orders[0].timestamp.replace(
-            hour=0, minute=0, second=0, microsecond=0)
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
         amount = Decimal(sum(order.amount for order in orders))
         quantity = Decimal(sum(order.quantity for order in orders))
         fees = Decimal(sum(order.fees for order in orders))
 
-        note = 'Merged from orders '
-        note += ','.join(str(order.id) for order in orders)
+        note = "Merged from orders "
+        note += ",".join(str(order.id) for order in orders)
 
         return order_class(
             timestamp,
@@ -93,7 +96,8 @@ class Order(Transaction, ABC):
             ticker=ticker,
             quantity=quantity,
             fees=fees,
-            note=note)
+            note=note,
+        )
 
 
 @dataclass(frozen=True)
