@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pylint mypy pytest
+        pip install flake8 black pylint mypy pytest
 
     - name: Install investir package
       run: |
@@ -30,6 +30,10 @@ jobs:
     - name: Run Flake8
       run: |
         flake8 .
+
+    - name: Run Black
+      run: |
+        black --check .
 
     - name: Run Pylint
       run: |
