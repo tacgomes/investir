@@ -3,6 +3,7 @@ import logging
 
 from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
+from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class FreetradeParser(Parser):
-    FIELDS = (
+    FIELDS: Final = (
         'Title',
         'Type',
         'Timestamp',

@@ -1,13 +1,14 @@
 import logging
+from typing import Final
 
 
 class CustomFormatter(logging.Formatter):
-    LIGHT_CYAN = '\033[0;96m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[38;5;226m'
-    RED = '\033[38;5;196m'
-    BOLD_RED = '\033[31;1m'
-    RESET = '\033[0m'
+    LIGHT_CYAN: Final = '\033[0;96m'
+    GREEN: Final = '\033[0;32m'
+    YELLOW: Final = '\033[38;5;226m'
+    RED: Final = '\033[38;5;196m'
+    BOLD_RED: Final = '\033[31;1m'
+    RESET: Final = '\033[0m'
 
     def __init__(self, fmt: str) -> None:
         super().__init__()

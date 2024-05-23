@@ -1,11 +1,11 @@
 import datetime
 
 from collections.abc import Iterable
+from typing import Final
 
-
-TAX_YEAR_MONTH = 4
-TAX_YEAR_START_DAY = 6
-TAX_YEAR_END_DAY = 5
+TAX_YEAR_MONTH: Final = 4
+TAX_YEAR_START_DAY: Final = 6
+TAX_YEAR_END_DAY: Final = 5
 
 
 def tax_year_period(tax_year: int) -> tuple[datetime.date, datetime.date]:
