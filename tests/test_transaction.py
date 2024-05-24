@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from investir.typing import Ticker
 from investir.transaction import Order, Acquisition, Disposal
 
 
@@ -12,7 +13,7 @@ def test_acquisition_order():
     order = Acquisition(
         datetime(2022, 4, 6, 18, 4, 50),
         amount=Decimal("100.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
         order_id="ORDER",
@@ -31,7 +32,7 @@ def test_disposal_order():
     order = Disposal(
         datetime(2023, 4, 6, 18, 4, 50),
         amount=Decimal("50.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("10.0"),
         fees=Decimal("1.7"),
         order_id="ORDER",
@@ -48,7 +49,7 @@ def test_order_merge():
     order1 = Acquisition(
         datetime(2022, 4, 6, 18, 4, 50),
         amount=Decimal("100.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
     )
@@ -56,7 +57,7 @@ def test_order_merge():
     order2 = Acquisition(
         datetime(2022, 4, 6, 18, 4, 50),
         amount=Decimal("50.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("5.0"),
         fees=Decimal("1.5"),
     )
@@ -64,7 +65,7 @@ def test_order_merge():
     order3 = Acquisition(
         datetime(2022, 4, 6, 18, 4, 50),
         amount=Decimal("10.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("4.0"),
         fees=Decimal("0.1"),
     )
@@ -83,7 +84,7 @@ def test_order_split():
     order = Acquisition(
         date_time,
         amount=Decimal("120.0"),
-        ticker="AMZN",
+        ticker=Ticker("AMZN"),
         quantity=Decimal("12.0"),
         fees=Decimal("6.0"),
     )

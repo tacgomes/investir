@@ -2,12 +2,13 @@ from datetime import datetime
 from decimal import Decimal
 
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
+from investir.typing import Ticker
 from investir.trhistory import TrHistory
 
 
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
-    ticker="AMZN",
+    ticker=Ticker("AMZN"),
     amount=Decimal("10.0"),
     quantity=Decimal("1.0"),
     fees=Decimal("0.5"),
@@ -16,7 +17,7 @@ ORDER1 = Acquisition(
 
 ORDER2 = Disposal(
     datetime(2024, 2, 5, 14, 7, 20),
-    ticker="GOOG",
+    ticker=Ticker("GOOG"),
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
     fees=Decimal("1.0"),
@@ -25,14 +26,14 @@ ORDER2 = Disposal(
 
 DIVIDEND1 = Dividend(
     datetime(2023, 2, 5, 14, 7, 20),
-    ticker="AMZN",
+    ticker=Ticker("AMZN"),
     amount=Decimal("5.0"),
     withheld=Decimal("2.0"),
 )
 
 DIVIDEND2 = Dividend(
     datetime(2024, 2, 5, 14, 7, 20),
-    ticker="GOOG",
+    ticker=Ticker("GOOG"),
     amount=Decimal("5.0"),
     withheld=Decimal("2.0"),
 )
