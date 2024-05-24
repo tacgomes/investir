@@ -8,6 +8,7 @@ from typing import Callable
 
 from prettytable import PrettyTable
 
+from .typing import Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
 
@@ -82,7 +83,7 @@ class TaxCalculator:
 
         self._calculate_capital_gains()
 
-    def capital_gains(self, tax_year: int | None = None) -> list[CapitalGain]:
+    def capital_gains(self, tax_year: Year | None = None) -> list[CapitalGain]:
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
 
@@ -93,8 +94,8 @@ class TaxCalculator:
 
     def show_capital_gains(
         self,
-        tax_year: int | None,
-        ticker: str | None,
+        tax_year: Year | None,
+        ticker: Ticker | None,
         gains_only: bool,
         losses_only: bool,
     ):
@@ -138,7 +139,7 @@ class TaxCalculator:
 
         print(table)
 
-    def show_holdings(self, ticker: str | None, show_avg_cost: bool):
+    def show_holdings(self, ticker: Ticker | None, show_avg_cost: bool):
         fields = ["Ticker", "Cost (£)", "Quantity", "Avg Cost (£)"]
 
         table = PrettyTable(field_names=fields)
@@ -209,7 +210,7 @@ class TaxCalculator:
             key = GroupKey(o.ticker, o.date, type(o))
             self._same_day_orders[key].append(o)
 
-    def _merge_same_day_orders(self, ticker: str) -> None:
+    def _merge_same_day_orders(self, ticker: Ticker) -> None:
         ticker_orders = (
             orders
             for key, orders in self._same_day_orders.items()
@@ -229,7 +230,7 @@ class TaxCalculator:
                 self._disposals[ticker].append(order)
 
     def _match_shares(
-        self, ticker: str, match_fn: Callable[[Acquisition, Disposal], bool]
+        self, ticker: Ticker, match_fn: Callable[[Acquisition, Disposal], bool]
     ):
         acquisits = self._acquisitions[ticker]
         disposals = self._disposals[ticker]

@@ -11,7 +11,9 @@ from .exceptions import ParserError, CalculatedAmountError, FeeError
 from .parser import Parser, ParsingResult
 from .utils import read_decimal
 from ..config import Config
+from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
+
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +140,7 @@ class FreetradeParser(Parser):
             order_class(
                 timestamp,
                 amount=total_amount - fees,
-                ticker=ticker,
+                ticker=Ticker(ticker),
                 quantity=quantity,
                 fees=abs(fees),
                 order_id=order_id,
@@ -184,7 +186,7 @@ class FreetradeParser(Parser):
             Dividend(
                 timestamp,
                 total_amount,
-                ticker=ticker,
+                ticker=Ticker(ticker),
                 withheld=withheld_tax_amount * base_fx_rate,
             )
         )

@@ -4,6 +4,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import ClassVar
 
+from .typing import Ticker, Year
 from .utils import date_to_tax_year
 
 
@@ -16,14 +17,14 @@ class Transaction(ABC):
     def date(self) -> date:
         return self.timestamp.date()
 
-    def tax_year(self) -> int:
+    def tax_year(self) -> Year:
         return date_to_tax_year(self.date)
 
 
 @dataclass(kw_only=True, frozen=True)
 class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
-    ticker: str
+    ticker: Ticker
     quantity: Decimal
     fees: Decimal = Decimal("0.0")
     order_id: str = ""
@@ -116,7 +117,7 @@ class Disposal(Order):
 
 @dataclass(kw_only=True, frozen=True)
 class Dividend(Transaction):
-    ticker: str
+    ticker: Ticker
     withheld: Decimal
 
 
