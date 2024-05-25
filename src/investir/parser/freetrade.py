@@ -92,6 +92,14 @@ class FreetradeParser(Parser):
             for row in rows:
                 tr_type = row["Type"]
                 if fn := parse_fn.get(tr_type):
+                    if (
+                        row["Type"] != "MONTHLY_STATEMENT"
+                        and row["Account Currency"] != "GBP"
+                    ):
+                        raise ParserError(
+                            self._csv_file.name,
+                            "Only 'GBP' is supported for the 'Account currency' field",
+                        )
                     fn(row)
                 else:
                     raise ParserError(
@@ -105,12 +113,6 @@ class FreetradeParser(Parser):
 
     def _parse_order(self, row: dict[str, str]) -> None:
         action = row["Buy / Sell"]
-
-        if row["Account Currency"] != "GBP":
-            raise ParserError(
-                self._csv_file.name, "`Account currency` field must be set to GBP"
-            )
-
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])
         ticker = row["Ticker"]
