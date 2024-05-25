@@ -5,7 +5,12 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from investir.config import Config
-from investir.parser.exceptions import ParserError, CalculatedAmountError, FeeError
+from investir.parser.exceptions import (
+    ParserError,
+    CalculatedAmountError,
+    FeeError,
+    OrderTooError,
+)
 from investir.parser.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
 
@@ -236,4 +241,28 @@ def test_parser_calculated_amount_mismatch(create_parser):
     assert parser.can_parse()
 
     with pytest.raises(CalculatedAmountError):
+        parser.parse()
+
+
+def test_parser_order_too_old(create_parser):
+    parser = create_parser(
+        [
+            {
+                "Type": "ORDER",
+                "Timestamp": "2008-04-05T09:00:00.000Z",
+                "Account Currency": "GBP",
+                "Total Amount": Decimal("1330.20"),
+                "Buy / Sell": "BUY",
+                "Ticker": "AMZN",
+                "Price per Share in Account Currency": Decimal("132.5"),
+                "Stamp Duty": Decimal("5.2"),
+                "Quantity": Decimal("10.0"),
+                "FX Fee Amount": "",
+            },
+        ]
+    )
+
+    assert parser.can_parse()
+
+    with pytest.raises(OrderTooError):
         parser.parse()

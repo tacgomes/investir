@@ -23,3 +23,9 @@ class FeeError(Exception):
             f"Both stamp duty and forex fee fields are non-zero"
             f", while parsing {file}"
         )
+
+
+class OrderTooError(Exception):
+
+    def __init__(self, order: dict) -> None:
+        super().__init__(f"Order made before 6 April of 2008: {order}")
