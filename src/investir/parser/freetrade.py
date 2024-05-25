@@ -7,9 +7,9 @@ from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
 
-from .exceptions import ParserError, CalculatedAmountError, FeeError
+from .exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
 from .parser import Parser, ParsingResult
-from .utils import read_decimal
+from .utils import read_decimal, MIN_TIMESTAMP
 from ..config import Config
 from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
@@ -119,6 +119,9 @@ class FreetradeParser(Parser):
         order_id = row["Order ID"]
         stamp_duty = read_decimal(row["Stamp Duty"])
         fx_fee_amount = read_decimal(row["FX Fee Amount"])
+
+        if timestamp < MIN_TIMESTAMP:
+            raise OrderTooError(row)
 
         if stamp_duty and fx_fee_amount:
             raise FeeError(self._csv_file.name)
