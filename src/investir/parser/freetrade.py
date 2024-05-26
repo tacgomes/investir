@@ -12,6 +12,7 @@ from .parser import Parser, ParsingResult
 from .utils import read_decimal, MIN_TIMESTAMP
 from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
+from ..utils import raise_or_warn
 
 
 logger = logging.getLogger(__name__)
@@ -100,9 +101,11 @@ class FreetradeParser(Parser):
                         )
                     fn(row)
                 else:
-                    raise ParserError(
-                        self._csv_file.name,
-                        f"Unrecognised value for `Type` field: {tr_type}",
+                    raise_or_warn(
+                        ParserError(
+                            self._csv_file.name,
+                            f"Unrecognised value for `Type` field: {tr_type}",
+                        )
                     )
 
         return ParsingResult(
@@ -135,8 +138,10 @@ class FreetradeParser(Parser):
 
         calculated_amount = round(price * quantity + fees, 2)
         if calculated_amount != total_amount:
-            raise CalculatedAmountError(
-                self._csv_file.name, calculated_amount, total_amount
+            raise_or_warn(
+                CalculatedAmountError(
+                    self._csv_file.name, calculated_amount, total_amount
+                )
             )
 
         self._orders.append(

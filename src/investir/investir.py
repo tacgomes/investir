@@ -3,6 +3,7 @@ import importlib.metadata
 import logging
 import pathlib
 
+from .config import config
 from .logging import setup_logging
 from .parser.factory import ParserFactory
 from .taxcalculator import TaxCalculator
@@ -118,6 +119,14 @@ def create_holdings_command(subparser, parent_parser) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        "--no-strict",
+        action="store_false",
+        dest="strict",
+        default=True,
+        help="disable aborting the program when encountering certain errors",
+    )
+
     parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
 
     parser.add_argument(
@@ -158,6 +167,8 @@ def main() -> None:
     args = parser.parse_args()
 
     setup_logging(args.verbose, args.colour)
+
+    config.strict = args.strict
 
     tr_hist = TrHistory()
 

@@ -11,6 +11,7 @@ from prettytable import PrettyTable
 from .typing import Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
+from .utils import raise_or_warn
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,6 @@ class Section104Holding:
     def decrease(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
         self.quantity -= quantity
         self.cost -= cost
-
-        if self.quantity < 0.0:
-            raise RuntimeError("Section104Holding: share quantity cannot be negative")
 
 
 class TaxCalculator:
@@ -295,6 +293,16 @@ class TaxCalculator:
 
                     holding.decrease(order.date, order.quantity, allowable_cost)
 
+                    if holding.quantity < 0.0:
+                        raise_or_warn(
+                            RuntimeError(
+                                "Section104Holding: share quantity cannot be negative"
+                            )
+                        )
+                        logging.warning("Not calculating holding for %s", ticker)
+                        del self._holdings[ticker]
+                        break
+
                     if holding.quantity == Decimal("0.0"):
                         del self._holdings[ticker]
 
@@ -302,7 +310,12 @@ class TaxCalculator:
                         CapitalGain(order, allowable_cost + order.fees)
                     )
                 else:
-                    raise RuntimeError(
-                        "Processing disposal order without previous "
-                        "acquisitions found"
+                    raise_or_warn(
+                        RuntimeError(
+                            "Processing disposal order without previous "
+                            "acquisitions found"
+                        )
                     )
+                    logging.warning("Not calculating holding for %s", ticker)
+                    del self._holdings[ticker]
+                    break
