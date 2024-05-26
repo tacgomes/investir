@@ -1,8 +1,10 @@
 import datetime
+import logging
 
 from collections.abc import Iterable
 from typing import Final
 
+from .config import config
 from .typing import Year
 
 TAX_YEAR_MONTH: Final = 4
@@ -27,3 +29,9 @@ def multiple_filter(filters, iterable: Iterable):
     if not filters:
         return iterable
     return filter(lambda x: all(f(x) for f in filters), iterable)
+
+
+def raise_or_warn(ex: Exception):
+    if config.strict:
+        raise ex
+    logging.warning(ex)
