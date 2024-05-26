@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from investir.config import Config
 from investir.parser.exceptions import (
     ParserError,
     CalculatedAmountError,
@@ -23,8 +22,7 @@ def fixture_create_parser(tmp_path):
             writer = csv.DictWriter(file, fieldnames=FreetradeParser.FIELDS)
             writer.writeheader()
             writer.writerows(rows)
-        config = Config(strict=True)
-        return FreetradeParser(csv_file, config)
+        return FreetradeParser(csv_file)
 
     return _create_parser
 
@@ -41,8 +39,7 @@ def fixture_create_parser_format_unrecognised(tmp_path):
                 "Field2": "B",
             }
         )
-    config = Config(strict=True)
-    return FreetradeParser(csv_file, config)
+    return FreetradeParser(csv_file)
 
 
 def test_parser_happy_path(create_parser):

@@ -2,7 +2,6 @@ import logging
 
 from pathlib import Path
 
-from ..config import Config
 from .parser import Parser
 
 logger = logging.getLogger(__name__)
@@ -16,9 +15,9 @@ class ParserFactory:
         cls._parsers.append(parser)
 
     @classmethod
-    def create_parser(cls, filename: Path, config: Config) -> Parser | None:
+    def create_parser(cls, filename: Path) -> Parser | None:
         for parser_class in cls._parsers:
-            parser = parser_class(filename, config)  # type: ignore[operator]
+            parser = parser_class(filename)  # type: ignore[operator]
             if parser.can_parse():
                 logger.info("Found parser for %s: %s", filename, type(parser).name())
                 return parser

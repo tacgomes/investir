@@ -10,7 +10,6 @@ from dateutil.parser import parse as parse_timestamp
 from .exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
 from .parser import Parser, ParsingResult
 from .utils import read_decimal, MIN_TIMESTAMP
-from ..config import Config
 from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
 
@@ -51,9 +50,8 @@ class FreetradeParser(Parser):
         "Dividend Withheld Tax Amount",
     )
 
-    def __init__(self, csv_file: Path, config: Config) -> None:
+    def __init__(self, csv_file: Path) -> None:
         self._csv_file = csv_file
-        self._config = config
         self._orders: list[Order] = []
         self._dividends: list[Dividend] = []
         self._transfers: list[Transfer] = []

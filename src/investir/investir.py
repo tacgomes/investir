@@ -3,7 +3,6 @@ import importlib.metadata
 import logging
 import pathlib
 
-from .config import Config
 from .logging import setup_logging
 from .parser.factory import ParserFactory
 from .taxcalculator import TaxCalculator
@@ -160,12 +159,10 @@ def main() -> None:
 
     setup_logging(args.verbose, args.colour)
 
-    config = Config(strict=True)
-
     tr_hist = TrHistory()
 
     for csv_file in args.input_files:
-        if csv_parser := ParserFactory.create_parser(csv_file, config):
+        if csv_parser := ParserFactory.create_parser(csv_file):
             result = csv_parser.parse()
             tr_hist.insert_orders(result.orders)
             tr_hist.insert_dividends(result.dividends)
