@@ -2,8 +2,10 @@ import argparse
 import importlib.metadata
 import logging
 import pathlib
+import sys
 
 from .config import config
+from .exceptions import InvestirError
 from .logging import setup_logging
 from .parser.factory import ParserFactory
 from .taxcalculator import TaxCalculator
@@ -119,7 +121,11 @@ def create_holdings_command(subparser, parent_parser) -> None:
 def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
     for csv_file in args.input_files:
         if csv_parser := ParserFactory.create_parser(csv_file):
-            result = csv_parser.parse()
+            try:
+                result = csv_parser.parse()
+            except InvestirError as ex:
+                logger.error(ex)
+                sys.exit(1)
             tr_hist.insert_orders(result.orders)
             tr_hist.insert_dividends(result.dividends)
             tr_hist.insert_transfers(result.transfers)
@@ -143,7 +149,11 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
     if args.tax_year is not None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
-    tax_calc = TaxCalculator(tr_hist)
+    try:
+        tax_calc = TaxCalculator(tr_hist)
+    except InvestirError as ex:
+        logger.error(ex)
+        sys.exit(1)
 
     match args.command:
         case "orders":
