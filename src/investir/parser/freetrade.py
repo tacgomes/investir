@@ -7,9 +7,9 @@ from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
 
-from .exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
 from .parser import Parser, ParsingResult
 from .utils import read_decimal, MIN_TIMESTAMP
+from ..exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
 from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
 from ..utils import raise_or_warn
