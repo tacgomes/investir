@@ -8,6 +8,7 @@ from typing import Callable
 
 from prettytable import PrettyTable
 
+from .exceptions import IncompleteRecordsError
 from .typing import Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
@@ -294,11 +295,7 @@ class TaxCalculator:
                     holding.decrease(order.date, order.quantity, allowable_cost)
 
                     if holding.quantity < 0.0:
-                        raise_or_warn(
-                            RuntimeError(
-                                "Section104Holding: share quantity cannot be negative"
-                            )
-                        )
+                        raise_or_warn(IncompleteRecordsError(ticker))
                         logging.warning("Not calculating holding for %s", ticker)
                         del self._holdings[ticker]
                         break
@@ -310,12 +307,7 @@ class TaxCalculator:
                         CapitalGain(order, allowable_cost + order.fees)
                     )
                 else:
-                    raise_or_warn(
-                        RuntimeError(
-                            "Processing disposal order without previous "
-                            "acquisitions found"
-                        )
-                    )
+                    raise_or_warn(IncompleteRecordsError(ticker))
                     logging.warning("Not calculating holding for %s", ticker)
                     del self._holdings[ticker]
                     break
