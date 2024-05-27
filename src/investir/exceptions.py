@@ -1,13 +1,17 @@
 from decimal import Decimal
 
 
-class ParserError(Exception):
+class InvestirError(Exception):
+    pass
+
+
+class ParserError(InvestirError):
 
     def __init__(self, file: str, message: str) -> None:
         super().__init__(f"{message}, while parsing {file}")
 
 
-class CalculatedAmountError(Exception):
+class CalculatedAmountError(InvestirError):
 
     def __init__(self, file: str, cal_amount: Decimal, csv_amount: Decimal) -> None:
         super().__init__(
@@ -16,7 +20,7 @@ class CalculatedAmountError(Exception):
         )
 
 
-class FeeError(Exception):
+class FeeError(InvestirError):
 
     def __init__(self, file: str) -> None:
         super().__init__(
@@ -25,7 +29,7 @@ class FeeError(Exception):
         )
 
 
-class OrderTooError(Exception):
+class OrderTooError(InvestirError):
 
     def __init__(self, order: dict) -> None:
         super().__init__(f"Order made before 6 April of 2008: {order}")
