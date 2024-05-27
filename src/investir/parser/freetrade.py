@@ -174,20 +174,14 @@ class FreetradeParser(Parser):
             * base_fx_rate
         )
 
-        rounded_calculated_ta = calculated_ta.quantize(
-            Decimal("1.00"), rounding=ROUND_DOWN
-        )
+        calculated_ta = calculated_ta.quantize(Decimal("1.00"), rounding=ROUND_DOWN)
 
-        if total_amount != rounded_calculated_ta:
-            # Warning instead of exception because on Freetrade
-            # the total amount is occasionally off by one cent.
-            logger.warning(
-                "Calculated amount (£%s ~= £%s) differs from the amount read "
-                "(£%s) for row %s\n",
-                calculated_ta,
-                rounded_calculated_ta,
-                total_amount,
-                row,
+        # Freetrade does not seem to use a consistent method for rounding dividends.
+        # Thus, allow the calculated amount to differ by one pence.
+        # https://community.freetrade.io/t/dividend-amount-off-by-one-penny/71806/7
+        if abs(total_amount - calculated_ta) > Decimal("0.01"):
+            raise_or_warn(
+                CalculatedAmountError(self._csv_file.name, calculated_ta, total_amount)
             )
 
         self._dividends.append(
