@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from investir.parser.exceptions import (
+from investir.exceptions import (
     ParserError,
     CalculatedAmountError,
     FeeError,
