@@ -116,6 +116,54 @@ def create_holdings_command(subparser, parent_parser) -> None:
     )
 
 
+def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
+    for csv_file in args.input_files:
+        if csv_parser := ParserFactory.create_parser(csv_file):
+            result = csv_parser.parse()
+            tr_hist.insert_orders(result.orders)
+            tr_hist.insert_dividends(result.dividends)
+            tr_hist.insert_transfers(result.transfers)
+            tr_hist.insert_interest(result.interest)
+        else:
+            logger.warning("Failed to find a parser for %s", csv_file)
+
+
+def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
+    filters = []
+
+    if hasattr(args, "ticker") and args.ticker is not None:
+        filters.append(lambda tr: tr.ticker == args.ticker)
+
+    if hasattr(args, "order_type") and args.order_type is not None:
+        filters.append(lambda tr: isinstance(tr, args.order_type))
+
+    if hasattr(args, "amount_filter") and args.amount_filter is not None:
+        filters.append(args.amount_filter)
+
+    if args.tax_year is not None:
+        filters.append(lambda tr: tr.tax_year() == args.tax_year)
+
+    tax_calc = TaxCalculator(tr_hist)
+
+    match args.command:
+        case "orders":
+            tr_hist.show_orders(filters)
+        case "dividends":
+            tr_hist.show_dividends(filters)
+        case "transfers":
+            tr_hist.show_transfers(filters)
+        case "interest":
+            tr_hist.show_interest(filters)
+        case "capital-gains":
+            tax_calc.show_capital_gains(
+                args.tax_year, args.ticker, args.gains_only, args.losses_only
+            )
+        case "holdings":
+            tax_calc.show_holdings(args.ticker, args.show_avg_cost)
+        case _:
+            raise AssertionError(f"Unknown command: {args.command}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
 
@@ -165,53 +213,9 @@ def main() -> None:
     create_holdings_command(subparser, parent_parser)
 
     args = parser.parse_args()
-
-    setup_logging(args.verbose, args.colour)
-
     config.strict = args.strict
-
     tr_hist = TrHistory()
 
-    for csv_file in args.input_files:
-        if csv_parser := ParserFactory.create_parser(csv_file):
-            result = csv_parser.parse()
-            tr_hist.insert_orders(result.orders)
-            tr_hist.insert_dividends(result.dividends)
-            tr_hist.insert_transfers(result.transfers)
-            tr_hist.insert_interest(result.interest)
-        else:
-            logger.warning("Failed to find a parser for %s", csv_file)
-
-    filters = []
-
-    if hasattr(args, "ticker") and args.ticker is not None:
-        filters.append(lambda tr: tr.ticker == args.ticker)
-
-    if hasattr(args, "order_type") and args.order_type is not None:
-        filters.append(lambda tr: isinstance(tr, args.order_type))
-
-    if hasattr(args, "amount_filter") and args.amount_filter is not None:
-        filters.append(args.amount_filter)
-
-    if args.tax_year is not None:
-        filters.append(lambda tr: tr.tax_year() == args.tax_year)
-
-    match args.command:
-        case "orders":
-            tr_hist.show_orders(filters)
-        case "dividends":
-            tr_hist.show_dividends(filters)
-        case "transfers":
-            tr_hist.show_transfers(filters)
-        case "interest":
-            tr_hist.show_interest(filters)
-        case "capital-gains":
-            calculator = TaxCalculator(tr_hist)
-            calculator.show_capital_gains(
-                args.tax_year, args.ticker, args.gains_only, args.losses_only
-            )
-        case "holdings":
-            calculator = TaxCalculator(tr_hist)
-            calculator.show_holdings(args.ticker, args.show_avg_cost)
-        case _:
-            raise AssertionError(f"Unknown command: {args.command}")
+    setup_logging(args.verbose, args.colour)
+    parse_input_files(args, tr_hist)
+    run_command(args, tr_hist)
