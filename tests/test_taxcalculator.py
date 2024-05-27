@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from investir.exceptions import IncompleteRecordsError
 from investir.taxcalculator import TaxCalculator
 from investir.typing import Ticker
 from investir.transaction import Acquisition, Disposal
@@ -631,7 +632,7 @@ def test_integrity_disposal_without_acquisition():
     tr_hist = TrHistory()
     tr_hist.insert_orders([order])
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(IncompleteRecordsError):
         TaxCalculator(tr_hist)
 
 
@@ -653,7 +654,7 @@ def test_integrity_disposing_more_than_quantity_acquired():
     tr_hist = TrHistory()
     tr_hist.insert_orders([order1, order2])
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(IncompleteRecordsError):
         TaxCalculator(tr_hist)
 
 

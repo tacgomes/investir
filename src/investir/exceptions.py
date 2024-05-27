@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from .typing import Ticker
+
 
 class InvestirError(Exception):
     pass
@@ -33,3 +35,12 @@ class OrderTooError(InvestirError):
 
     def __init__(self, order: dict) -> None:
         super().__init__(f"Order made before 6 April of 2008: {order}")
+
+
+class IncompleteRecordsError(InvestirError):
+
+    def __init__(self, ticker: Ticker) -> None:
+        super().__init__(
+            f"Records appear to be incomplete for {ticker}: "
+            "share quantity cannot be negative"
+        )
