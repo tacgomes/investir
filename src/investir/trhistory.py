@@ -99,6 +99,8 @@ class TrHistory:
     @staticmethod
     def _insert(l1, l2):
         """Remove duplicates and sort by timestamp."""
-        # FIXME: this is not very efficient but it will do for now.
+        if len(l2) != len(set(l2)):
+            raise ValueError("Input file has duplicated entries")
+
         result = list(set(l1 + l2))
         return sorted(result, key=lambda tr: tr.timestamp)
