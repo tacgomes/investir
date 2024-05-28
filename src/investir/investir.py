@@ -120,18 +120,37 @@ def create_holdings_command(subparser, parent_parser) -> None:
 
 def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
     for csv_file in args.input_files:
+        logging.info("Parsing input file: %s", csv_file)
         if csv_parser := ParserFactory.create_parser(csv_file):
             try:
                 result = csv_parser.parse()
             except InvestirError as ex:
-                logger.error(ex)
+                logging.critical(ex)
                 sys.exit(1)
+            logging.info(
+                "Parsed: "
+                "%s orders, %s dividend payments, %s transfers, %s interest payments",
+                len(result.orders),
+                len(result.dividends),
+                len(result.transfers),
+                len(result.interest),
+            )
+
             tr_hist.insert_orders(result.orders)
             tr_hist.insert_dividends(result.dividends)
             tr_hist.insert_transfers(result.transfers)
             tr_hist.insert_interest(result.interest)
         else:
-            logger.warning("Failed to find a parser for %s", csv_file)
+            logging.critical("Unable to find a parser for %s", csv_file)
+            sys.exit(1)
+
+    logging.info(
+        "Total: %s orders, %s dividend payments, %s transfer, %s interest payments",
+        len(tr_hist.orders()),
+        len(tr_hist.dividends()),
+        len(tr_hist.transfers()),
+        len(tr_hist.interest()),
+    )
 
 
 def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
@@ -152,8 +171,10 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
     try:
         tax_calc = TaxCalculator(tr_hist)
     except InvestirError as ex:
-        logger.error(ex)
+        logging.critical(ex)
         sys.exit(1)
+
+    print()
 
     match args.command:
         case "orders":
