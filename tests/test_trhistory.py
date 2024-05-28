@@ -1,6 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
 
+import pytest
+
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
 from investir.typing import Ticker
 from investir.trhistory import TrHistory
@@ -47,7 +49,7 @@ INTEREST1 = Interest(datetime(2023, 2, 5, 14, 7, 20), Decimal("1000.0"))
 INTEREST2 = Interest(datetime(2024, 2, 5, 14, 7, 20), Decimal("500.0"))
 
 
-def test_trhistory_duplicates_are_removed():
+def test_trhistory_duplicates_on_different_files_are_removed():
     tr_hist = TrHistory()
 
     # Create an order almost identical to ORDER1 other than the `id`
@@ -62,21 +64,47 @@ def test_trhistory_duplicates_are_removed():
         order_id=ORDER1.order_id,
     )
 
-    tr_hist.insert_orders([ORDER1, order1b])
+    tr_hist.insert_orders([ORDER1])
     tr_hist.insert_orders([order1b])
     assert len(tr_hist.orders()) == 1
 
-    tr_hist.insert_dividends([DIVIDEND1, DIVIDEND1])
+    tr_hist.insert_dividends([DIVIDEND1])
     tr_hist.insert_dividends([DIVIDEND1])
     assert len(tr_hist.dividends()) == 1
 
-    tr_hist.insert_transfers([TRANSFER1, TRANSFER1])
+    tr_hist.insert_transfers([TRANSFER1])
     tr_hist.insert_transfers([TRANSFER1])
     assert len(tr_hist.transfers()) == 1
 
-    tr_hist.insert_interest([INTEREST1, INTEREST1])
+    tr_hist.insert_interest([INTEREST1])
     tr_hist.insert_interest([INTEREST1])
     assert len(tr_hist.interest()) == 1
+
+
+def test_trhistory_duplicates_on_same_file_are_not_allowed():
+    tr_hist = TrHistory()
+
+    order1b = Acquisition(
+        ORDER1.timestamp,
+        ticker=ORDER1.ticker,
+        amount=ORDER1.amount,
+        quantity=ORDER1.quantity,
+        fees=ORDER1.fees,
+        order_id=ORDER1.order_id,
+    )
+
+    with pytest.raises(ValueError):
+        tr_hist.insert_orders([ORDER1, order1b])
+        assert len(tr_hist.orders()) == 1
+
+    with pytest.raises(ValueError):
+        tr_hist.insert_dividends([DIVIDEND1, DIVIDEND1])
+
+    with pytest.raises(ValueError):
+        tr_hist.insert_transfers([TRANSFER1, TRANSFER1])
+
+    with pytest.raises(ValueError):
+        tr_hist.insert_interest([INTEREST1, INTEREST1])
 
 
 def test_trhistory_transactions_are_sorted_by_timestamp():
