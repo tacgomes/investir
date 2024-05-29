@@ -174,7 +174,8 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
         logging.critical(ex)
         sys.exit(1)
 
-    print()
+    if args.log_level != logging.CRITICAL:
+        print()
 
     match args.command:
         case "orders":
@@ -206,7 +207,21 @@ def main() -> None:
         help="disable aborting the program when encountering certain errors",
     )
 
-    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--quiet",
+        dest="log_level",
+        action="store_const",
+        const=logging.CRITICAL,
+        help="disable all non-critical logging",
+    )
+    group.add_argument(
+        "--verbose",
+        dest="log_level",
+        action="store_const",
+        const=logging.DEBUG,
+        help="enable additional logging",
+    )
 
     parser.add_argument(
         "--no-colour",
@@ -247,6 +262,6 @@ def main() -> None:
     config.strict = args.strict
     tr_hist = TrHistory()
 
-    setup_logging(args.verbose, args.colour)
+    setup_logging(args.log_level, args.colour)
     parse_input_files(args, tr_hist)
     run_command(args, tr_hist)

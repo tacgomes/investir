@@ -27,13 +27,13 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def setup_logging(debug: bool, color: bool) -> None:
+def setup_logging(log_level: int | None, color: bool) -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.NOTSET)
 
     fmt = "%(levelname)8s | %(message)s"
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+    console_handler.setLevel(log_level if log_level is not None else logging.INFO)
     console_handler.setFormatter(
         CustomFormatter(fmt) if color else logging.Formatter(fmt)
     )
