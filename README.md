@@ -33,49 +33,49 @@ Some examples in how to use this software are described next.
 
 View the stock buy or sell orders placed:
 
-    investir orders data/freetrade.csv
+    investir orders examples/freetrade.csv
 
 View the stock sell orders for Microsoft placed in the 2021/2022 tax
 year:
 
-    investir orders --tax-year 2021 --ticker MSFT --disposals data/freetrade.csv
+    investir orders --tax-year 2021 --ticker MSFT --disposals examples/freetrade.csv
 
 View the dividends paid out:
 
-    investir dividends data/freetrade.csv
+    investir dividends examples/freetrade.csv
 
 View the dividends paid out by Microsoft:
 
-    investir dividends --ticker MSFT data/freetrade.csv
+    investir dividends --ticker MSFT examples/freetrade.csv
 
 View the interest on cash paid out:
 
-    investir interest data/freetrade.csv
+    investir interest examples/freetrade.csv
 
 View the cash deposits and cash withdrawals made:
 
-    investir transfers data/freetrade.csv
+    investir transfers examples/freetrade.csv
 
 View the capital gains or losses:
 
-    investir capital-gains data/freetrade.csv
+    investir capital-gains examples/freetrade.csv
 
 View the capital gains or losses for the 2021/2022 tax year:
 
-    investir capital-gains --tax-year 2021 data/freetrade.csv
+    investir capital-gains --tax-year 2021 examples/freetrade.csv
 
 View the capital losses for any tax year:
 
-    investir capital-gains --losses data/freetrade.csv
+    investir capital-gains --losses examples/freetrade.csv
 
 View the cost basis of the current holdings:
 
-    investir holdings data/freetrade.csv
+    investir holdings examples/freetrade.csv
 
 View the cost basis for the Microsoft holding and show the average cost
 per share as well:
 
-    investir holdings --ticker MSFT --show-avg-cost data/freetrade.csv
+    investir holdings --ticker MSFT --show-avg-cost examples/freetrade.csv
 
 Use the `-h` option for a subcommand view all the available options and
 filters.
