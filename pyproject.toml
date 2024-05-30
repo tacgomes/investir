@@ -33,7 +33,7 @@ classifiers = [
 ]
 
 [project.scripts]
-investir = "investir.investir:main"
+investir = "investir.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/tacgomes/investir"
