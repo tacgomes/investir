@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from investir.config import config
 from investir.exceptions import (
     ParserError,
     CalculatedAmountError,
@@ -51,25 +52,25 @@ def test_parser_happy_path(create_parser):
                 "Type": "ORDER",
                 "Timestamp": timestamp + timedelta(hours=1),
                 "Account Currency": "GBP",
-                "Total Amount": Decimal("1330.20"),
+                "Total Amount": "1330.20",
                 "Buy / Sell": "BUY",
                 "Ticker": "AMZN",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": Decimal("5.2"),
-                "Quantity": Decimal("10.0"),
+                "Price per Share in Account Currency": "132.5",
+                "Stamp Duty": "5.2",
+                "Quantity": "10.0",
                 "FX Fee Amount": "",
             },
             {
                 "Type": "ORDER",
                 "Timestamp": timestamp,
                 "Account Currency": "GBP",
-                "Total Amount": Decimal("1111.85"),
+                "Total Amount": "1111.85",
                 "Buy / Sell": "SELL",
                 "Ticker": "SWKS",
-                "Price per Share in Account Currency": Decimal("532.5"),
+                "Price per Share in Account Currency": "532.5",
                 "Stamp Duty": "",
-                "Quantity": Decimal("2.1"),
-                "FX Fee Amount": Decimal("6.4"),
+                "Quantity": "2.1",
+                "FX Fee Amount": "6.4",
             },
             {
                 "Type": "DIVIDEND",
@@ -77,7 +78,6 @@ def test_parser_happy_path(create_parser):
                 "Account Currency": "GBP",
                 "Total Amount": "2.47",
                 "Ticker": "SWKS",
-                "ISIN": "US83088M1027",
                 "Base FX Rate": "0.75440000",
                 "FX Fee Amount": "0.00",
                 "Dividend Ex Date": "2021-11-22",
@@ -157,6 +157,81 @@ def test_parser_happy_path(create_parser):
     interest = parser_result.interest[0]
     assert interest.timestamp == timestamp
     assert interest.amount == Decimal("4.65")
+
+
+def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
+    timestamp = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
+
+    config.include_fx_fees = False
+
+    parser = create_parser(
+        [
+            {
+                "Type": "ORDER",
+                "Timestamp": timestamp + timedelta(hours=2),
+                "Account Currency": "GBP",
+                "Total Amount": Decimal("1330.20"),
+                "Buy / Sell": "BUY",
+                "Ticker": "AMZN",
+                "Price per Share in Account Currency": Decimal("132.5"),
+                "Stamp Duty": "",
+                "Quantity": "10.0",
+                "FX Fee Amount": "5.2",
+            },
+            {
+                "Type": "ORDER",
+                "Timestamp": timestamp + timedelta(hours=1),
+                "Account Currency": "GBP",
+                "Total Amount": Decimal("1111.85"),
+                "Buy / Sell": "SELL",
+                "Ticker": "SWKS",
+                "Price per Share in Account Currency": Decimal("532.5"),
+                "Stamp Duty": "",
+                "Quantity": "2.1",
+                "FX Fee Amount": "6.4",
+            },
+            {
+                "Type": "ORDER",
+                "Timestamp": timestamp,
+                "Account Currency": "GBP",
+                "Total Amount": Decimal("1326.30"),
+                "Buy / Sell": "BUY",
+                "Ticker": "MSFT",
+                "Price per Share in Account Currency": Decimal("132.5"),
+                "Stamp Duty": "1.3",
+                "Quantity": "10.0",
+                "FX Fee Amount": "",
+            },
+        ]
+    )
+
+    parser_result = parser.parse()
+
+    assert len(parser_result.orders) == 3
+
+    order = parser_result.orders[0]
+    assert isinstance(order, Acquisition)
+    assert order.timestamp == timestamp
+    assert order.amount == Decimal("1325.00")
+    assert order.ticker == "MSFT"
+    assert order.quantity == Decimal("10.0")
+    assert order.fees == Decimal("1.3")
+
+    order = parser_result.orders[1]
+    assert isinstance(order, Disposal)
+    assert order.timestamp == timestamp + timedelta(hours=1)
+    assert order.amount == Decimal("1118.25")
+    assert order.ticker == "SWKS"
+    assert order.quantity == Decimal("2.1")
+    assert order.fees == Decimal("0.0")
+
+    order = parser_result.orders[2]
+    assert isinstance(order, Acquisition)
+    assert order.timestamp == timestamp + timedelta(hours=2)
+    assert order.amount == Decimal("1325.00")
+    assert order.ticker == "AMZN"
+    assert order.quantity == Decimal("10")
+    assert order.fees == Decimal("0.0")
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):

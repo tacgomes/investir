@@ -207,6 +207,13 @@ def main() -> None:
         help="disable aborting the program when encountering certain errors",
     )
 
+    parser.add_argument(
+        "--exclude-fx-fees",
+        action="store_false",
+        default=False,
+        help="exclude foreign exchange fees as an allowable cost",
+    )
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--quiet",
@@ -260,6 +267,7 @@ def main() -> None:
 
     args = parser.parse_args()
     config.strict = args.strict
+    config.include_fx_fees = not args.exclude_fx_fees
     tr_hist = TrHistory()
 
     setup_logging(args.log_level, args.colour)

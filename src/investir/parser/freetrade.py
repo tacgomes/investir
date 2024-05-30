@@ -10,6 +10,7 @@ from dateutil.parser import parse as parse_timestamp
 from .parser import Parser, ParsingResult
 from .utils import read_decimal, dict2str, MIN_TIMESTAMP
 from ..exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
+from ..config import config
 from ..typing import Ticker
 from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
 from ..utils import raise_or_warn
@@ -144,13 +145,18 @@ class FreetradeParser(Parser):
                 )
             )
 
+        if config.include_fx_fees:
+            allowable_fees = abs(fees)
+        else:
+            allowable_fees = stamp_duty
+
         self._orders.append(
             order_class(
                 timestamp,
                 amount=total_amount - fees,
                 ticker=Ticker(ticker),
                 quantity=quantity,
-                fees=abs(fees),
+                fees=allowable_fees,
                 order_id=order_id,
             )
         )
