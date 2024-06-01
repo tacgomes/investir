@@ -8,7 +8,8 @@ from typing import Final
 from dateutil.parser import parse as parse_timestamp
 
 from .parser import Parser, ParsingResult
-from .utils import read_decimal, dict2str, MIN_TIMESTAMP
+from ..const import MIN_TIMESTAMP
+from ..utils import read_decimal, dict2str
 from ..exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
 from ..config import config
 from ..typing import Ticker

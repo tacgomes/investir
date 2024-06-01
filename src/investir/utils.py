@@ -2,6 +2,7 @@ import datetime
 import logging
 
 from collections.abc import Iterable
+from decimal import Decimal
 from typing import Final
 
 from .config import config
@@ -35,3 +36,11 @@ def raise_or_warn(ex: Exception):
     if config.strict:
         raise ex
     logging.warning(ex)
+
+
+def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
+    return Decimal(val) if val.strip() else default
+
+
+def dict2str(d: dict[str, str]) -> str:
+    return str({k: v for k, v in d.items() if v.strip()})
