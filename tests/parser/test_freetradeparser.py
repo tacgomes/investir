@@ -11,7 +11,7 @@ from investir.exceptions import (
     FeeError,
     OrderTooError,
 )
-from investir.parser.freetrade import FreetradeParser
+from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
 
 

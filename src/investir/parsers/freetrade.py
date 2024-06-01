@@ -7,14 +7,26 @@ from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
 
-from .parser import Parser, ParsingResult
-from ..const import MIN_TIMESTAMP
-from ..utils import read_decimal, dict2str
-from ..exceptions import ParserError, CalculatedAmountError, FeeError, OrderTooError
-from ..config import config
-from ..typing import Ticker
-from ..transaction import Order, Acquisition, Disposal, Dividend, Transfer, Interest
-from ..utils import raise_or_warn
+from investir.const import MIN_TIMESTAMP
+from investir.utils import read_decimal, dict2str
+from investir.exceptions import (
+    ParserError,
+    CalculatedAmountError,
+    FeeError,
+    OrderTooError,
+)
+from investir.config import config
+from investir.parser import Parser, ParsingResult
+from investir.typing import Ticker
+from investir.transaction import (
+    Order,
+    Acquisition,
+    Disposal,
+    Dividend,
+    Transfer,
+    Interest,
+)
+from investir.utils import raise_or_warn
 
 
 logger = logging.getLogger(__name__)

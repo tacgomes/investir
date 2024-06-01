@@ -7,7 +7,7 @@ import sys
 from .config import config
 from .exceptions import InvestirError
 from .logging import setup_logging
-from .parser.factory import ParserFactory
+from .parser import ParserFactory
 from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal
 from .trhistory import TrHistory

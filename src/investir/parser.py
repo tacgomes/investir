@@ -1,10 +1,35 @@
 import logging
 
+from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import NamedTuple
 
-from .parser import Parser
+from .transaction import Order, Dividend, Transfer, Interest
+
 
 logger = logging.getLogger(__name__)
+
+
+class ParsingResult(NamedTuple):
+    orders: list[Order]
+    dividends: list[Dividend]
+    transfers: list[Transfer]
+    interest: list[Interest]
+
+
+class Parser(ABC):
+    @staticmethod
+    @abstractmethod
+    def name() -> str:
+        pass
+
+    @abstractmethod
+    def can_parse(self) -> bool:
+        pass
+
+    @abstractmethod
+    def parse(self) -> ParsingResult:
+        pass
 
 
 class ParserFactory:
