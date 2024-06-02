@@ -9,7 +9,7 @@ from investir.exceptions import (
     ParserError,
     CalculatedAmountError,
     FeeError,
-    OrderTooError,
+    OrderTooOldError,
 )
 from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
@@ -336,5 +336,5 @@ def test_parser_order_too_old(create_parser):
 
     assert parser.can_parse()
 
-    with pytest.raises(OrderTooError):
+    with pytest.raises(OrderTooOldError):
         parser.parse()

@@ -31,7 +31,7 @@ class FeeError(InvestirError):
         )
 
 
-class OrderTooError(InvestirError):
+class OrderTooOldError(InvestirError):
 
     def __init__(self, order: dict) -> None:
         super().__init__(f"Order made before 6 April of 2008: {order}")

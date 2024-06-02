@@ -13,7 +13,7 @@ from investir.exceptions import (
     ParserError,
     CalculatedAmountError,
     FeeError,
-    OrderTooError,
+    OrderTooOldError,
 )
 from investir.config import config
 from investir.parser import Parser, ParsingResult
@@ -138,7 +138,7 @@ class FreetradeParser(Parser):
         fx_fee_amount = read_decimal(row["FX Fee Amount"])
 
         if timestamp < MIN_TIMESTAMP:
-            raise OrderTooError(row)
+            raise OrderTooOldError(row)
 
         if stamp_duty and fx_fee_amount:
             raise FeeError(self._csv_file.name)
