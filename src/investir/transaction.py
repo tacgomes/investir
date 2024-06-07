@@ -12,6 +12,8 @@ from .utils import date_to_tax_year
 class Transaction(ABC):
     timestamp: datetime
     amount: Decimal
+    transaction_id: str | None = None
+    notes: str | None = None
 
     @property
     def date(self) -> date:
@@ -27,8 +29,6 @@ class Order(Transaction, ABC):
     ticker: Ticker
     quantity: Decimal
     fees: Decimal = Decimal("0.0")
-    order_id: str = ""
-    note: str = ""
 
     order_count: ClassVar[int] = 0
 
@@ -57,7 +57,7 @@ class Order(Transaction, ABC):
             ticker=self.ticker,
             quantity=match_quantity,
             fees=match_fees,
-            note=f"Splitted from order {self.id}",
+            notes=f"Splitted from order {self.id}",
         )
 
         remainder = type(self)(
@@ -66,7 +66,7 @@ class Order(Transaction, ABC):
             ticker=self.ticker,
             quantity=remainder_quantity,
             fees=remainder_fees,
-            note=f"Splitted from order {self.id}",
+            notes=f"Splitted from order {self.id}",
         )
 
         return match, remainder
@@ -88,8 +88,8 @@ class Order(Transaction, ABC):
         quantity = Decimal(sum(order.quantity for order in orders))
         fees = Decimal(sum(order.fees for order in orders))
 
-        note = "Merged from orders "
-        note += ",".join(str(order.id) for order in orders)
+        notes = "Merged from orders "
+        notes += ",".join(str(order.id) for order in orders)
 
         return order_class(
             timestamp,
@@ -97,7 +97,7 @@ class Order(Transaction, ABC):
             ticker=ticker,
             quantity=quantity,
             fees=fees,
-            note=note,
+            notes=notes,
         )
 
 

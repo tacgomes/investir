@@ -10,20 +10,20 @@ from investir.trhistory import TrHistory
 
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
+    transaction_id="ORDER1",
     ticker=Ticker("AMZN"),
     amount=Decimal("10.0"),
     quantity=Decimal("1.0"),
     fees=Decimal("0.5"),
-    order_id="ORDER1",
 )
 
 ORDER2 = Disposal(
     datetime(2024, 2, 5, 14, 7, 20),
+    transaction_id="ORDER2",
     ticker=Ticker("GOOG"),
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
     fees=Decimal("1.0"),
-    order_id="ORDER2",
 )
 
 DIVIDEND1 = Dividend(
@@ -57,11 +57,11 @@ def test_trhistory_duplicates_on_different_files_are_removed():
     # For comparison purposes, the orders should be equivalent.
     order1b = Acquisition(
         ORDER1.timestamp,
+        transaction_id=ORDER1.transaction_id,
         ticker=ORDER1.ticker,
         amount=ORDER1.amount,
         quantity=ORDER1.quantity,
         fees=ORDER1.fees,
-        order_id=ORDER1.order_id,
     )
 
     tr_hist.insert_orders([ORDER1])
@@ -86,11 +86,11 @@ def test_trhistory_duplicates_on_same_file_are_not_allowed():
 
     order1b = Acquisition(
         ORDER1.timestamp,
+        transaction_id=ORDER1.transaction_id,
         ticker=ORDER1.ticker,
         amount=ORDER1.amount,
         quantity=ORDER1.quantity,
         fees=ORDER1.fees,
-        order_id=ORDER1.order_id,
     )
 
     with pytest.raises(ValueError):
