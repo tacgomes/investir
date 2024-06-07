@@ -12,11 +12,11 @@ def test_acquisition_order():
 
     order = Acquisition(
         datetime(2022, 4, 6, 18, 4, 50),
+        transaction_id="ORDER",
         amount=Decimal("100.0"),
         ticker=Ticker("AMZN"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
-        order_id="ORDER",
     )
 
     assert order.date == date(2022, 4, 6)
@@ -31,11 +31,11 @@ def test_disposal_order():
 
     order = Disposal(
         datetime(2023, 4, 6, 18, 4, 50),
+        transaction_id="ORDER",
         amount=Decimal("50.0"),
         ticker=Ticker("AMZN"),
         quantity=Decimal("10.0"),
         fees=Decimal("1.7"),
-        order_id="ORDER",
     )
 
     assert order.date == date(2023, 4, 6)

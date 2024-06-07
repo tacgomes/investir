@@ -166,11 +166,11 @@ class FreetradeParser(Parser):
         self._orders.append(
             order_class(
                 timestamp,
+                transaction_id=order_id,
                 amount=total_amount - fees,
                 ticker=Ticker(ticker),
                 quantity=quantity,
                 fees=allowable_fees,
-                order_id=order_id,
             )
         )
 
