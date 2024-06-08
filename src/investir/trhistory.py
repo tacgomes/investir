@@ -76,7 +76,11 @@ class TrHistory:
         )
 
         for tr in multiple_filter(filters, self._dividends):
-            table.add_row([tr.date, tr.ticker, tr.amount, round(tr.withheld, 2)])
+            if tr.withheld is None:
+                withheld = "?"
+            else:
+                withheld = round(tr.withheld, 2)
+            table.add_row([tr.date, tr.ticker, tr.amount, withheld])
 
         print(table)
 
