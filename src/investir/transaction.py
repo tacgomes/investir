@@ -118,7 +118,7 @@ class Disposal(Order):
 @dataclass(kw_only=True, frozen=True)
 class Dividend(Transaction):
     ticker: Ticker
-    withheld: Decimal
+    withheld: Decimal | None
 
 
 @dataclass(frozen=True)
