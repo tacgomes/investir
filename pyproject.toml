@@ -41,7 +41,13 @@ Repository = "https://github.com/tacgomes/investir"
 "Bug Tracker" = "https://github.com/tacgomes/investir/issues"
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = ["C0114, C0115, C0116", "W0511"]
+disable = [
+  "duplicate-code",
+  "fixme",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "missing-module-docstring"
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
