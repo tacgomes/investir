@@ -6,10 +6,11 @@ import pytest
 
 from investir.config import config
 from investir.exceptions import (
-    ParserError,
     CalculatedAmountError,
-    FeeError,
-    OrderTooOldError,
+    CurrencyError,
+    FeesError,
+    OrderDateError,
+    TransactionTypeError,
 )
 from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
@@ -244,16 +245,28 @@ def test_parser_invalid_type(create_parser):
 
     assert parser.can_parse()
 
-    with pytest.raises(ParserError):
+    with pytest.raises(TransactionTypeError):
         parser.parse()
 
 
 def test_parser_invalid_buy_sell(create_parser):
-    parser = create_parser([{"Type": "ORDER", "Buy / Sell": "Not Valid"}])
-
+    parser = create_parser(
+        [
+            {
+                "Type": "ORDER",
+                "Timestamp": "2024-03-08T17:53:45.673Z",
+                "Account Currency": "GBP",
+                "Total Amount": "10.0",
+                "Buy / Sell": "NOT-VALID",
+                "Ticker": "AMZN",
+                "Price per Share in Account Currency": "132.5",
+                "Quantity": "10.0",
+            },
+        ]
+    )
     assert parser.can_parse()
 
-    with pytest.raises(ParserError):
+    with pytest.raises(TransactionTypeError):
         parser.parse()
 
 
@@ -264,7 +277,7 @@ def test_parser_invalid_account_currency(create_parser):
 
     assert parser.can_parse()
 
-    with pytest.raises(ParserError):
+    with pytest.raises(CurrencyError):
         parser.parse()
 
 
@@ -288,7 +301,7 @@ def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
 
     assert parser.can_parse()
 
-    with pytest.raises(FeeError):
+    with pytest.raises(FeesError):
         parser.parse()
 
 
@@ -336,5 +349,5 @@ def test_parser_order_too_old(create_parser):
 
     assert parser.can_parse()
 
-    with pytest.raises(OrderTooOldError):
+    with pytest.raises(OrderDateError):
         parser.parse()
