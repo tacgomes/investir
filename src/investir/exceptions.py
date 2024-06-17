@@ -1,4 +1,5 @@
 from decimal import Decimal
+from pathlib import Path
 
 from .typing import Ticker
 
@@ -7,34 +8,49 @@ class InvestirError(Exception):
     pass
 
 
-class ParserError(InvestirError):
+class ParseError(InvestirError):
 
-    def __init__(self, file: str, message: str) -> None:
-        super().__init__(f"{message}, while parsing {file}")
+    def __init__(self, file: Path, row: dict, message: str) -> None:
+        super().__init__(f"{file}: {message} on row {row}")
 
 
-class CalculatedAmountError(InvestirError):
+class TransactionTypeError(ParseError):
 
-    def __init__(self, file: str, cal_amount: Decimal, csv_amount: Decimal) -> None:
+    def __init__(self, file: Path, row: dict, tr_type: str) -> None:
+        super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
+
+
+class CurrencyError(ParseError):
+
+    def __init__(self, file: Path, row: dict, currency: str) -> None:
+        super().__init__(file, row, f"Currency not supported ('{currency}')")
+
+
+class CalculatedAmountError(ParseError):
+
+    def __init__(
+        self, file: Path, row: dict, csv_amount: Decimal, cal_amount: Decimal
+    ) -> None:
         super().__init__(
-            f"Calculated amount (£{cal_amount}) differs from the total "
-            f"amount read` (£{csv_amount}), while parsing {file}"
+            file,
+            row,
+            f"Calculated amount (£{cal_amount}) is different than the "
+            f"expected value (£{csv_amount})",
         )
 
 
-class FeeError(InvestirError):
+class FeesError(ParseError):
 
-    def __init__(self, file: str) -> None:
+    def __init__(self, file: Path, row: dict) -> None:
+        super().__init__(file, row, "Stamp duty and conversion fees are both non-zero")
+
+
+class OrderDateError(ParseError):
+
+    def __init__(self, file: Path, row: dict) -> None:
         super().__init__(
-            f"Both stamp duty and forex fee fields are non-zero"
-            f", while parsing {file}"
+            file, row, "Orders executed before 6 April of 2008 are not supported"
         )
-
-
-class OrderTooOldError(InvestirError):
-
-    def __init__(self, order: dict) -> None:
-        super().__init__(f"Order made before 6 April of 2008: {order}")
 
 
 class IncompleteRecordsError(InvestirError):

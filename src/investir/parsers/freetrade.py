@@ -10,10 +10,11 @@ from dateutil.parser import parse as parse_timestamp
 from investir.const import MIN_TIMESTAMP
 from investir.utils import read_decimal, dict2str
 from investir.exceptions import (
-    ParserError,
     CalculatedAmountError,
-    FeeError,
-    OrderTooOldError,
+    CurrencyError,
+    FeesError,
+    OrderDateError,
+    TransactionTypeError,
 )
 from investir.config import config
 from investir.parser import Parser, ParsingResult
@@ -109,18 +110,14 @@ class FreetradeParser(Parser):
                         row["Type"] != "MONTHLY_STATEMENT"
                         and row["Account Currency"] != "GBP"
                     ):
-                        raise ParserError(
-                            self._csv_file.name,
-                            "Only 'GBP' is supported for the 'Account currency' field",
+                        raise CurrencyError(
+                            self._csv_file,
+                            row,
+                            row["Account Currency"],
                         )
                     fn(row)
                 else:
-                    raise_or_warn(
-                        ParserError(
-                            self._csv_file.name,
-                            f"Unrecognised value for `Type` field: {tr_type}",
-                        )
-                    )
+                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
@@ -137,11 +134,14 @@ class FreetradeParser(Parser):
         stamp_duty = read_decimal(row["Stamp Duty"])
         fx_fee_amount = read_decimal(row["FX Fee Amount"])
 
+        if action not in ("BUY", "SELL"):
+            raise TransactionTypeError(self._csv_file, row, action)
+
         if timestamp < MIN_TIMESTAMP:
-            raise OrderTooOldError(row)
+            raise OrderDateError(self._csv_file, row)
 
         if stamp_duty and fx_fee_amount:
-            raise FeeError(self._csv_file.name)
+            raise FeesError(self._csv_file, row)
 
         order_class: type[Order] = Acquisition
         fees = stamp_duty + fx_fee_amount
@@ -154,7 +154,7 @@ class FreetradeParser(Parser):
         if calculated_amount != total_amount:
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file.name, calculated_amount, total_amount
+                    self._csv_file, row, total_amount, calculated_amount
                 )
             )
 
@@ -200,7 +200,7 @@ class FreetradeParser(Parser):
         # https://community.freetrade.io/t/dividend-amount-off-by-one-penny/71806/7
         if abs(total_amount - calculated_ta) > Decimal("0.01"):
             raise_or_warn(
-                CalculatedAmountError(self._csv_file.name, calculated_ta, total_amount)
+                CalculatedAmountError(self._csv_file, row, total_amount, calculated_ta)
             )
 
         self._dividends.append(
