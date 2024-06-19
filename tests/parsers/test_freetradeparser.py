@@ -1,6 +1,7 @@
 import csv
 from decimal import Decimal
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from typing import Final
 
 import pytest
 
@@ -16,8 +17,37 @@ from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
 
 
+TIMESTAMP = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
+
+ACQUISITION: Final = {
+    "Type": "ORDER",
+    "Timestamp": TIMESTAMP,
+    "Account Currency": "GBP",
+    "Total Amount": "1330.20",
+    "Buy / Sell": "BUY",
+    "Ticker": "AMZN",
+    "Price per Share in Account Currency": "132.5",
+    "Stamp Duty": "5.2",
+    "Quantity": "10.0",
+}
+
+DISPOSAL: Final = {
+    "Type": "ORDER",
+    "Timestamp": TIMESTAMP,
+    "Account Currency": "GBP",
+    "Total Amount": "1111.85",
+    "Buy / Sell": "SELL",
+    "Ticker": "SWKS",
+    "Price per Share in Account Currency": "532.5",
+    "Quantity": "2.1",
+    "FX Fee Amount": "6.4",
+}
+
+
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path):
+    config.include_fx_fees = True
+
     def _create_parser(rows):
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
@@ -45,84 +75,72 @@ def fixture_create_parser_format_unrecognised(tmp_path):
 
 
 def test_parser_happy_path(create_parser):
-    timestamp = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
+    acquisition = dict(ACQUISITION)
+
+    disposal = DISPOSAL
+
+    dividend = {
+        "Type": "DIVIDEND",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "2.47",
+        "Ticker": "SWKS",
+        "Base FX Rate": "0.75440000",
+        "FX Fee Amount": "0.00",
+        "Dividend Ex Date": "2021-11-22",
+        "Dividend Pay Date": "2021-12-14",
+        "Dividend Eligible Quantity": "6.88764135",
+        "Dividend Amount Per Share": "0.56000000",
+        "Dividend Gross Distribution Amount": "3.86",
+        "Dividend Net Distribution Amount": "3.28",
+        "Dividend Withheld Tax Percentage": "15",
+        "Dividend Withheld Tax Amount": "0.58",
+    }
+
+    deposit = {
+        "Type": "TOP_UP",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "1000.00",
+    }
+
+    withdrawal = {
+        "Type": "WITHDRAW",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "500.25",
+    }
+
+    interest = {
+        "Type": "INTEREST_FROM_CASH",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "4.65",
+    }
+
+    statement = {"Type": "MONTHLY_STATEMENT"}
 
     parser = create_parser(
         [
-            {
-                "Type": "ORDER",
-                "Timestamp": timestamp + timedelta(hours=1),
-                "Account Currency": "GBP",
-                "Total Amount": "1330.20",
-                "Buy / Sell": "BUY",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": "132.5",
-                "Stamp Duty": "5.2",
-                "Quantity": "10.0",
-                "FX Fee Amount": "",
-            },
-            {
-                "Type": "ORDER",
-                "Timestamp": timestamp,
-                "Account Currency": "GBP",
-                "Total Amount": "1111.85",
-                "Buy / Sell": "SELL",
-                "Ticker": "SWKS",
-                "Price per Share in Account Currency": "532.5",
-                "Stamp Duty": "",
-                "Quantity": "2.1",
-                "FX Fee Amount": "6.4",
-            },
-            {
-                "Type": "DIVIDEND",
-                "Timestamp": timestamp,
-                "Account Currency": "GBP",
-                "Total Amount": "2.47",
-                "Ticker": "SWKS",
-                "Base FX Rate": "0.75440000",
-                "FX Fee Amount": "0.00",
-                "Dividend Ex Date": "2021-11-22",
-                "Dividend Pay Date": "2021-12-14",
-                "Dividend Eligible Quantity": "6.88764135",
-                "Dividend Amount Per Share": "0.56000000",
-                "Dividend Gross Distribution Amount": "3.86",
-                "Dividend Net Distribution Amount": "3.28",
-                "Dividend Withheld Tax Percentage": "15",
-                "Dividend Withheld Tax Amount": "0.58",
-            },
-            {
-                "Type": "TOP_UP",
-                "Timestamp": timestamp + timedelta(hours=1),
-                "Account Currency": "GBP",
-                "Total Amount": "1000.00",
-            },
-            {
-                "Type": "WITHDRAW",
-                "Timestamp": timestamp,
-                "Account Currency": "GBP",
-                "Total Amount": "500.25",
-            },
-            {
-                "Type": "INTEREST_FROM_CASH",
-                "Timestamp": timestamp,
-                "Account Currency": "GBP",
-                "Total Amount": "4.65",
-            },
-            {"Type": "MONTHLY_STATEMENT"},
+            acquisition,
+            disposal,
+            dividend,
+            deposit,
+            withdrawal,
+            interest,
+            statement,
         ]
     )
 
     assert type(parser).name() == "Freetrade"
-
     assert parser.can_parse()
 
     parser_result = parser.parse()
-
     assert len(parser_result.orders) == 2
 
     order = parser_result.orders[0]
     assert isinstance(order, Disposal)
-    assert order.timestamp == timestamp
+    assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1118.25")
     assert order.ticker == "SWKS"
     assert order.quantity == Decimal("2.1")
@@ -130,7 +148,7 @@ def test_parser_happy_path(create_parser):
 
     order = parser_result.orders[1]
     assert isinstance(order, Acquisition)
-    assert order.timestamp == timestamp + timedelta(hours=1)
+    assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
     assert order.ticker == "AMZN"
     assert order.quantity == Decimal("10")
@@ -139,7 +157,7 @@ def test_parser_happy_path(create_parser):
     assert len(parser_result.dividends) == 1
     dividend = parser_result.dividends[0]
 
-    assert dividend.timestamp == timestamp
+    assert dividend.timestamp == TIMESTAMP
     assert dividend.amount == Decimal("2.47")
     assert dividend.ticker == "SWKS"
     assert dividend.withheld == Decimal("0.4375520000")
@@ -147,72 +165,51 @@ def test_parser_happy_path(create_parser):
     assert len(parser_result.transfers) == 2
 
     transfer = parser_result.transfers[0]
-    assert transfer.timestamp == timestamp
+    assert transfer.timestamp == TIMESTAMP
     assert transfer.amount == Decimal("-500.25")
 
     transfer = parser_result.transfers[1]
-    assert transfer.timestamp == timestamp + timedelta(hours=1)
+    assert transfer.timestamp == TIMESTAMP
     assert transfer.amount == Decimal("1000.00")
 
     assert len(parser_result.interest) == 1
     interest = parser_result.interest[0]
-    assert interest.timestamp == timestamp
+    assert interest.timestamp == TIMESTAMP
     assert interest.amount == Decimal("4.65")
 
 
 def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
-    timestamp = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
-
     config.include_fx_fees = False
 
-    parser = create_parser(
-        [
-            {
-                "Type": "ORDER",
-                "Timestamp": timestamp + timedelta(hours=2),
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("1330.20"),
-                "Buy / Sell": "BUY",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": "",
-                "Quantity": "10.0",
-                "FX Fee Amount": "5.2",
-            },
-            {
-                "Type": "ORDER",
-                "Timestamp": timestamp + timedelta(hours=1),
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("1111.85"),
-                "Buy / Sell": "SELL",
-                "Ticker": "SWKS",
-                "Price per Share in Account Currency": Decimal("532.5"),
-                "Stamp Duty": "",
-                "Quantity": "2.1",
-                "FX Fee Amount": "6.4",
-            },
-            {
-                "Type": "ORDER",
-                "Timestamp": timestamp,
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("1326.30"),
-                "Buy / Sell": "BUY",
-                "Ticker": "MSFT",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": "1.3",
-                "Quantity": "10.0",
-                "FX Fee Amount": "",
-            },
-        ]
-    )
+    order1 = dict(ACQUISITION)
+    order1["Timestamp"] = TIMESTAMP
+    order1["FX Fee Amount"] = "5.2"
+    del order1["Stamp Duty"]
+
+    order2 = dict(DISPOSAL)
+    order2["Timestamp"] = TIMESTAMP
+
+    order3 = {
+        "Type": "ORDER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "1326.30",
+        "Buy / Sell": "BUY",
+        "Ticker": "MSFT",
+        "Price per Share in Account Currency": "132.5",
+        "Stamp Duty": "1.3",
+        "Quantity": "10.0",
+        "FX Fee Amount": "",
+    }
+
+    parser = create_parser([order1, order2, order3])
 
     parser_result = parser.parse()
-
     assert len(parser_result.orders) == 3
 
     order = parser_result.orders[0]
     assert isinstance(order, Acquisition)
-    assert order.timestamp == timestamp
+    assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
     assert order.ticker == "MSFT"
     assert order.quantity == Decimal("10.0")
@@ -220,7 +217,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
 
     order = parser_result.orders[1]
     assert isinstance(order, Disposal)
-    assert order.timestamp == timestamp + timedelta(hours=1)
+    assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1118.25")
     assert order.ticker == "SWKS"
     assert order.quantity == Decimal("2.1")
@@ -228,7 +225,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
 
     order = parser_result.orders[2]
     assert isinstance(order, Acquisition)
-    assert order.timestamp == timestamp + timedelta(hours=2)
+    assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
     assert order.ticker == "AMZN"
     assert order.quantity == Decimal("10")
@@ -240,114 +237,55 @@ def test_parser_cannot_parse(create_parser_format_unrecognised):
     assert parser.can_parse() is False
 
 
-def test_parser_invalid_type(create_parser):
-    parser = create_parser([{"Type": "Not Valid"}])
-
+def test_parser_invalid_transaction_type(create_parser):
+    order = dict(ACQUISITION)
+    order["Type"] = "NOT-VALID"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(TransactionTypeError):
         parser.parse()
 
 
 def test_parser_invalid_buy_sell(create_parser):
-    parser = create_parser(
-        [
-            {
-                "Type": "ORDER",
-                "Timestamp": "2024-03-08T17:53:45.673Z",
-                "Account Currency": "GBP",
-                "Total Amount": "10.0",
-                "Buy / Sell": "NOT-VALID",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": "132.5",
-                "Quantity": "10.0",
-            },
-        ]
-    )
+    order = dict(ACQUISITION)
+    order["Buy / Sell"] = "NOT-VALID"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(TransactionTypeError):
         parser.parse()
 
 
 def test_parser_invalid_account_currency(create_parser):
-    parser = create_parser(
-        [{"Type": "ORDER", "Buy / Sell": "BUY", "Account Currency": "USD"}]
-    )
-
+    order = dict(ACQUISITION)
+    order["Account Currency"] = "USD"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(CurrencyError):
         parser.parse()
 
 
 def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
-    parser = create_parser(
-        [
-            {
-                "Type": "ORDER",
-                "Timestamp": "2024-03-08T17:53:45.673Z",
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("0.0"),
-                "Buy / Sell": "BUY",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": Decimal("5.2"),
-                "Quantity": Decimal("10.0"),
-                "FX Fee Amount": Decimal("1.2"),
-            },
-        ]
-    )
-
+    order = dict(ACQUISITION)
+    order["FX Fee Amount"] = "1.2"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(FeesError):
         parser.parse()
 
 
 def test_parser_calculated_amount_mismatch(create_parser):
-    parser = create_parser(
-        [
-            {
-                "Type": "ORDER",
-                "Timestamp": "2024-03-08T17:53:45.673Z",
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("0.0"),
-                "Buy / Sell": "BUY",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": Decimal("5.2"),
-                "Quantity": Decimal("10.0"),
-                "FX Fee Amount": "",
-            },
-        ]
-    )
-
+    order = dict(ACQUISITION)
+    order["Total Amount"] = "7.5"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(CalculatedAmountError):
         parser.parse()
 
 
 def test_parser_order_too_old(create_parser):
-    parser = create_parser(
-        [
-            {
-                "Type": "ORDER",
-                "Timestamp": "2008-04-05T09:00:00.000Z",
-                "Account Currency": "GBP",
-                "Total Amount": Decimal("1330.20"),
-                "Buy / Sell": "BUY",
-                "Ticker": "AMZN",
-                "Price per Share in Account Currency": Decimal("132.5"),
-                "Stamp Duty": Decimal("5.2"),
-                "Quantity": Decimal("10.0"),
-                "FX Fee Amount": "",
-            },
-        ]
-    )
-
+    order = dict(ACQUISITION)
+    order["Timestamp"] = "2008-04-05T09:00:00.000Z"
+    parser = create_parser([order])
     assert parser.can_parse()
-
     with pytest.raises(OrderDateError):
         parser.parse()
