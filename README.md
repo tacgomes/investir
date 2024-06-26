@@ -2,13 +2,16 @@
 
 # Investir
 
-This software permits to view the list of stock buy or sell orders
-placed in a stock broker, dividends paid out, interest on cash given,
-deposits/withdraws made, cost basis of the current holdings, and the
-realised capital gains (or losses) calculated in accordance to the HMRC
-share identification rules [1] [2]. It requires as input a CSV export of
-your activity feed that can be obtained from the broker. Currently, only
-the [Freetrade] broker is supported.
+You can use investir to view the stock buying and selling orders placed
+with an investment platform, dividends paid out, interest on cash
+received, cash deposits or withdraws made, cost basis of the current
+holdings, and the realised capital gains (or losses) calculated in
+accordance to the HMRC [share identification rules].
+
+A CSV file with your account activity is required as input. This file
+can be exported from your investment platform. Only the Freetrade and
+Trading 212 platforms are supported, but the code is structured in a way
+that simplifies adding support for more.
 
 ## Disclaimer
 
@@ -31,7 +34,7 @@ this repo and executing the following command:
 
 Some examples in how to use this software are described next.
 
-View the stock buy or sell orders placed:
+View the stock buying and selling orders placed:
 
     investir orders examples/freetrade.csv
 
@@ -80,16 +83,27 @@ per share as well:
 Use the `-h` option for a subcommand view all the available options and
 filters.
 
-More than one CSV export can be used as input.
+Multiple CSV files can be used as input, including from different
+investment platforms.
 
-## Issues
+## Limitations
 
-Freetrade does not provide detail regarding stock splits events on the
-CSV export, and therefore the information provided for companies whose
-stock has been splitted will not be correct unless the CSV is manually
-adjusted for these events. A similar issue can be encountered for
-companies that had their ticker symbol changed (e.g `FB` to `META`).
+* Other than dividend payments, the CSV files exported from a
+  investment platform do not provide information regarding corporate
+  actions that can affect the portfolio. Examples of such actions are
+  stock splits, reverse stock splits, or ticker symbol changes (e.g FB
+  to META). In that scenario the reports created will not be accurate
+  unless the CSV is manually edited to account for those actions.
 
-[Freetrade]: https://freetrade.io/
-[1]: https://www.gov.uk/government/publications/shares-and-capital-gains-tax-hs284-self-assessment-helpsheet/hs284-shares-and-capital-gains-tax-2023#rule
-[2]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
+* No special handling takes place for the accumulation class of shares
+  for an investment fund, where income from dividends or interest are
+  automatically reinvested back into the fund. This means that in
+  practice you might have to pay more tax on your income and less tax on
+  capital gains when you sell the fund than what is reported.
+
+* Multi-currency accounts in Trading 212 are not supported and the
+  program will terminate if encounters transactions whose base currency
+  is not in pound sterling (GBP). These transactions can be ignored
+  instead by using the `--no-strict` option in the command line.
+
+[share identification rules]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
