@@ -1,6 +1,7 @@
 import argparse
 import importlib.metadata
 import logging
+import operator
 import pathlib
 import sys
 
@@ -35,15 +36,15 @@ def create_orders_command(subparser, parent_parser) -> None:
     type_group.add_argument(
         "--acquisitions",
         action="store_const",
-        dest="order_type",
         const=Acquisition,
+        dest="order_type",
         help="show only acquisitions",
     )
     type_group.add_argument(
         "--disposals",
         action="store_const",
-        dest="order_type",
         const=Disposal,
+        dest="order_type",
         help="show only disposals",
     )
 
@@ -65,15 +66,15 @@ def create_transfers_command(subparser, parent_parser) -> None:
     type_group.add_argument(
         "--deposits",
         action="store_const",
-        dest="amount_filter",
-        const=lambda tr: tr.amount > 0.0,
+        const=operator.gt,
+        dest="amount",
         help="show only acquisitions",
     )
     type_group.add_argument(
-        "--widthdraws",
+        "--withdrawals",
         action="store_const",
-        dest="amount_filter",
-        const=lambda tr: tr.amount < 0.0,
+        const=operator.lt,
+        dest="amount",
         help="show only disposals",
     )
 
@@ -84,7 +85,7 @@ def create_interest_command(subparser, parent_parser) -> None:
     )
 
 
-def create_tax_command(subparser, parent_parser) -> None:
+def create_capital_gains_command(subparser, parent_parser) -> None:
     parser = subparser.add_parser(
         "capital-gains", help="show capital gains report", parents=[parent_parser]
     )
@@ -145,7 +146,7 @@ def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
             sys.exit(1)
 
     logging.info(
-        "Total: %s orders, %s dividend payments, %s transfer, %s interest payments",
+        "Total: %s orders, %s dividend payments, %s transfers, %s interest payments",
         len(tr_hist.orders()),
         len(tr_hist.dividends()),
         len(tr_hist.transfers()),
@@ -156,16 +157,19 @@ def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
 def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
     filters = []
 
-    if hasattr(args, "ticker") and args.ticker is not None:
+    def filter_set(filter_name):
+        return getattr(args, filter_name, None) is not None
+
+    if filter_set("ticker"):
         filters.append(lambda tr: tr.ticker == args.ticker)
 
-    if hasattr(args, "order_type") and args.order_type is not None:
+    if filter_set("order_type"):
         filters.append(lambda tr: isinstance(tr, args.order_type))
 
-    if hasattr(args, "amount_filter") and args.amount_filter is not None:
-        filters.append(args.amount_filter)
+    if filter_set("amount"):
+        filters.append(lambda tr: args.amount(tr.amount, 0.0))
 
-    if args.tax_year is not None:
+    if filter_set("tax_year"):
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
     try:
@@ -262,7 +266,7 @@ def main() -> None:
     create_dividends_command(subparser, parent_parser)
     create_transfers_command(subparser, parent_parser)
     create_interest_command(subparser, parent_parser)
-    create_tax_command(subparser, parent_parser)
+    create_capital_gains_command(subparser, parent_parser)
     create_holdings_command(subparser, parent_parser)
 
     args = parser.parse_args()
