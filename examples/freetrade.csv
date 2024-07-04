@@ -1,4 +1,5 @@
 Title,Type,Timestamp,Account Currency,Total Amount,Buy / Sell,Ticker,ISIN,Price per Share in Account Currency,Stamp Duty,Quantity,Venue,Order ID,Order Type,Instrument Currency,Total Shares Amount,Price per Share,FX Rate,Base FX Rate,FX Fee (BPS),FX Fee Amount,Dividend Ex Date,Dividend Pay Date,Dividend Eligible Quantity,Dividend Amount Per Share,Dividend Gross Distribution Amount,Dividend Net Distribution Amount,Dividend Withheld Tax Percentage,Dividend Withheld Tax Amount
+Withdrawal,WITHDRAWAL,2023-07-03T19:54:31.000Z,GBP,250.31,,,,,,,,,,,,,,,,,,,,,,,,
 Microsoft,ORDER,2023-05-12T18:11:00.000Z,GBP,249.61,BUY,MSFT,,84.09550099,0.00,2.95081184,,,,USD,308.95,104.69898300,1.23765450,1.24500000,59,1.46,,,,,,,,
 PayPal,ORDER,2023-05-08T17:08:00.000Z,GBP,249.59,BUY,PYPL,,60.05492742,0.00,4.13171759,,,,USD,313.67,75.91854800,1.25667163,1.26413000,59,1.46,,,,,,,,
 Interest,INTEREST_FROM_CASH,2022-03-15T00:00:00.000Z,GBP,0.39,,,,,,,,,,,,,,,,,,,,,,,,
