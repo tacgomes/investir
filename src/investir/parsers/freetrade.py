@@ -90,7 +90,7 @@ class FreetradeParser(Parser):
             "ORDER": self._parse_order,
             "DIVIDEND": self._parse_dividend,
             "TOP_UP": self._parse_transfer,
-            "WITHDRAW": self._parse_transfer,
+            "WITHDRAWAL": self._parse_transfer,
             "INTEREST_FROM_CASH": self._parse_interest,
             "MONTHLY_STATEMENT": lambda _: None,
         }
@@ -219,7 +219,7 @@ class FreetradeParser(Parser):
         tr_type = row["Type"]
         total_amount = Decimal(row["Total Amount"])
 
-        if tr_type == "WITHDRAW":
+        if tr_type == "WITHDRAWAL":
             total_amount *= -1
 
         self._transfers.append(Transfer(timestamp, total_amount))

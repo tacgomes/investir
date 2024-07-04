@@ -105,7 +105,7 @@ def test_parser_happy_path(create_parser):
     }
 
     withdrawal = {
-        "Type": "WITHDRAW",
+        "Type": "WITHDRAWAL",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
         "Total Amount": "500.25",
