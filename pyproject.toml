@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0.0"]
+requires = ["setuptools >= 61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "investir"
 version = "0.2alpha"
 dependencies = [
-  "python-dateutil",
-  "prettytable",
+  "prettytable ~= 3.10.0",
+  "python-dateutil ~= 2.8.0",
 ]
 requires-python = ">=3.10"
 authors = [
@@ -19,9 +19,9 @@ maintainers = [
 description = "Calculate UK capital gains tax for Freetrade"
 readme = "README.md"
 license = {text = "MIT License"}
-keywords = ["HMRC", "Shares", "Stock", "Tax", "Capital Gains", "Freetrade"]
+keywords = ["HMRC", "Shares", "Stock", "Tax", "Capital Gains", "Freetrade", "Trading212"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Intended Audience :: End Users/Desktop",
   "License :: OSI Approved :: MIT License",
