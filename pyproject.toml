@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "investir"
-version = "0.2alpha"
+version = "0.3alpha"
 dependencies = [
   "prettytable ~= 3.10.0",
   "python-dateutil ~= 2.8.0",
