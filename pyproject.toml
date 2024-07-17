@@ -9,6 +9,15 @@ dependencies = [
   "prettytable ~= 3.10.0",
   "python-dateutil ~= 2.8.0",
 ]
+optional-dependencies.lint = [
+  "flake8 ~= 7.0.0",
+  "black ~= 24.1.0",
+  "pylint ~= 3.2.0",
+  "mypy ~= 1.9.0",
+]
+optional-dependencies.test = [
+  "pytest ~= 8.1.0",
+]
 requires-python = ">=3.10"
 authors = [
   {name = "Tiago Gomes", email = "tiago.avv+oss@gmail.com"},
