@@ -17,15 +17,10 @@ jobs:
       with:
         python-version: ${{matrix.python-version}}
 
-    - name: Install dependencies
+    - name: Install investir package and optional dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black pylint mypy pytest
-
-    - name: Install investir package
-      run: |
-        python -m pip install --upgrade pip
-        pip install --editable .
+        pip install --editable .[lint,test]
 
     - name: Run Flake8
       run: |
