@@ -9,6 +9,7 @@ from .config import config
 from .exceptions import InvestirError
 from .logging import setup_logging
 from .parser import ParserFactory
+from .sharesplitter import ShareSplitter
 from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal
 from .trhistory import TrHistory
@@ -173,7 +174,8 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
     try:
-        tax_calc = TaxCalculator(tr_hist)
+        share_splitter = ShareSplitter(tr_hist)
+        tax_calc = TaxCalculator(tr_hist, share_splitter)
     except InvestirError as ex:
         logging.critical(ex)
         sys.exit(1)

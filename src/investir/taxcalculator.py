@@ -9,6 +9,7 @@ from typing import Callable
 from prettytable import PrettyTable
 
 from .exceptions import IncompleteRecordsError
+from .sharesplitter import ShareSplitter
 from .typing import Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
@@ -72,8 +73,9 @@ class Section104Holding:
 
 
 class TaxCalculator:
-    def __init__(self, tr_hist: TrHistory) -> None:
+    def __init__(self, tr_hist: TrHistory, share_splitter: ShareSplitter) -> None:
         self._tr_hist = tr_hist
+        self._share_splitter = share_splitter
         self._same_day_orders: dict[GroupKey, list[Order]] = defaultdict(list)
         self._acquisitions: dict[str, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[str, list[Disposal]] = defaultdict(list)
