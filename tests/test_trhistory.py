@@ -4,8 +4,8 @@ from decimal import Decimal
 import pytest
 
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
-from investir.typing import Ticker
 from investir.trhistory import TrHistory
+from investir.typing import Ticker
 
 
 ORDER1 = Acquisition(
@@ -24,6 +24,22 @@ ORDER2 = Disposal(
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
     fees=Decimal("1.0"),
+)
+
+ORDER3 = Disposal(
+    datetime(2025, 1, 2),
+    transaction_id="ORDER3",
+    ticker=Ticker("AAPL"),
+    amount=Decimal("1.0"),
+    quantity=Decimal("1.0"),
+)
+
+ORDER4 = Disposal(
+    datetime(2025, 1, 3),
+    transaction_id="ORDER4",
+    ticker=Ticker("AAPL"),
+    amount=Decimal("1.0"),
+    quantity=Decimal("1.0"),
 )
 
 DIVIDEND1 = Dividend(
@@ -145,6 +161,12 @@ def test_trhistory_interest_is_sorted_by_timestamp():
     assert len(interest) == 2
     assert interest[0].amount == INTEREST1.amount
     assert interest[1].amount == INTEREST2.amount
+
+
+def test_trhistory_tickers_method():
+    tr_hist = TrHistory()
+    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    assert tr_hist.tickers() == ["AAPL", "AMZN", "GOOG"]
 
 
 def test_trhistory_show_orders(capsys):
