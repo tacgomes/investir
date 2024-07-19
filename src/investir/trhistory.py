@@ -1,6 +1,7 @@
 from prettytable import PrettyTable
 
 from .transaction import Order, Acquisition, Dividend, Transfer, Interest
+from .typing import Ticker
 from .utils import multiple_filter
 
 
@@ -34,6 +35,9 @@ class TrHistory:
 
     def interest(self) -> list[Interest]:
         return self._interest[:]
+
+    def tickers(self) -> list[Ticker]:
+        return sorted(set(o.ticker for o in self._orders))
 
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
