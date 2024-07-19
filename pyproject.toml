@@ -6,8 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "investir"
 version = "0.3alpha"
 dependencies = [
+  "platformdirs ~= 4.2.0",
   "prettytable ~= 3.10.0",
   "python-dateutil ~= 2.8.0",
+  "PyYAML ~= 6.0.0",
+  "yfinance ~= 0.2.40",
 ]
 optional-dependencies.lint = [
   "flake8 ~= 7.0.0",
@@ -16,7 +19,9 @@ optional-dependencies.lint = [
   "mypy ~= 1.9.0",
 ]
 optional-dependencies.test = [
+  "pandas ~= 2.2.0",
   "pytest ~= 8.1.0",
+  "pytest-mock ~= 3.14.0"
 ]
 requires-python = ">=3.10"
 authors = [
@@ -48,6 +53,10 @@ investir = "investir.cli:main"
 Homepage = "https://github.com/tacgomes/investir"
 Repository = "https://github.com/tacgomes/investir"
 "Bug Tracker" = "https://github.com/tacgomes/investir/issues"
+
+[[tool.mypy.overrides]]
+module = "yfinance"
+ignore_missing_imports = true
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
