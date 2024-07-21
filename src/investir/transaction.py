@@ -28,6 +28,7 @@ class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
     ticker: Ticker
     quantity: Decimal
+    original_quantity: Decimal | None = None
     fees: Decimal = Decimal("0.0")
 
     order_count: ClassVar[int] = 0
