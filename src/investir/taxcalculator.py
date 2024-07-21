@@ -4,7 +4,7 @@ from collections import defaultdict, namedtuple
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Callable
+from typing import Callable, TypeAlias
 
 from prettytable import PrettyTable
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 GroupKey = namedtuple("GroupKey", ["ticker", "date", "type"])
+GroupDict: TypeAlias = dict[GroupKey, list[Order]]
 
 
 def same_day_match(ord1: Acquisition, ord2: Disposal) -> bool:
@@ -76,7 +77,6 @@ class TaxCalculator:
     def __init__(self, tr_hist: TrHistory, share_splitter: ShareSplitter) -> None:
         self._tr_hist = tr_hist
         self._share_splitter = share_splitter
-        self._same_day_orders: dict[GroupKey, list[Order]] = defaultdict(list)
         self._acquisitions: dict[str, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[str, list[Disposal]] = defaultdict(list)
         self._holdings: dict[str, Section104Holding] = {}
@@ -173,17 +173,15 @@ class TaxCalculator:
         logging.info("Calculating capital gains")
 
         # Group together orders that have the same ticker, date and type.
-        self._group_same_day_orders()
+        same_day = self._group_same_day(self._tr_hist.orders())
 
-        tickers = sorted(set(order.ticker for order in self._tr_hist.orders()))
-
-        for ticker in tickers:
+        for ticker in self._tr_hist.tickers():
             logging.debug("Calculating capital gains for %s", ticker)
 
             # Merge orders that were issued in the same day and have
             # the same type, and place them in the acquisitions or
             # disposals bucket.
-            self._merge_same_day_orders(ticker)
+            self._merge_same_day(ticker, same_day)
 
             # Match disposed shares with shares acquired in the same
             # day.
@@ -206,16 +204,16 @@ class TaxCalculator:
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.ticker)
             )
 
-    def _group_same_day_orders(self) -> None:
-        for o in self._tr_hist.orders():
+    def _group_same_day(self, orders: list[Order]) -> GroupDict:
+        same_day = defaultdict(list)
+        for o in orders:
             key = GroupKey(o.ticker, o.date, type(o))
-            self._same_day_orders[key].append(o)
+            same_day[key].append(o)
+        return same_day
 
-    def _merge_same_day_orders(self, ticker: Ticker) -> None:
+    def _merge_same_day(self, ticker: Ticker, same_day: GroupDict) -> None:
         ticker_orders = (
-            orders
-            for key, orders in self._same_day_orders.items()
-            if key.ticker == ticker
+            orders for key, orders in same_day.items() if key.ticker == ticker
         )
 
         for orders in ticker_orders:
