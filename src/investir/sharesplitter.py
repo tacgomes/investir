@@ -3,6 +3,8 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
+from functools import reduce
+import operator
 from pathlib import Path
 
 from dateutil.parser import parse as parse_timestamp
@@ -10,6 +12,7 @@ from platformdirs import user_cache_dir
 import yaml
 import yfinance
 
+from .transaction import Order
 from .trhistory import TrHistory
 from .typing import Ticker
 
@@ -59,6 +62,31 @@ class ShareSplitter:
     def splits(self, ticker: Ticker) -> list[Split]:
         ticker_data = self._ticker_data.get(ticker)
         return ticker_data.splits if ticker_data else []
+
+    def adjust_quantity(self, order: Order) -> Order:
+        split_ratios = [
+            split.ratio
+            for split in self.splits(order.ticker)
+            if order.timestamp < split.date_effective
+        ]
+
+        if not split_ratios:
+            return order
+
+        quantity = reduce(operator.mul, [order.quantity] + split_ratios)
+
+        return type(order)(
+            order.timestamp,
+            amount=order.amount,
+            ticker=order.ticker,
+            quantity=quantity,
+            original_quantity=order.quantity,
+            fees=order.fees,
+            notes=(
+                f"Adjusted from order {order.id} after applying the "
+                f"following split ratios: {', '.join(map(str, split_ratios))}"
+            ),
+        )
 
     def _initialise(self):
         self._load_cache()

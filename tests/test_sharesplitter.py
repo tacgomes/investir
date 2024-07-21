@@ -55,7 +55,12 @@ AMZN_PSERIES = pd.Series(
     ],
 )
 
-GOOG_PSERIES = pd.Series()
+GOOG_PSERIES = pd.Series(
+    data=[5.0],
+    index=[
+        pd.Timestamp(2023, 1, 1, tzinfo=timezone.utc),
+    ],
+)
 
 AMZN_SPLITS = [
     Split(
@@ -66,7 +71,11 @@ AMZN_SPLITS = [
     ),
 ]
 
-GOOG_SPLITS: list[Split] = []
+GOOG_SPLITS = [
+    Split(
+        date_effective=datetime(2023, 1, 1, tzinfo=timezone.utc), ratio=Decimal("5.0")
+    ),
+]
 
 
 @pytest.fixture(name="ticker_mocker")
@@ -153,3 +162,41 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
     assert not data["tickers"].get("AAPL").splits
     assert data["tickers"].get("AMZN").splits == amazn_splits
     assert data["tickers"].get("GOOG").splits == GOOG_SPLITS
+
+
+def test_sharesplitter_adjust_quantity(ticker_mocker, tmp_path):
+    cache_file = tmp_path / "cache.yaml"
+
+    ticker_mocker([AMZN_PSERIES, GOOG_PSERIES])
+
+    tr_hist = TrHistory()
+    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+
+    share_splitter = ShareSplitter(tr_hist, cache_file)
+
+    assert share_splitter.adjust_quantity(ORDER4) == ORDER4
+    assert share_splitter.adjust_quantity(ORDER3) == ORDER3
+
+    order2_adjusted = share_splitter.adjust_quantity(ORDER2)
+    ratio = Decimal("3.0")
+    assert type(order2_adjusted) is type(ORDER2)
+    assert order2_adjusted.timestamp == ORDER2.timestamp
+    assert order2_adjusted.transaction_id == ORDER2.transaction_id
+    assert order2_adjusted.ticker == ORDER2.ticker
+    assert order2_adjusted.amount == ORDER2.amount
+    assert order2_adjusted.fees == ORDER2.fees
+    assert order2_adjusted.quantity == ORDER2.quantity * ratio
+    assert order2_adjusted.original_quantity == ORDER2.quantity
+    assert "Adjusted from order" in order2_adjusted.notes
+
+    order1_adjusted = share_splitter.adjust_quantity(ORDER1)
+    ratio = Decimal("10.0") * Decimal("3.0")
+    assert type(order1_adjusted) is type(ORDER1)
+    assert order1_adjusted.timestamp == ORDER1.timestamp
+    assert order1_adjusted.transaction_id == ORDER1.transaction_id
+    assert order1_adjusted.ticker == ORDER1.ticker
+    assert order1_adjusted.amount == ORDER1.amount
+    assert order1_adjusted.fees == ORDER1.fees
+    assert order1_adjusted.quantity == ORDER1.quantity * ratio
+    assert order1_adjusted.original_quantity == ORDER1.quantity
+    assert "Adjusted from order" in order1_adjusted.notes
