@@ -44,11 +44,17 @@ class CapitalGain:
         # proceeds are used.
         return self.disposal.amount - self.cost
 
+    @property
+    def quantity(self) -> Decimal:
+        if self.disposal.original_quantity is not None:
+            return self.disposal.original_quantity
+        return self.disposal.quantity
+
     def __str__(self) -> str:
         return (
             f"{self.disposal.date} "
             f"{self.disposal.ticker:<4} "
-            f"quantity: {self.disposal.quantity}, "
+            f"quantity: {self.quantity}, "
             f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
             f"gain: £{self.gain_loss:.2f} "
             f'({self.date_acquired or "Section 104"})'
@@ -131,7 +137,7 @@ class TaxCalculator:
                     cg.disposal.date,
                     cg.date_acquired or "Section 104",
                     cg.disposal.ticker,
-                    cg.disposal.quantity,
+                    cg.quantity,
                     f"{cg.cost:.2f}",
                     f"{cg.disposal.amount:.2f}",
                     f"{cg.gain_loss:.2f}",
@@ -172,8 +178,13 @@ class TaxCalculator:
     def _calculate_capital_gains(self) -> None:
         logging.info("Calculating capital gains")
 
+        # First normalise the orders by retroactively adjusting their
+        # share quantity for any eventual share sub-division or share
+        # consolidation event.
+        orders = self._normalise_orders(self._tr_hist.orders())
+
         # Group together orders that have the same ticker, date and type.
-        same_day = self._group_same_day(self._tr_hist.orders())
+        same_day = self._group_same_day(orders)
 
         for ticker in self._tr_hist.tickers():
             logging.debug("Calculating capital gains for %s", ticker)
@@ -203,6 +214,9 @@ class TaxCalculator:
             self._capital_gains[year] = sorted(
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.ticker)
             )
+
+    def _normalise_orders(self, orders: list[Order]) -> list[Order]:
+        return [self._share_splitter.adjust_quantity(o) for o in orders]
 
     def _group_same_day(self, orders: list[Order]) -> GroupDict:
         same_day = defaultdict(list)
