@@ -13,6 +13,10 @@ can be exported from your investment platform. Only the Freetrade and
 Trading 212 platforms are supported, but the code is structured in a way
 that simplifies adding support for more.
 
+The Yahoo Finance API is used to find the share sub-division or share
+consolidation events executed for a given company, and that information
+is taken into account when calculating the capital gains.
+
 ## Disclaimer
 
 The reporting provided by this software is intended for informational
@@ -87,13 +91,6 @@ Multiple CSV files can be used as input, including from different
 investment platforms.
 
 ## Limitations
-
-* Other than dividend payments, the CSV files exported from a
-  investment platform do not provide information regarding corporate
-  actions that can affect the portfolio. Examples of such actions are
-  stock splits, reverse stock splits, or ticker symbol changes (e.g FB
-  to META). In that scenario the reports created will not be accurate
-  unless the CSV is manually edited to account for those actions.
 
 * No special handling takes place for the accumulation class of shares
   for an investment fund, where income from dividends or interest are
