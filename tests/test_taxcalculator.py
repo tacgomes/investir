@@ -94,7 +94,7 @@ def test_section_104_disposal(create_tax_calculator):
     assert cg.cost.quantize(Decimal("0.00")) == Decimal("1779.67")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("300.33")
 
-    holding = tax_calculator.holdings()["LOBS"]
+    holding = tax_calculator.holding(Ticker("LOBS"))
     assert holding.quantity == Decimal("400.0")
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("1674.67")
 
@@ -117,7 +117,7 @@ def test_section_104_with_no_disposal_made(create_tax_calculator):
     )
 
     tax_calculator = create_tax_calculator([order1, order2])
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("1500.0")
     assert holding.cost == Decimal("6200.0")
 
@@ -177,7 +177,7 @@ def test_same_day_rule(create_tax_calculator):
     assert cg.cost == order3.amount + order4.amount + order6.amount
     assert cg.gain_loss == Decimal("170.00")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10.0")
     assert holding.cost == Decimal("100.0")
 
@@ -214,7 +214,7 @@ def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
     assert cg.cost == Decimal("120.0")
     assert cg.gain_loss == Decimal("30.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10")
     assert holding.cost == Decimal("100.0")
 
@@ -252,7 +252,7 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
     assert cg.cost == Decimal("50.0")
     assert cg.gain_loss == Decimal("100.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10")
     assert holding.cost == Decimal("170.0")
 
@@ -288,7 +288,7 @@ def test_acquisitions_are_not_matched_before_disposal_date(create_tax_calculator
     assert cg.cost == Decimal("100.00")
     assert cg.gain_loss == Decimal("50.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10")
     assert holding.cost == Decimal("200.0")
 
@@ -349,7 +349,7 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(create_tax_calcula
     assert cg.cost == Decimal("150.0")
     assert cg.gain_loss == Decimal("20.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10.0")
     assert holding.cost == Decimal("100.0")
 
@@ -401,7 +401,7 @@ def test_matching_disposals_with_larger_acquisition(create_tax_calculator):
     assert cg.cost == Decimal("10.0")
     assert cg.gain_loss == Decimal("1.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("11.0")
     assert holding.cost == Decimal("110.0")
 
@@ -491,7 +491,7 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calcula
     assert cg.cost == Decimal("3.0")
     assert cg.gain_loss == Decimal("4.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("8.0")
     assert holding.cost == Decimal("24.0")
 
@@ -550,7 +550,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
     assert cg.gain_loss == Decimal("33.45")
 
     # New S104 pool cost = 31.5 - 31.5 * (5.0/10.0) = 15.75
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("5.0")
     assert holding.cost == Decimal("15.75")
 
@@ -616,11 +616,11 @@ def test_disposals_on_different_tickers(create_tax_calculator):
     assert cg.cost == Decimal("6.0")
     assert cg.gain_loss == Decimal("16.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("11.0")
     assert holding.cost == Decimal("104.0")
 
-    holding = tax_calculator.holdings()["Y"]
+    holding = tax_calculator.holding(Ticker("Y"))
     assert holding.quantity == Decimal("20.0")
     assert holding.cost == Decimal("200.0")
 
@@ -773,7 +773,7 @@ def test_rppaccounts_example(create_tax_calculator):
     assert cg.cost == Decimal("26506.25")
     assert cg.gain_loss == Decimal("43493.75")
 
-    assert "X" not in tax_calculator.holdings()
+    assert tax_calculator.holding(Ticker("X")) is None
 
 
 def test_section_104_disposal_with_share_split(create_tax_calculator):
@@ -826,7 +826,7 @@ def test_section_104_disposal_with_share_split(create_tax_calculator):
     assert cg.quantity == Decimal("5.0")
     assert cg.gain_loss == Decimal("600.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("35.0")
     assert holding.cost == Decimal("3500.0")
 
@@ -866,6 +866,6 @@ def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
     assert cg.quantity == Decimal("5.0")
     assert cg.gain_loss == Decimal("30.0")
 
-    holding = tax_calculator.holdings()["X"]
+    holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("35.0")
     assert holding.cost == Decimal("140.0")

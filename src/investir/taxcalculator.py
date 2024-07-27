@@ -96,8 +96,8 @@ class TaxCalculator:
 
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
-    def holdings(self) -> dict[str, Section104Holding]:
-        return self._holdings
+    def holding(self, ticker: Ticker) -> Section104Holding | None:
+        return self._holdings.get(ticker)
 
     def show_capital_gains(
         self,
