@@ -99,20 +99,20 @@ def test_sharesplitter_initialisation_without_cache(ticker_mocker, tmp_path):
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
 
     share_splitter = ShareSplitter(tr_hist, cache_file)
-    assert share_splitter.splits("AMZN") == AMZN_SPLITS
-    assert share_splitter.splits("GOOG") == GOOG_SPLITS
+    assert share_splitter.splits(Ticker("AMZN")) == AMZN_SPLITS
+    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
     assert splits_prop_mock.call_count == 2
 
     assert cache_file.exists()
     with cache_file.open("r") as file:
         data = yaml.load(file, Loader=yaml.FullLoader)
     assert data["version"] == VERSION
-    assert data["tickers"].get("AMZN").splits == AMZN_SPLITS
-    assert data["tickers"].get("GOOG").splits == GOOG_SPLITS
+    assert data["tickers"].get(Ticker("AMZN")).splits == AMZN_SPLITS
+    assert data["tickers"].get(Ticker("GOOG")).splits == GOOG_SPLITS
 
     share_splitter = ShareSplitter(tr_hist, cache_file)
-    assert share_splitter.splits("AMZN") == AMZN_SPLITS
-    assert share_splitter.splits("GOOG") == GOOG_SPLITS
+    assert share_splitter.splits(Ticker("AMZN")) == AMZN_SPLITS
+    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
     assert splits_prop_mock.call_count == 2
 
 
@@ -150,18 +150,22 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
     share_splitter = ShareSplitter(tr_hist, cache_file)
-    assert not share_splitter.splits("AAPL")
-    assert share_splitter.splits("AMZN") == amazn_splits
-    assert share_splitter.splits("GOOG") == GOOG_SPLITS
+    assert not share_splitter.splits(Ticker("AAPL"))
+    assert share_splitter.splits(Ticker("AMZN")) == amazn_splits
+    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
     assert splits_prop_mock.call_count == 3
 
     with cache_file.open("r") as file:
         data = yaml.load(file, yaml.FullLoader)
 
-    assert tuple(data["tickers"].keys()) == ("AAPL", "AMZN", "GOOG")
-    assert not data["tickers"].get("AAPL").splits
-    assert data["tickers"].get("AMZN").splits == amazn_splits
-    assert data["tickers"].get("GOOG").splits == GOOG_SPLITS
+    assert tuple(data["tickers"].keys()) == (
+        Ticker("AAPL"),
+        Ticker("AMZN"),
+        Ticker("GOOG"),
+    )
+    assert not data["tickers"].get(Ticker("AAPL")).splits
+    assert data["tickers"].get(Ticker("AMZN")).splits == amazn_splits
+    assert data["tickers"].get(Ticker("GOOG")).splits == GOOG_SPLITS
 
 
 def test_sharesplitter_adjust_quantity(ticker_mocker, tmp_path):

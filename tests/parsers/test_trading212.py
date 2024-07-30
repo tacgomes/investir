@@ -16,6 +16,7 @@ from investir.exceptions import (
 )
 from investir.parsers.trading212 import Trading212Parser
 from investir.transaction import Acquisition, Disposal
+from investir.typing import Ticker
 
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
@@ -162,7 +163,7 @@ def test_parser_happy_path(create_parser):
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
-    assert order.ticker == "AMZN"
+    assert order.ticker == Ticker("AMZN")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("5.2")
     assert order == parser_result.orders[1]
@@ -171,7 +172,7 @@ def test_parser_happy_path(create_parser):
     assert isinstance(order, Disposal)
     assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1118.25")
-    assert order.ticker == "SWKS"
+    assert order.ticker == Ticker("SWKS")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("6.4")
     assert order == parser_result.orders[3]
@@ -181,7 +182,7 @@ def test_parser_happy_path(create_parser):
 
     assert dividend.timestamp == TIMESTAMP
     assert dividend.amount == Decimal("2.47")
-    assert dividend.ticker == "SWKS"
+    assert dividend.ticker == Ticker("SWKS")
     assert dividend.withheld is None
     assert dividend == parser_result.dividends[1]
     assert dividend == parser_result.dividends[2]
@@ -234,7 +235,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
-    assert order.ticker == "AMZN"
+    assert order.ticker == Ticker("AMZN")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("0.0")
 
@@ -242,7 +243,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert isinstance(order, Disposal)
     assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1118.25")
-    assert order.ticker == "SWKS"
+    assert order.ticker == Ticker("SWKS")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("0.0")
 
@@ -250,7 +251,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
     assert order.amount == Decimal("1325.00")
-    assert order.ticker == "MSFT"
+    assert order.ticker == Ticker("MSFT")
     assert order.quantity == Decimal("10.0")
     assert order.fees == Decimal("1.3")
 

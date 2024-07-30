@@ -72,7 +72,7 @@ def test_order_merge():
 
     merged_order = Order.merge(order1, order2, order3)
     assert merged_order.timestamp == datetime(2022, 4, 6, 0, 0)
-    assert merged_order.ticker == "AMZN"
+    assert merged_order.ticker == Ticker("AMZN")
     assert merged_order.amount == Decimal("160")
     assert merged_order.quantity == Decimal("29")
     assert merged_order.fees == Decimal("3.0")
@@ -93,14 +93,14 @@ def test_order_split():
 
     assert isinstance(matched, Acquisition)
     assert matched.timestamp == date_time
-    assert matched.ticker == "AMZN"
+    assert matched.ticker == Ticker("AMZN")
     assert matched.amount == Decimal("80.0")
     assert matched.quantity == Decimal("8.0")
     assert matched.fees == Decimal("4.0")
 
     assert isinstance(remainder, Acquisition)
     assert remainder.timestamp == date_time
-    assert remainder.ticker == "AMZN"
+    assert remainder.ticker == Ticker("AMZN")
     assert remainder.amount == Decimal("40.0")
     assert remainder.quantity == Decimal("4.0")
     assert remainder.fees == Decimal("2.0")

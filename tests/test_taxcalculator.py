@@ -606,13 +606,13 @@ def test_disposals_on_different_tickers(create_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.date_acquired == date(2019, 1, 21)
-    assert cg.disposal.ticker == "X"
+    assert cg.disposal.ticker == Ticker("X")
     assert cg.cost == Decimal("4.0")
     assert cg.gain_loss == Decimal("7.0")
 
     cg = capital_gains[1]
     assert cg.date_acquired == date(2019, 1, 22)
-    assert cg.disposal.ticker == "Y"
+    assert cg.disposal.ticker == Ticker("Y")
     assert cg.cost == Decimal("6.0")
     assert cg.gain_loss == Decimal("16.0")
 
