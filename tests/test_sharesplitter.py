@@ -35,7 +35,7 @@ ORDER3 = Disposal(
 
 ORDER4 = Acquisition(
     datetime(2024, 1, 1, tzinfo=timezone.utc),
-    ticker=Ticker("GOOG"),
+    ticker=Ticker("NFLX"),
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
 )
@@ -55,7 +55,7 @@ AMZN_PSERIES = pd.Series(
     ],
 )
 
-GOOG_PSERIES = pd.Series(
+NFLX_PSERIES = pd.Series(
     data=[5.0],
     index=[
         pd.Timestamp(2023, 1, 1, tzinfo=timezone.utc),
@@ -71,7 +71,7 @@ AMZN_SPLITS = [
     ),
 ]
 
-GOOG_SPLITS = [
+NFLX_SPLITS = [
     Split(
         date_effective=datetime(2023, 1, 1, tzinfo=timezone.utc), ratio=Decimal("5.0")
     ),
@@ -93,14 +93,14 @@ def _ticker_mocker(mocker):
 def test_sharesplitter_initialisation_without_cache(ticker_mocker, tmp_path):
     cache_file = tmp_path / "cache.yaml"
 
-    splits_prop_mock = ticker_mocker([AMZN_PSERIES, GOOG_PSERIES])
+    splits_prop_mock = ticker_mocker([AMZN_PSERIES, NFLX_PSERIES])
 
     tr_hist = TrHistory()
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
 
     share_splitter = ShareSplitter(tr_hist, cache_file)
     assert share_splitter.splits(Ticker("AMZN")) == AMZN_SPLITS
-    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
+    assert share_splitter.splits(Ticker("NFLX")) == NFLX_SPLITS
     assert splits_prop_mock.call_count == 2
 
     assert cache_file.exists()
@@ -108,11 +108,11 @@ def test_sharesplitter_initialisation_without_cache(ticker_mocker, tmp_path):
         data = yaml.load(file, Loader=yaml.FullLoader)
     assert data["version"] == VERSION
     assert data["tickers"].get(Ticker("AMZN")).splits == AMZN_SPLITS
-    assert data["tickers"].get(Ticker("GOOG")).splits == GOOG_SPLITS
+    assert data["tickers"].get(Ticker("NFLX")).splits == NFLX_SPLITS
 
     share_splitter = ShareSplitter(tr_hist, cache_file)
     assert share_splitter.splits(Ticker("AMZN")) == AMZN_SPLITS
-    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
+    assert share_splitter.splits(Ticker("NFLX")) == NFLX_SPLITS
     assert splits_prop_mock.call_count == 2
 
 
@@ -126,12 +126,10 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
             splits:
             - !split '2019-01-01 00:00:00+00:00, 10'
             - !split '2021-01-01 00:00:00+00:00, 3'
-            yaml_tag: '!ticker'
-        GOOG: !ticker
+        NFLX: !ticker
             last_updated: 2024-01-01 00:00:00+00:00
             splits:
             - !split '2021-05-12 00:00:00+00:00, 20'
-            yaml_tag: '!ticker'
         """
     )
 
@@ -144,7 +142,7 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
         Split(date_effective=datetime(2024, 1, 1), ratio=Decimal("40.0"))
     ]
 
-    splits_prop_mock = ticker_mocker([aapl_pseries, amzn_pseries, GOOG_PSERIES])
+    splits_prop_mock = ticker_mocker([aapl_pseries, amzn_pseries, NFLX_PSERIES])
 
     tr_hist = TrHistory()
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
@@ -152,7 +150,7 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
     share_splitter = ShareSplitter(tr_hist, cache_file)
     assert not share_splitter.splits(Ticker("AAPL"))
     assert share_splitter.splits(Ticker("AMZN")) == amazn_splits
-    assert share_splitter.splits(Ticker("GOOG")) == GOOG_SPLITS
+    assert share_splitter.splits(Ticker("NFLX")) == NFLX_SPLITS
     assert splits_prop_mock.call_count == 3
 
     with cache_file.open("r") as file:
@@ -161,17 +159,17 @@ def test_sharesplitter_cache_is_updated(ticker_mocker, tmp_path):
     assert tuple(data["tickers"].keys()) == (
         Ticker("AAPL"),
         Ticker("AMZN"),
-        Ticker("GOOG"),
+        Ticker("NFLX"),
     )
     assert not data["tickers"].get(Ticker("AAPL")).splits
     assert data["tickers"].get(Ticker("AMZN")).splits == amazn_splits
-    assert data["tickers"].get(Ticker("GOOG")).splits == GOOG_SPLITS
+    assert data["tickers"].get(Ticker("NFLX")).splits == NFLX_SPLITS
 
 
 def test_sharesplitter_adjust_quantity(ticker_mocker, tmp_path):
     cache_file = tmp_path / "cache.yaml"
 
-    ticker_mocker([AMZN_PSERIES, GOOG_PSERIES])
+    ticker_mocker([AMZN_PSERIES, NFLX_PSERIES])
 
     tr_hist = TrHistory()
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
