@@ -1,8 +1,15 @@
+from typing import NamedTuple
+
 from prettytable import PrettyTable
 
 from .transaction import Order, Acquisition, Dividend, Transfer, Interest
-from .typing import Ticker
+from .typing import ISIN, Ticker
 from .utils import multiple_filter
+
+
+class Security(NamedTuple):
+    isin: ISIN
+    name: str = ""
 
 
 class TrHistory:
@@ -36,13 +43,31 @@ class TrHistory:
     def interest(self) -> list[Interest]:
         return self._interest[:]
 
-    def tickers(self) -> list[Ticker]:
-        return sorted(set(o.ticker for o in self._orders))
+    def securities(self) -> list[Security]:
+        securities = {o.isin: o.name for o in self._orders}
+        return sorted(
+            (Security(isin, name) for isin, name in securities.items()),
+            key=lambda t: t.name,
+        )
+
+    def get_security_name(self, isin: ISIN) -> str | None:
+        securities = {o.isin: o.name for o in self._orders}
+        return securities.get(isin)
+
+    def get_ticker_isin(self, ticker: Ticker) -> ISIN | None:
+        isins = set(o.isin for o in self._orders if o.ticker == ticker)
+
+        if not len(isins) == 1:
+            return None
+
+        return next(iter(isins))
 
     def show_orders(self, filters=None) -> None:
         table = PrettyTable(
             field_names=(
                 "Date",
+                "ISIN",
+                "Security",
                 "Ticker",
                 "Total Cost (£)",
                 "Net Proceeds (£)",
@@ -63,6 +88,8 @@ class TrHistory:
             table.add_row(
                 [
                     tr.date,
+                    tr.isin,
+                    tr.name,
                     tr.ticker,
                     total_cost,
                     net_proceeds,
@@ -76,7 +103,14 @@ class TrHistory:
 
     def show_dividends(self, filters=None):
         table = PrettyTable(
-            field_names=("Date", "Ticker", "Amount (£)", "Tax widhheld (£)")
+            field_names=(
+                "Date",
+                "ISIN",
+                "Security",
+                "Ticker",
+                "Amount (£)",
+                "Tax widhheld (£)",
+            )
         )
 
         for tr in multiple_filter(filters, self._dividends):
@@ -84,7 +118,7 @@ class TrHistory:
                 withheld = "?"
             else:
                 withheld = round(tr.withheld, 2)
-            table.add_row([tr.date, tr.ticker, tr.amount, withheld])
+            table.add_row([tr.date, tr.isin, tr.name, tr.ticker, tr.amount, withheld])
 
         print(table)
 

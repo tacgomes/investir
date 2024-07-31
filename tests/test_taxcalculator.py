@@ -5,11 +5,11 @@ from pathlib import Path
 import pytest
 
 from investir.exceptions import IncompleteRecordsError
-from investir.sharesplitter import ShareSplitter, Split, TickerData
+from investir.sharesplitter import SecurityInfo, ShareSplitter, Split
 from investir.taxcalculator import TaxCalculator
-from investir.typing import Ticker
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
+from investir.typing import ISIN, Ticker
 
 
 class LocalShareSplitter(ShareSplitter):
@@ -18,10 +18,12 @@ class LocalShareSplitter(ShareSplitter):
     ) -> None:
         super().__init__(tr_hist, cache_file)
         if splits:
-            tickers = self._tr_hist.tickers()
-            assert all(tickers[0] == t for t in tickers)
-            ticker_data = self._ticker_data.setdefault(tickers[0], TickerData())
-            ticker_data.splits = splits
+            securities = self._tr_hist.securities()
+            assert all(securities[0].isin == s.isin for s in securities)
+            security_info = self._securities_info.setdefault(
+                securities[0].isin, SecurityInfo()
+            )
+            security_info.splits = splits
 
     def _initialise(self):
         pass
@@ -47,7 +49,7 @@ def test_section_104_disposal(create_tax_calculator):
     """
     order1 = Acquisition(
         datetime(2015, 4, 1),
-        ticker=Ticker("LOBS"),
+        isin=ISIN("LOBS"),
         quantity=Decimal("1000.0"),
         amount=Decimal("4000.0"),
         fees=Decimal("150.0"),
@@ -55,7 +57,7 @@ def test_section_104_disposal(create_tax_calculator):
 
     order2 = Acquisition(
         datetime(2018, 9, 1),
-        ticker=Ticker("LOBS"),
+        isin=ISIN("LOBS"),
         quantity=Decimal("500.0"),
         amount=Decimal("2050.0"),
         fees=Decimal("80.0"),
@@ -63,7 +65,7 @@ def test_section_104_disposal(create_tax_calculator):
 
     order3 = Disposal(
         datetime(2023, 5, 1),
-        ticker=Ticker("LOBS"),
+        isin=ISIN("LOBS"),
         quantity=Decimal("700.0"),
         amount=Decimal("3360.0"),
         fees=Decimal("100.0"),
@@ -71,7 +73,7 @@ def test_section_104_disposal(create_tax_calculator):
 
     order4 = Disposal(
         datetime(2024, 2, 1),
-        ticker=Ticker("LOBS"),
+        isin=ISIN("LOBS"),
         quantity=Decimal("400.0"),
         amount=Decimal("2080.0"),
         fees=Decimal("105.0"),
@@ -102,7 +104,7 @@ def test_section_104_disposal(create_tax_calculator):
 def test_section_104_with_no_disposal_made(create_tax_calculator):
     order1 = Acquisition(
         datetime(2015, 4, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1000.0"),
         amount=Decimal("4000.0"),
         fees=Decimal("150.0"),
@@ -110,7 +112,7 @@ def test_section_104_with_no_disposal_made(create_tax_calculator):
 
     order2 = Acquisition(
         datetime(2018, 9, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("500.0"),
         amount=Decimal("2000.0"),
         fees=Decimal("50.0"),
@@ -125,42 +127,42 @@ def test_section_104_with_no_disposal_made(create_tax_calculator):
 def test_same_day_rule(create_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, 14, 00),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("70.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 20, 15, 00),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("60.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 20, 16, 00),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("2.0"),
         amount=Decimal("65.0"),
     )
 
     order5 = Disposal(
         datetime(2019, 1, 20, 17, 00),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("4.0"),
         amount=Decimal("280.0"),
     )
 
     order6 = Acquisition(
         datetime(2019, 1, 20, 18, 00),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("2.0"),
         amount=Decimal("55.0"),
     )
@@ -186,21 +188,21 @@ def test_same_day_rule(create_tax_calculator):
 def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
 
     order3 = Acquisition(
         order2.timestamp + timedelta(days=days_elapsed),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("120.0"),
     )
@@ -224,21 +226,21 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
 ):
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 19),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 2, 19),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("120.0"),
     )
@@ -260,21 +262,21 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
 def test_acquisitions_are_not_matched_before_disposal_date(create_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Acquisition(
         datetime(2019, 2, 18),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("200.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 2, 19),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
@@ -302,35 +304,35 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(create_tax_calcula
     """
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 25),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
 
     order4 = Disposal(
         datetime(2019, 1, 25),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("170.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 27),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("300.0"),
     )
@@ -361,28 +363,28 @@ def test_matching_disposals_with_larger_acquisition(create_tax_calculator):
     """
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("60.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 21),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("11.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 22),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("7.0"),
         amount=Decimal("70.0"),
     )
@@ -420,42 +422,42 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calcula
     """
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("30.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("50.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("9.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 25),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("2.0"),
         amount=Decimal("16.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 27),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("5.0"),
     )
 
     order6 = Disposal(
         datetime(2019, 3, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("7.0"),
     )
@@ -499,7 +501,7 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calcula
 def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("30.0"),
         fees=Decimal("1.5"),
@@ -507,7 +509,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
 
     order2 = Acquisition(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("40.0"),
         fees=Decimal("0.5"),
@@ -515,7 +517,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
 
     order3 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("50.0"),
         fees=Decimal("0.4"),
@@ -523,7 +525,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
 
     order4 = Disposal(
         datetime(2019, 3, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("50.0"),
         fees=Decimal("0.8"),
@@ -558,42 +560,42 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
 def test_disposals_on_different_tickers(create_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Acquisition(
         datetime(2018, 1, 1),
-        ticker="Y",
+        isin=ISIN("Y"),
         quantity=Decimal("20.0"),
         amount=Decimal("200.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 20),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("11.0"),
     )
 
     order4 = Disposal(
         datetime(2019, 1, 21),
-        ticker="Y",
+        isin=ISIN("Y"),
         quantity=Decimal("2.0"),
         amount=Decimal("22.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 21),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("2.0"),
         amount=Decimal("8.0"),
     )
 
     order6 = Acquisition(
         datetime(2019, 1, 22),
-        ticker="Y",
+        isin=ISIN("Y"),
         quantity=Decimal("2.0"),
         amount=Decimal("6.0"),
     )
@@ -606,13 +608,13 @@ def test_disposals_on_different_tickers(create_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.date_acquired == date(2019, 1, 21)
-    assert cg.disposal.ticker == Ticker("X")
+    assert cg.disposal.isin == ISIN("X")
     assert cg.cost == Decimal("4.0")
     assert cg.gain_loss == Decimal("7.0")
 
     cg = capital_gains[1]
     assert cg.date_acquired == date(2019, 1, 22)
-    assert cg.disposal.ticker == Ticker("Y")
+    assert cg.disposal.isin == ISIN("Y")
     assert cg.cost == Decimal("6.0")
     assert cg.gain_loss == Decimal("16.0")
 
@@ -628,7 +630,7 @@ def test_disposals_on_different_tickers(create_tax_calculator):
 def test_integrity_disposal_without_acquisition(create_tax_calculator):
     order = Disposal(
         datetime(2019, 1, 17),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("120.0"),
     )
@@ -640,14 +642,14 @@ def test_integrity_disposal_without_acquisition(create_tax_calculator):
 def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 3, 17),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("120.0"),
     )
@@ -663,70 +665,70 @@ def test_rppaccounts_example(create_tax_calculator):
     """
     order1 = Acquisition(
         datetime(2019, 1, 18),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("4.0"),
         amount=Decimal("12025.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 18),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("3.0"),
         amount=Decimal("9100.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 19),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("5000.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 22),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("2000.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 23),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("15000.0"),
     )
 
     order6 = Disposal(
         datetime(2019, 1, 24),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("2.0"),
         amount=Decimal("8000.0"),
     )
 
     order7 = Acquisition(
         datetime(2019, 1, 25),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("3300.0"),
     )
 
     order8 = Disposal(
         datetime(2019, 1, 25),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("3500.0"),
     )
 
     order9 = Acquisition(
         datetime(2019, 1, 26),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("4.0"),
         amount=Decimal("17000.0"),
     )
 
     order10 = Disposal(
         datetime(2019, 1, 27),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("8.0"),
         amount=Decimal("70000.0"),
     )
@@ -779,28 +781,28 @@ def test_rppaccounts_example(create_tax_calculator):
 def test_section_104_disposal_with_share_split(create_tax_calculator):
     order1 = Acquisition(
         datetime(2014, 5, 1, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("11.0"),
         amount=Decimal("3300.0"),
     )
 
     order2 = Disposal(
         datetime(2014, 6, 1, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("1.0"),
         amount=Decimal("500.0"),
     )
 
     order3 = Acquisition(
         datetime(2014, 8, 1, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("1000.0"),
     )
 
     order4 = Disposal(
         datetime(2014, 9, 1, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("1100.0"),
     )
@@ -834,21 +836,21 @@ def test_section_104_disposal_with_share_split(create_tax_calculator):
 def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("10.0"),
         amount=Decimal("100.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("5.0"),
         amount=Decimal("150.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 30, tzinfo=timezone.utc),
-        ticker=Ticker("X"),
+        isin=ISIN("X"),
         quantity=Decimal("20.0"),
         amount=Decimal("160.0"),
     )

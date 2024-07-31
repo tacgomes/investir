@@ -1,7 +1,7 @@
 from decimal import Decimal
 from pathlib import Path
 
-from .typing import Ticker
+from .typing import ISIN
 
 
 class InvestirError(Exception):
@@ -55,8 +55,8 @@ class OrderDateError(ParseError):
 
 class IncompleteRecordsError(InvestirError):
 
-    def __init__(self, ticker: Ticker) -> None:
+    def __init__(self, isin: ISIN, name: str) -> None:
         super().__init__(
-            f"Records appear to be incomplete for {ticker}: "
-            "share quantity cannot be negative"
+            f"Records appear to be incomplete for {name} ({isin}): "
+            f"share quantity cannot be negative"
         )

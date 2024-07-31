@@ -26,8 +26,8 @@ class Transaction(ABC):
 @dataclass(kw_only=True, frozen=True)
 class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
-    isin: ISIN = ISIN("")
-    ticker: Ticker
+    isin: ISIN
+    ticker: Ticker | None = None
     name: str = ""
     quantity: Decimal
     original_quantity: Decimal | None = None
@@ -82,8 +82,8 @@ class Order(Transaction, ABC):
     def merge(*orders: "Order") -> "Order":
         assert len(orders) > 1
 
-        ticker = orders[0].ticker
-        assert all(order.ticker == ticker for order in orders)
+        isin = orders[0].isin
+        assert all(order.isin == isin for order in orders)
 
         order_class = type(orders[0])
 
@@ -100,8 +100,8 @@ class Order(Transaction, ABC):
 
         return order_class(
             timestamp,
-            isin=orders[0].isin,
-            ticker=ticker,
+            isin=isin,
+            ticker=orders[0].ticker,
             name=orders[0].name,
             amount=amount,
             quantity=quantity,
@@ -126,9 +126,9 @@ class Disposal(Order):
 
 @dataclass(kw_only=True, frozen=True)
 class Dividend(Transaction):
-    isin: ISIN = ISIN("")
+    isin: ISIN
     name: str = ""
-    ticker: Ticker
+    ticker: Ticker | None = None
     withheld: Decimal | None
 
 

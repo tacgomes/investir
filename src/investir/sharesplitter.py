@@ -14,13 +14,13 @@ import yfinance
 
 from .transaction import Order
 from .trhistory import TrHistory
-from .typing import Ticker
+from .typing import ISIN
 
 logger = logging.getLogger(__name__)
 
 VERSION = 1
 DEFAULT_CACHE_DIR = Path(user_cache_dir()) / "investir"
-DEFAULT_CACHE_FILENAME = "ticker.yaml"
+DEFAULT_CACHE_FILENAME = "securities.yaml"
 
 
 @dataclass
@@ -43,10 +43,11 @@ class Split(yaml.YAMLObject):
 
 
 @dataclass
-class TickerData(yaml.YAMLObject):
+class SecurityInfo(yaml.YAMLObject):
+    name: str = ""
     splits: list[Split] = field(default_factory=list)
     last_updated = datetime.fromtimestamp(0, timezone.utc)
-    yaml_tag = "!ticker"
+    yaml_tag = "!security"
 
 
 class ShareSplitter:
@@ -55,18 +56,18 @@ class ShareSplitter:
         self._cache_file = cache_file
         if self._cache_file is None:
             self._cache_file = DEFAULT_CACHE_DIR / DEFAULT_CACHE_FILENAME
-        self._ticker_data: dict[Ticker, TickerData] = {}
+        self._securities_info: dict[ISIN, SecurityInfo] = {}
 
         self._initialise()
 
-    def splits(self, ticker: Ticker) -> list[Split]:
-        ticker_data = self._ticker_data.get(ticker)
-        return ticker_data.splits if ticker_data else []
+    def splits(self, isin: ISIN) -> list[Split]:
+        security_info = self._securities_info.get(isin)
+        return security_info.splits if security_info else []
 
     def adjust_quantity(self, order: Order) -> Order:
         split_ratios = [
             split.ratio
-            for split in self.splits(order.ticker)
+            for split in self.splits(order.isin)
             if order.timestamp < split.date_effective
         ]
 
@@ -77,8 +78,10 @@ class ShareSplitter:
 
         return type(order)(
             order.timestamp,
-            amount=order.amount,
+            isin=order.isin,
             ticker=order.ticker,
+            name=order.name,
+            amount=order.amount,
             quantity=quantity,
             original_quantity=order.quantity,
             fees=order.fees,
@@ -94,47 +97,51 @@ class ShareSplitter:
         orders = self._tr_hist.orders()
         update_cache = False
 
-        for ticker in self._tr_hist.tickers():
-            ticker_data = self._ticker_data.setdefault(ticker, TickerData())
-            last_order = next(o for o in reversed(orders) if o.ticker == ticker)
+        for isin, name in self._tr_hist.securities():
+            security_info = self._securities_info.setdefault(
+                isin, SecurityInfo(name=name)
+            )
+            last_order = next(o for o in reversed(orders) if o.isin == isin)
 
-            if ticker_data.last_updated > last_order.timestamp:
-                logging.debug("Ticker cache for %s is up-to-date", ticker)
+            if security_info.last_updated > last_order.timestamp:
+                logging.debug("Securities cache for %s (%s) is up-to-date", name, isin)
                 continue
 
-            logging.info("Fetching ticker data for %s", ticker)
+            logging.info("Fetching information for %s (%s)", name, isin)
 
-            splits = yfinance.Ticker(ticker).splits
+            splits = yfinance.Ticker(isin).splits
 
-            ticker_data.splits = []
-            ticker_data.last_updated = datetime.now(timezone.utc).replace(microsecond=0)
+            security_info.splits = []
+            security_info.last_updated = datetime.now(timezone.utc).replace(
+                microsecond=0
+            )
             update_cache = True
 
             for date_str, ratio_str in splits.items():
                 date_effective = date_str.to_pydatetime()
                 ratio = Decimal(ratio_str)
-                ticker_data.splits.append(Split(date_effective, ratio))
+                security_info.splits.append(Split(date_effective, ratio))
 
         if update_cache:
             self._update_cache()
 
     def _load_cache(self):
         if self._cache_file.exists():
-            logging.info("Loading ticker cache from %s", self._cache_file)
+            logging.info("Loading securities cache from %s", self._cache_file)
 
             with self._cache_file.open("r") as file:
                 data = yaml.load(file, Loader=yaml.FullLoader)
-                self._ticker_data = data["tickers"]
+                self._securities_info = data["securities"]
 
     def _update_cache(self):
         if self._cache_file.exists():
-            logging.info("Updating ticker cache on %s", self._cache_file)
+            logging.info("Updating securities cache on %s", self._cache_file)
         else:
-            logging.info("Creating ticker cache on %s", self._cache_file)
+            logging.info("Creating securities cache on %s", self._cache_file)
 
         self._cache_file.parent.mkdir(parents=True, exist_ok=True)
-        ticker_data = dict(sorted(self._ticker_data.items()))
-        data = {"version": VERSION, "tickers": ticker_data}
+        securities_info = dict(sorted(self._securities_info.items()))
+        data = {"version": VERSION, "securities": securities_info}
 
         with self._cache_file.open("w") as file:
             yaml.dump(data, file, sort_keys=False)

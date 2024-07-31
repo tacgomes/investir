@@ -10,7 +10,7 @@ from prettytable import PrettyTable
 
 from .exceptions import IncompleteRecordsError
 from .sharesplitter import ShareSplitter
-from .typing import Ticker, Year
+from .typing import ISIN, Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
 from .utils import raise_or_warn
@@ -18,17 +18,17 @@ from .utils import raise_or_warn
 logger = logging.getLogger(__name__)
 
 
-GroupKey = namedtuple("GroupKey", ["ticker", "date", "type"])
+GroupKey = namedtuple("GroupKey", ["isin", "date", "type"])
 GroupDict: TypeAlias = dict[GroupKey, list[Order]]
 
 
 def same_day_match(ord1: Acquisition, ord2: Disposal) -> bool:
-    assert ord1.ticker == ord2.ticker
+    assert ord1.isin == ord2.isin
     return ord1.date == ord2.date
 
 
 def thirty_days_match(ord1: Acquisition, ord2: Disposal) -> bool:
-    assert ord1.ticker == ord2.ticker
+    assert ord1.isin == ord2.isin
     return ord2.date < ord1.date <= ord2.date + timedelta(days=30)
 
 
@@ -53,7 +53,7 @@ class CapitalGain:
     def __str__(self) -> str:
         return (
             f"{self.disposal.date} "
-            f"{self.disposal.ticker:<4} "
+            f"{self.disposal.isin:<4} "
             f"quantity: {self.quantity}, "
             f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
             f"gain: £{self.gain_loss:.2f} "
@@ -83,9 +83,9 @@ class TaxCalculator:
     def __init__(self, tr_hist: TrHistory, share_splitter: ShareSplitter) -> None:
         self._tr_hist = tr_hist
         self._share_splitter = share_splitter
-        self._acquisitions: dict[str, list[Acquisition]] = defaultdict(list)
-        self._disposals: dict[str, list[Disposal]] = defaultdict(list)
-        self._holdings: dict[str, Section104Holding] = {}
+        self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
+        self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
+        self._holdings: dict[ISIN, Section104Holding] = {}
         self._capital_gains: dict[int, list[CapitalGain]] = defaultdict(list)
 
         self._calculate_capital_gains()
@@ -96,8 +96,8 @@ class TaxCalculator:
 
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
-    def holding(self, ticker: Ticker) -> Section104Holding | None:
-        return self._holdings.get(ticker)
+    def holding(self, isin: ISIN) -> Section104Holding | None:
+        return self._holdings.get(isin)
 
     def show_capital_gains(
         self,
@@ -112,7 +112,8 @@ class TaxCalculator:
             field_names=(
                 "Date Disposed",
                 "Date Acquired",
-                "Ticker",
+                "ISIN",
+                "Security",
                 "Quantity",
                 "Cost (£)",
                 "Proceeds (£)",
@@ -136,7 +137,8 @@ class TaxCalculator:
                 [
                     cg.disposal.date,
                     cg.date_acquired or "Section 104",
-                    cg.disposal.ticker,
+                    cg.disposal.isin,
+                    cg.disposal.name,
                     cg.quantity,
                     f"{cg.cost:.2f}",
                     f"{cg.disposal.amount:.2f}",
@@ -147,26 +149,31 @@ class TaxCalculator:
         print(table)
 
     def show_holdings(self, ticker: Ticker | None, show_avg_cost: bool):
-        fields = ["Ticker", "Cost (£)", "Quantity", "Avg Cost (£)"]
+        fields = ["ISIN", "Security", "Cost (£)", "Quantity", "Avg Cost (£)"]
 
         table = PrettyTable(field_names=fields)
 
         if not show_avg_cost:
             table.fields = fields[:-1]
 
-        if ticker is None:
-            holdings = sorted(
-                self._holdings.items(), key=lambda x: x[1].cost, reverse=True
-            )
-        elif ticker in self._holdings:
-            holdings = [(ticker, self._holdings[ticker])]
-        else:
-            holdings = []
+        holdings = sorted(self._holdings.items(), key=lambda x: x[1].cost, reverse=True)
 
-        for ticker_, holding in holdings:
+        if ticker is not None:
+            isin = self._tr_hist.get_ticker_isin(ticker)
+            if isin is not None:
+                holdings = [(isin, self._holdings[isin])]
+            else:
+                logger.warning(
+                    "Ignoring ticker filter as %s was not found or is ambiguous "
+                    "(used on different securities)",
+                    ticker,
+                )
+
+        for isin, holding in holdings:
             table.add_row(
                 [
-                    ticker_,
+                    isin,
+                    self._tr_hist.get_security_name(isin),
                     f"{holding.cost:.2f}",
                     holding.quantity,
                     f"{holding.cost / holding.quantity:.2f}",
@@ -183,27 +190,27 @@ class TaxCalculator:
         # consolidation event.
         orders = self._normalise_orders(self._tr_hist.orders())
 
-        # Group together orders that have the same ticker, date and type.
+        # Group together orders that have the same isin, date and type.
         same_day = self._group_same_day(orders)
 
-        for ticker in self._tr_hist.tickers():
-            logging.debug("Calculating capital gains for %s", ticker)
+        for isin, name in self._tr_hist.securities():
+            logging.debug("Calculating capital gains for %s (%s)", name, isin)
 
             # Merge orders that were issued in the same day and have
             # the same type, and place them in the acquisitions or
             # disposals bucket.
-            self._merge_same_day(ticker, same_day)
+            self._merge_same_day(isin, same_day)
 
             # Match disposed shares with shares acquired in the same
             # day.
-            self._match_shares(ticker, same_day_match)
+            self._match_shares(isin, same_day_match)
 
             # Match disposed shares with shares acquired up to 30 days
             # past the disposal date.
-            self._match_shares(ticker, thirty_days_match)
+            self._match_shares(isin, thirty_days_match)
 
             # Process shares disposed from a Section 104 pool.
-            self._process_section104_disposals(ticker)
+            self._process_section104_disposals(isin)
 
         # Capital gains are calculated ticker by ticker in order to be
         # able to show all the intermediary calculations grouped together
@@ -212,7 +219,7 @@ class TaxCalculator:
         # their disposal date.
         for year, events in self._capital_gains.items():
             self._capital_gains[year] = sorted(
-                events, key=lambda te: (te.disposal.timestamp, te.disposal.ticker)
+                events, key=lambda te: (te.disposal.timestamp, te.disposal.isin)
             )
 
     def _normalise_orders(self, orders: list[Order]) -> list[Order]:
@@ -221,16 +228,16 @@ class TaxCalculator:
     def _group_same_day(self, orders: list[Order]) -> GroupDict:
         same_day = defaultdict(list)
         for o in orders:
-            key = GroupKey(o.ticker, o.date, type(o))
+            key = GroupKey(o.isin, o.date, type(o))
             same_day[key].append(o)
         return same_day
 
-    def _merge_same_day(self, ticker: Ticker, same_day: GroupDict) -> None:
-        ticker_orders = (
-            orders for key, orders in same_day.items() if key.ticker == ticker
+    def _merge_same_day(self, isin: ISIN, same_day: GroupDict) -> None:
+        security_orders = (
+            orders for key, orders in same_day.items() if key.isin == isin
         )
 
-        for orders in ticker_orders:
+        for orders in security_orders:
             if len(orders) > 1:
                 order = Order.merge(*orders)
                 logging.debug('    New "same-day" merged order: %s', order)
@@ -238,15 +245,15 @@ class TaxCalculator:
                 order = orders[0]
 
             if isinstance(order, Acquisition):
-                self._acquisitions[ticker].append(order)
+                self._acquisitions[isin].append(order)
             elif isinstance(order, Disposal):
-                self._disposals[ticker].append(order)
+                self._disposals[isin].append(order)
 
     def _match_shares(
-        self, ticker: Ticker, match_fn: Callable[[Acquisition, Disposal], bool]
+        self, isin: ISIN, match_fn: Callable[[Acquisition, Disposal], bool]
     ):
-        acquisits = self._acquisitions[ticker]
-        disposals = self._disposals[ticker]
+        acquisits = self._acquisitions[isin]
+        disposals = self._disposals[isin]
         matched: set[Order] = set()
 
         a_idx = 0
@@ -283,23 +290,23 @@ class TaxCalculator:
                 CapitalGain(d, a.total_cost + d.fees, a.date)
             )
 
-        self._acquisitions[ticker] = [o for o in acquisits if o not in matched]
-        self._disposals[ticker] = [o for o in disposals if o not in matched]
+        self._acquisitions[isin] = [o for o in acquisits if o not in matched]
+        self._disposals[isin] = [o for o in disposals if o not in matched]
 
-    def _process_section104_disposals(self, ticker) -> None:
-        ticker_orders = sorted(
-            [*self._acquisitions[ticker], *self._disposals[ticker]],
+    def _process_section104_disposals(self, isin: ISIN) -> None:
+        security_orders = sorted(
+            [*self._acquisitions[isin], *self._disposals[isin]],
             key=lambda order: order.date,
         )
 
-        for order in ticker_orders:
-            holding = self._holdings.get(ticker)
+        for order in security_orders:
+            holding = self._holdings.get(isin)
 
             if isinstance(order, Acquisition):
                 if holding is not None:
                     holding.increase(order.date, order.quantity, order.total_cost)
                 else:
-                    self._holdings[ticker] = Section104Holding(
+                    self._holdings[isin] = Section104Holding(
                         order.date, order.quantity, order.total_cost
                     )
             elif isinstance(order, Disposal):
@@ -309,19 +316,27 @@ class TaxCalculator:
                     holding.decrease(order.date, order.quantity, allowable_cost)
 
                     if holding.quantity < 0.0:
-                        raise_or_warn(IncompleteRecordsError(ticker))
-                        logging.warning("Not calculating holding for %s", ticker)
-                        del self._holdings[ticker]
+                        raise_or_warn(
+                            IncompleteRecordsError(
+                                isin, self._tr_hist.get_security_name(isin) or "?"
+                            )
+                        )
+                        logging.warning("Not calculating holding for %s", isin)
+                        del self._holdings[isin]
                         break
 
                     if holding.quantity == Decimal("0.0"):
-                        del self._holdings[ticker]
+                        del self._holdings[isin]
 
                     self._capital_gains[order.tax_year()].append(
                         CapitalGain(order, allowable_cost + order.fees)
                     )
                 else:
-                    raise_or_warn(IncompleteRecordsError(ticker))
-                    logging.warning("Not calculating holding for %s", ticker)
-                    del self._holdings[ticker]
+                    raise_or_warn(
+                        IncompleteRecordsError(
+                            isin, self._tr_hist.get_security_name(isin) or "?"
+                        )
+                    )
+                    logging.warning("Not calculating holding for %s", isin)
+                    del self._holdings[isin]
                     break
