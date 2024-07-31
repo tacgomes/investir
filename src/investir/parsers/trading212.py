@@ -20,7 +20,7 @@ from investir.exceptions import (
 )
 from investir.config import config
 from investir.parser import Parser, ParsingResult
-from investir.typing import Ticker
+from investir.typing import ISIN, Ticker
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -143,7 +143,9 @@ class Trading212Parser(Parser):
     ) -> None:
         action = row["Action"]
         timestamp = parse_timestamp(row["Time"])
+        isin = row["ISIN"]
         ticker = row["Ticker"]
+        name = row["Name"]
         num_shares = Decimal(row["No. of shares"])
         price_share = Decimal(row["Price / share"])
         exchange_rate = Decimal(row["Exchange rate"])
@@ -190,11 +192,13 @@ class Trading212Parser(Parser):
         self._orders.append(
             order_class(
                 timestamp,
-                transaction_id=tr_id,
-                amount=total - fees,
+                isin=ISIN(isin),
                 ticker=Ticker(ticker),
+                name=name,
+                amount=total - fees,
                 quantity=num_shares,
                 fees=allowable_fees,
+                transaction_id=tr_id,
             )
         )
 
@@ -202,7 +206,9 @@ class Trading212Parser(Parser):
 
     def _parse_dividend(self, row: dict[str, str]):
         timestamp = parse_timestamp(row["Time"])
+        isin = row["ISIN"]
         ticker = row["Ticker"]
+        name = row["Name"]
         currency_price_share = row["Currency (Price / share)"]
         total = Decimal(row["Total"])
         currency_withholding_tax = row["Currency (Withholding tax)"]
@@ -222,10 +228,12 @@ class Trading212Parser(Parser):
         self._dividends.append(
             Dividend(
                 timestamp,
-                transaction_id=tr_id,
-                amount=total,
+                isin=ISIN(isin),
                 ticker=Ticker(ticker),
+                name=name,
+                amount=total,
                 withheld=None,
+                transaction_id=tr_id,
             )
         )
 

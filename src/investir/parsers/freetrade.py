@@ -18,7 +18,7 @@ from investir.exceptions import (
 )
 from investir.config import config
 from investir.parser import Parser, ParsingResult
-from investir.typing import Ticker
+from investir.typing import ISIN, Ticker
 from investir.transaction import (
     Order,
     Acquisition,
@@ -123,11 +123,15 @@ class FreetradeParser(Parser):
             self._orders, self._dividends, self._transfers, self._interest
         )
 
-    def _parse_order(self, row: dict[str, str]) -> None:
-        action = row["Buy / Sell"]
+    def _parse_order(  # pylint: disable=too-many-locals
+        self, row: dict[str, str]
+    ) -> None:
+        title = row["Title"]
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])
+        action = row["Buy / Sell"]
         ticker = row["Ticker"]
+        isin = row["ISIN"]
         price = Decimal(row["Price per Share in Account Currency"])
         quantity = Decimal(row["Quantity"])
         order_id = row["Order ID"]
@@ -166,20 +170,24 @@ class FreetradeParser(Parser):
         self._orders.append(
             order_class(
                 timestamp,
-                transaction_id=order_id,
-                amount=total_amount - fees,
+                isin=ISIN(isin),
                 ticker=Ticker(ticker),
+                name=title,
+                amount=total_amount - fees,
                 quantity=quantity,
                 fees=allowable_fees,
+                transaction_id=order_id,
             )
         )
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_dividend(self, row: dict[str, str]):
+        title = row["Title"]
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])
         ticker = row["Ticker"]
+        isin = row["ISIN"]
         base_fx_rate = read_decimal(row["Base FX Rate"], Decimal("1.0"))
         eligible_quantity = Decimal(row["Dividend Eligible Quantity"])
         amount_per_share = Decimal(row["Dividend Amount Per Share"])
@@ -206,8 +214,10 @@ class FreetradeParser(Parser):
         self._dividends.append(
             Dividend(
                 timestamp,
-                total_amount,
+                isin=ISIN(isin),
                 ticker=Ticker(ticker),
+                name=title,
+                amount=total_amount,
                 withheld=withheld_tax_amount * base_fx_rate,
             )
         )

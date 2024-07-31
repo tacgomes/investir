@@ -15,30 +15,34 @@ from investir.exceptions import (
 )
 from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
-from investir.typing import Ticker
+from investir.typing import ISIN, Ticker
 
 
 TIMESTAMP = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
 ACQUISITION: Final = {
+    "Title": "Amazon",
     "Type": "ORDER",
     "Timestamp": TIMESTAMP,
     "Account Currency": "GBP",
     "Total Amount": "1330.20",
     "Buy / Sell": "BUY",
     "Ticker": "AMZN",
+    "ISIN": "AMZN-ISIN",
     "Price per Share in Account Currency": "132.5",
     "Stamp Duty": "5.2",
     "Quantity": "10.0",
 }
 
 DISPOSAL: Final = {
+    "Title": "Skyworks",
     "Type": "ORDER",
     "Timestamp": TIMESTAMP,
     "Account Currency": "GBP",
     "Total Amount": "1111.85",
     "Buy / Sell": "SELL",
     "Ticker": "SWKS",
+    "ISIN": "SWKS-ISIN",
     "Price per Share in Account Currency": "532.5",
     "Quantity": "2.1",
     "FX Fee Amount": "6.4",
@@ -81,11 +85,13 @@ def test_parser_happy_path(create_parser):
     disposal = DISPOSAL
 
     dividend = {
+        "Title": "Skyworks",
         "Type": "DIVIDEND",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
         "Total Amount": "2.47",
         "Ticker": "SWKS",
+        "ISIN": "SWKS-ISIN",
         "Base FX Rate": "0.75440000",
         "FX Fee Amount": "0.00",
         "Dividend Ex Date": "2021-11-22",
@@ -142,16 +148,20 @@ def test_parser_happy_path(create_parser):
     order = parser_result.orders[0]
     assert isinstance(order, Disposal)
     assert order.timestamp == TIMESTAMP
-    assert order.amount == Decimal("1118.25")
+    assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
+    assert order.name == "Skyworks"
+    assert order.amount == Decimal("1118.25")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("6.4")
 
     order = parser_result.orders[1]
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
-    assert order.amount == Decimal("1325.00")
+    assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
+    assert order.name == "Amazon"
+    assert order.amount == Decimal("1325.00")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("5.2")
 
@@ -159,8 +169,10 @@ def test_parser_happy_path(create_parser):
     dividend = parser_result.dividends[0]
 
     assert dividend.timestamp == TIMESTAMP
-    assert dividend.amount == Decimal("2.47")
+    assert dividend.isin == ISIN("SWKS-ISIN")
+    assert dividend.name == "Skyworks"
     assert dividend.ticker == Ticker("SWKS")
+    assert dividend.amount == Decimal("2.47")
     assert dividend.withheld == Decimal("0.4375520000")
 
     assert len(parser_result.transfers) == 2
@@ -191,12 +203,14 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     order2["Timestamp"] = TIMESTAMP
 
     order3 = {
+        "Title": "Microsoft",
         "Type": "ORDER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
         "Total Amount": "1326.30",
         "Buy / Sell": "BUY",
         "Ticker": "MSFT",
+        "ISIN": "MSFT-ISIN",
         "Price per Share in Account Currency": "132.5",
         "Stamp Duty": "1.3",
         "Quantity": "10.0",
@@ -211,24 +225,30 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     order = parser_result.orders[0]
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
-    assert order.amount == Decimal("1325.00")
+    assert order.isin == ISIN("MSFT-ISIN")
     assert order.ticker == Ticker("MSFT")
+    assert order.name == "Microsoft"
+    assert order.amount == Decimal("1325.00")
     assert order.quantity == Decimal("10.0")
     assert order.fees == Decimal("1.3")
 
     order = parser_result.orders[1]
     assert isinstance(order, Disposal)
     assert order.timestamp == TIMESTAMP
-    assert order.amount == Decimal("1118.25")
+    assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
+    assert order.name == "Skyworks"
+    assert order.amount == Decimal("1118.25")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("0.0")
 
     order = parser_result.orders[2]
     assert isinstance(order, Acquisition)
     assert order.timestamp == TIMESTAMP
-    assert order.amount == Decimal("1325.00")
+    assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
+    assert order.name == "Amazon"
+    assert order.amount == Decimal("1325.00")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("0.0")
 
