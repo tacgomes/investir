@@ -4,7 +4,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import ClassVar
 
-from .typing import Ticker, Year
+from .typing import ISIN, Ticker, Year
 from .utils import date_to_tax_year
 
 
@@ -26,7 +26,9 @@ class Transaction(ABC):
 @dataclass(kw_only=True, frozen=True)
 class Order(Transaction, ABC):
     id: int = field(default=0, compare=False)
+    isin: ISIN = ISIN("")
     ticker: Ticker
+    name: str = ""
     quantity: Decimal
     original_quantity: Decimal | None = None
     fees: Decimal = Decimal("0.0")
@@ -54,8 +56,10 @@ class Order(Transaction, ABC):
 
         match = type(self)(
             self.timestamp,
-            amount=match_amount,
+            isin=self.isin,
             ticker=self.ticker,
+            name=self.name,
+            amount=match_amount,
             quantity=match_quantity,
             fees=match_fees,
             notes=f"Splitted from order {self.id}",
@@ -63,8 +67,10 @@ class Order(Transaction, ABC):
 
         remainder = type(self)(
             self.timestamp,
-            amount=remainder_amount,
+            isin=self.isin,
             ticker=self.ticker,
+            name=self.name,
+            amount=remainder_amount,
             quantity=remainder_quantity,
             fees=remainder_fees,
             notes=f"Splitted from order {self.id}",
@@ -94,8 +100,10 @@ class Order(Transaction, ABC):
 
         return order_class(
             timestamp,
-            amount=amount,
+            isin=orders[0].isin,
             ticker=ticker,
+            name=orders[0].name,
+            amount=amount,
             quantity=quantity,
             fees=fees,
             notes=notes,
@@ -118,6 +126,8 @@ class Disposal(Order):
 
 @dataclass(kw_only=True, frozen=True)
 class Dividend(Transaction):
+    isin: ISIN = ISIN("")
+    name: str = ""
     ticker: Ticker
     withheld: Decimal | None
 
