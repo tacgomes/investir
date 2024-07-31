@@ -5,53 +5,65 @@ import pytest
 
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
 from investir.trhistory import TrHistory
-from investir.typing import Ticker
+from investir.typing import ISIN, Ticker
 
 
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
-    transaction_id="ORDER1",
+    isin=ISIN("AMZN-ISIN"),
     ticker=Ticker("AMZN"),
+    name="Amazon",
     amount=Decimal("10.0"),
     quantity=Decimal("1.0"),
     fees=Decimal("0.5"),
+    transaction_id="ORDER1",
 )
 
 ORDER2 = Disposal(
     datetime(2024, 2, 5, 14, 7, 20),
-    transaction_id="ORDER2",
+    isin=ISIN("GOOG-ISIN"),
     ticker=Ticker("GOOG"),
+    name="Alphabet",
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
     fees=Decimal("1.0"),
+    transaction_id="ORDER2",
 )
 
 ORDER3 = Disposal(
     datetime(2025, 1, 2),
-    transaction_id="ORDER3",
+    isin=ISIN("AAPL-ISIN"),
     ticker=Ticker("AAPL"),
+    name="Apple",
     amount=Decimal("1.0"),
     quantity=Decimal("1.0"),
+    transaction_id="ORDER3",
 )
 
 ORDER4 = Disposal(
     datetime(2025, 1, 3),
-    transaction_id="ORDER4",
+    isin=ISIN("AAPL-ISIN"),
     ticker=Ticker("AAPL"),
+    name="Apple",
     amount=Decimal("1.0"),
     quantity=Decimal("1.0"),
+    transaction_id="ORDER4",
 )
 
 DIVIDEND1 = Dividend(
     datetime(2023, 2, 5, 14, 7, 20),
+    isin=ISIN("AMZN-ISIN"),
     ticker=Ticker("AMZN"),
+    name="Amazon",
     amount=Decimal("5.0"),
     withheld=Decimal("2.0"),
 )
 
 DIVIDEND2 = Dividend(
     datetime(2024, 2, 5, 14, 7, 20),
+    isin=ISIN("GOOG-ISIN"),
     ticker=Ticker("GOOG"),
+    name="Alphabet",
     amount=Decimal("5.0"),
     withheld=Decimal("2.0"),
 )
@@ -73,11 +85,13 @@ def test_trhistory_duplicates_on_different_files_are_removed():
     # For comparison purposes, the orders should be equivalent.
     order1b = Acquisition(
         ORDER1.timestamp,
-        transaction_id=ORDER1.transaction_id,
+        isin=ORDER1.isin,
         ticker=ORDER1.ticker,
+        name=ORDER1.name,
         amount=ORDER1.amount,
         quantity=ORDER1.quantity,
         fees=ORDER1.fees,
+        transaction_id=ORDER1.transaction_id,
     )
 
     tr_hist.insert_orders([ORDER1])
@@ -102,11 +116,13 @@ def test_trhistory_duplicates_on_same_file_are_not_allowed():
 
     order1b = Acquisition(
         ORDER1.timestamp,
-        transaction_id=ORDER1.transaction_id,
+        isin=ORDER1.isin,
         ticker=ORDER1.ticker,
+        name=ORDER1.name,
         amount=ORDER1.amount,
         quantity=ORDER1.quantity,
         fees=ORDER1.fees,
+        transaction_id=ORDER1.transaction_id,
     )
 
     with pytest.raises(ValueError):
@@ -129,8 +145,8 @@ def test_trhistory_transactions_are_sorted_by_timestamp():
 
     orders = tr_hist.orders()
     assert len(orders) == 2
-    assert orders[0].ticker == ORDER1.ticker
-    assert orders[1].ticker == ORDER2.ticker
+    assert orders[0].isin == ORDER1.isin
+    assert orders[1].isin == ORDER2.isin
 
 
 def test_trhistory_dividends_are_sorted_by_timestamp():
@@ -139,8 +155,8 @@ def test_trhistory_dividends_are_sorted_by_timestamp():
 
     dividends = tr_hist.dividends()
     assert len(dividends) == 2
-    assert dividends[0].ticker == DIVIDEND1.ticker
-    assert dividends[1].ticker == DIVIDEND2.ticker
+    assert dividends[0].isin == DIVIDEND1.isin
+    assert dividends[1].isin == DIVIDEND2.isin
 
 
 def test_trhistory_transfers_are_sorted_by_timestamp():
@@ -163,10 +179,54 @@ def test_trhistory_interest_is_sorted_by_timestamp():
     assert interest[1].amount == INTEREST2.amount
 
 
-def test_trhistory_tickers_method():
+def test_trhistory_securities():
     tr_hist = TrHistory()
     tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tr_hist.tickers() == ["AAPL", "AMZN", "GOOG"]
+    assert tr_hist.securities() == [
+        ("GOOG-ISIN", "Alphabet"),
+        ("AMZN-ISIN", "Amazon"),
+        ("AAPL-ISIN", "Apple"),
+    ]
+
+
+def test_get_security_name():
+    tr_hist = TrHistory()
+    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    assert tr_hist.get_security_name(ISIN("AMZN-ISIN")) == "Amazon"
+    assert tr_hist.get_security_name(ISIN("GOOG-ISIN")) == "Alphabet"
+    assert tr_hist.get_security_name(ISIN("AAPL-ISIN")) == "Apple"
+    assert tr_hist.get_security_name(ISIN("NOTF")) is None
+
+
+def test_get_ticker_isin():
+    tr_hist = TrHistory()
+    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    assert tr_hist.get_ticker_isin(Ticker("AMZN")) == ISIN("AMZN-ISIN")
+    assert tr_hist.get_ticker_isin(Ticker("GOOG")) == ISIN("GOOG-ISIN")
+    assert tr_hist.get_ticker_isin(Ticker("AAPL")) == ISIN("AAPL-ISIN")
+    assert tr_hist.get_ticker_isin(Ticker("NOTF")) is None
+
+
+def test_get_ticker_isin_when_ticker_ambigous():
+    order1 = Acquisition(
+        datetime(2023, 1, 1),
+        isin=ISIN("NL0010273215"),
+        ticker=Ticker("ASML"),
+        amount=Decimal("10.0"),
+        quantity=Decimal("1.0"),
+    )
+
+    order2 = Acquisition(
+        datetime(2023, 1, 2),
+        isin=ISIN("USN070592100"),
+        ticker=Ticker("ASML"),
+        amount=Decimal("10.0"),
+        quantity=Decimal("1.0"),
+    )
+
+    tr_hist = TrHistory()
+    tr_hist.insert_orders([order1, order2])
+    assert tr_hist.get_ticker_isin(Ticker("ASML")) is None
 
 
 def test_trhistory_show_orders(capsys):
@@ -174,8 +234,8 @@ def test_trhistory_show_orders(capsys):
     tr_hist.insert_orders([ORDER1, ORDER2])
     tr_hist.show_orders()
     captured = capsys.readouterr()
-    assert ORDER1.ticker in captured.out
-    assert ORDER2.ticker in captured.out
+    assert ORDER1.name in captured.out
+    assert ORDER2.name in captured.out
 
 
 def test_trhistory_show_dividends(capsys):
@@ -183,8 +243,8 @@ def test_trhistory_show_dividends(capsys):
     tr_hist.insert_dividends([DIVIDEND1, DIVIDEND2])
     tr_hist.show_dividends()
     captured = capsys.readouterr()
-    assert DIVIDEND1.ticker in captured.out
-    assert DIVIDEND2.ticker in captured.out
+    assert DIVIDEND1.name in captured.out
+    assert DIVIDEND2.name in captured.out
 
 
 def test_trhistory_show_transfers(capsys):
