@@ -8,8 +8,8 @@ from typing import Callable, TypeAlias
 
 from prettytable import PrettyTable
 
+from .securitiesdatacache import SecuritiesDataCache
 from .exceptions import IncompleteRecordsError
-from .sharesplitter import ShareSplitter
 from .typing import ISIN, Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
@@ -80,9 +80,11 @@ class Section104Holding:
 
 
 class TaxCalculator:
-    def __init__(self, tr_hist: TrHistory, share_splitter: ShareSplitter) -> None:
+    def __init__(
+        self, tr_hist: TrHistory, securities_data: SecuritiesDataCache
+    ) -> None:
         self._tr_hist = tr_hist
-        self._share_splitter = share_splitter
+        self._securities_data = securities_data
         self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
         self._holdings: dict[ISIN, Section104Holding] = {}
@@ -223,7 +225,7 @@ class TaxCalculator:
             )
 
     def _normalise_orders(self, orders: list[Order]) -> list[Order]:
-        return [self._share_splitter.adjust_quantity(o) for o in orders]
+        return [o.adjust_quantity(self._securities_data[o.isin].splits) for o in orders]
 
     def _group_same_day(self, orders: list[Order]) -> GroupDict:
         same_day = defaultdict(list)

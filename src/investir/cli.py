@@ -6,10 +6,11 @@ import pathlib
 import sys
 
 from .config import config
+from .securitiesdatacache import SecuritiesDataCache
+from .securitiesdataprovider import YahooFinanceDataProvider
 from .exceptions import InvestirError
 from .logging import setup_logging
 from .parser import ParserFactory
-from .sharesplitter import ShareSplitter
 from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal
 from .trhistory import TrHistory
@@ -174,8 +175,8 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
         filters.append(lambda tr: tr.tax_year() == args.tax_year)
 
     try:
-        share_splitter = ShareSplitter(tr_hist)
-        tax_calc = TaxCalculator(tr_hist, share_splitter)
+        securities_data = SecuritiesDataCache(YahooFinanceDataProvider(), tr_hist)
+        tax_calculator = TaxCalculator(tr_hist, securities_data)
     except InvestirError as ex:
         logging.critical(ex)
         sys.exit(1)
@@ -193,11 +194,11 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
         case "interest":
             tr_hist.show_interest(filters)
         case "capital-gains":
-            tax_calc.show_capital_gains(
+            tax_calculator.show_capital_gains(
                 args.tax_year, args.ticker, args.gains_only, args.losses_only
             )
         case "holdings":
-            tax_calc.show_holdings(args.ticker, args.show_avg_cost)
+            tax_calculator.show_holdings(args.ticker, args.show_avg_cost)
         case _:
             raise AssertionError(f"Unknown command: {args.command}")
 
