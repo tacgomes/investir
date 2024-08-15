@@ -30,7 +30,7 @@ authors = [
 maintainers = [
   {name = "Tiago Gomes", email = "tiago.avv+oss@gmail.com"}
 ]
-description = "Calculate UK capital gains tax for Freetrade"
+description = "Calculate UK capital gains tax for Freetrade and Trading212"
 readme = "README.md"
 license = {text = "MIT License"}
 keywords = ["HMRC", "Shares", "Stock", "Tax", "Capital Gains", "Freetrade", "Trading212"]
