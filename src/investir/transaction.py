@@ -2,8 +2,11 @@ from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from decimal import Decimal
+from functools import reduce
+import operator
 from typing import ClassVar
 
+from .securitydata import Split
 from .typing import ISIN, Ticker, Year
 from .utils import date_to_tax_year
 
@@ -107,6 +110,29 @@ class Order(Transaction, ABC):
             quantity=quantity,
             fees=fees,
             notes=notes,
+        )
+
+    def adjust_quantity(self, splits: list[Split]) -> "Order":
+        split_ratios = [s.ratio for s in splits if self.timestamp < s.date_effective]
+
+        if not split_ratios:
+            return self
+
+        quantity = reduce(operator.mul, [self.quantity] + split_ratios)
+
+        return type(self)(
+            self.timestamp,
+            isin=self.isin,
+            ticker=self.ticker,
+            name=self.name,
+            amount=self.amount,
+            quantity=quantity,
+            original_quantity=self.quantity,
+            fees=self.fees,
+            notes=(
+                f"Adjusted from order {self.id} after applying the "
+                f"following split ratios: {', '.join(map(str, split_ratios))}"
+            ),
         )
 
 

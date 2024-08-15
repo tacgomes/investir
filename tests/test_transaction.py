@@ -1,8 +1,9 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 
 import pytest
 
+from investir.securitydata import Split
 from investir.typing import ISIN, Ticker
 from investir.transaction import Order, Acquisition, Disposal
 
@@ -125,3 +126,54 @@ def test_order_split():
 
     with pytest.raises(AssertionError):
         order.split(Decimal("12.1"))
+
+
+def test_order_adjust_quantity():
+    order1 = Acquisition(
+        datetime(2018, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("AMZN-ISIN"),
+        name="Amazon",
+        amount=Decimal("10.0"),
+        quantity=Decimal("1.0"),
+    )
+
+    order2 = Acquisition(
+        datetime(2020, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("AMZN-ISIN"),
+        name="Amazon",
+        amount=Decimal("10.0"),
+        quantity=Decimal("1.0"),
+    )
+
+    splits = [
+        Split(datetime(2019, 1, 1, tzinfo=timezone.utc), Decimal("10.0")),
+        Split(datetime(2021, 1, 1, tzinfo=timezone.utc), Decimal("3.0")),
+    ]
+
+    order2_adjusted = order2.adjust_quantity(splits)
+    ratio = Decimal("3.0")
+    assert type(order2_adjusted) is type(order2)
+    assert order2_adjusted.timestamp == order2.timestamp
+    assert order2_adjusted.isin == order2.isin
+    assert order2_adjusted.ticker == order2.ticker
+    assert order2_adjusted.name == order2.name
+    assert order2_adjusted.amount == order2.amount
+    assert order2_adjusted.fees == order2.fees
+    assert order2_adjusted.quantity == order2.quantity * ratio
+    assert order2_adjusted.original_quantity == order2.quantity
+    assert order2_adjusted.transaction_id == order2.transaction_id
+    assert "Adjusted from order" in order2_adjusted.notes
+
+    order1_adjusted = order1.adjust_quantity(splits)
+    ratio = Decimal("10.0") * Decimal("3.0")
+    assert type(order1_adjusted) is type(order1)
+    assert order1_adjusted.timestamp == order1.timestamp
+    assert order1_adjusted.isin == order1.isin
+    assert order1_adjusted.ticker == order1.ticker
+    assert order1_adjusted.name == order1.name
+    assert order1_adjusted.amount == order1.amount
+    assert order1_adjusted.fees == order1.fees
+    assert order1_adjusted.quantity == order1.quantity * ratio
+    assert order1_adjusted.original_quantity == order1.quantity
+    assert order1_adjusted.transaction_id == order1.transaction_id
+    assert "Adjusted from order" in order1_adjusted.notes
