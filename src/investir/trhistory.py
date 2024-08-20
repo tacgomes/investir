@@ -81,10 +81,9 @@ class TrHistory:
             net_proceeds = ""
             total_cost = ""
             if isinstance(tr, Acquisition):
-                total_cost = str(round(tr.total_cost, 2))
+                total_cost = f"{tr.total_cost:.2f}"
             else:
-                net_proceeds = str(round(tr.net_proceeds, 2))
-
+                net_proceeds = f"{tr.net_proceeds:.2f}"
             table.add_row(
                 [
                     tr.date,
@@ -94,7 +93,7 @@ class TrHistory:
                     total_cost,
                     net_proceeds,
                     tr.quantity,
-                    round(tr.price, 2),
+                    f"{tr.price:.2f}",
                     tr.fees,
                 ]
             )
@@ -117,7 +116,7 @@ class TrHistory:
             if tr.withheld is None:
                 withheld = "?"
             else:
-                withheld = round(tr.withheld, 2)
+                withheld = f"{tr.withheld:.2f}"
             table.add_row([tr.date, tr.isin, tr.name, tr.ticker, tr.amount, withheld])
 
         print(table)
