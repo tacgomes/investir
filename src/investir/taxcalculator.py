@@ -88,7 +88,7 @@ class TaxCalculator:
         self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
         self._holdings: dict[ISIN, Section104Holding] = {}
-        self._capital_gains: dict[int, list[CapitalGain]] = defaultdict(list)
+        self._capital_gains: dict[Year, list[CapitalGain]] = defaultdict(list)
 
         self._calculate_capital_gains()
 
