@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Callable, TypeAlias
 
-from prettytable import PrettyTable
+import prettytable
 
 from .securitiesdatacache import SecuritiesDataCache
 from .exceptions import IncompleteRecordsError
@@ -110,50 +110,84 @@ class TaxCalculator:
     ):
         assert not (gains_only and losses_only)
 
-        table = PrettyTable(
-            field_names=(
-                "Date Disposed",
-                "Date Acquired",
-                "ISIN",
-                "Security",
-                "Quantity",
-                "Cost (£)",
-                "Proceeds (£)",
-                "Gain/loss (£)",
+        if tax_year is not None:
+            tax_years = [tax_year]
+        else:
+            tax_years = sorted(self._capital_gains.keys())
+
+        for year in tax_years:
+            table = prettytable.PrettyTable(
+                title=f"Tax year {year}-{year + 1}",
+                field_names=(
+                    "Date Disposed",
+                    "Date Acquired",
+                    "ISIN",
+                    "Security",
+                    "Quantity",
+                    "Cost (£)",
+                    "Proceeds (£)",
+                    "Gain/loss (£)",
+                ),
             )
-        )
+            table.vrules = prettytable.NONE
 
-        capital_gains = self.capital_gains(tax_year)
+            num_disposals = 0
+            disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
 
-        for cg in capital_gains:
-            if ticker is not None and cg.disposal.ticker != ticker:
-                continue
+            for cg in self.capital_gains(tax_year):
+                if ticker is not None and cg.disposal.ticker != ticker:
+                    continue
 
-            if gains_only and cg.gain_loss < 0.0:
-                continue
+                if gains_only and cg.gain_loss < 0.0:
+                    continue
 
-            if losses_only and cg.gain_loss > 0.0:
-                continue
+                if losses_only and cg.gain_loss > 0.0:
+                    continue
 
-            table.add_row(
-                [
-                    cg.disposal.date,
-                    cg.date_acquired or "Section 104",
-                    cg.disposal.isin,
-                    cg.disposal.name,
-                    cg.quantity,
-                    f"{cg.cost:.2f}",
-                    f"{cg.disposal.amount:.2f}",
-                    f"{cg.gain_loss:.2f}",
-                ]
+                table.add_row(
+                    [
+                        cg.disposal.date,
+                        cg.date_acquired or "Section 104",
+                        cg.disposal.isin,
+                        cg.disposal.name,
+                        cg.quantity,
+                        f"{cg.cost:.2f}",
+                        f"{cg.disposal.amount:.2f}",
+                        f"{cg.gain_loss:.2f}",
+                    ]
+                )
+
+                num_disposals += 1
+                disposal_proceeds += round(cg.disposal.amount, 2)
+                total_cost += round(cg.cost, 2)
+                if cg.gain_loss > 0.0:
+                    total_gains += cg.gain_loss
+                else:
+                    total_losses += abs(cg.gain_loss)
+
+            print(table)
+
+            def gbp(amount):
+                return "£" + f"{amount:.2f}"
+
+            print(
+                f"{'Number of disposals:':44}{num_disposals:>10}       "
+                f"{'Gains in the year, before losses:':44}{gbp(total_gains):>10}"
             )
-
-        print(table)
+            print(
+                f"{'Disposal proceeds:':44}{gbp(disposal_proceeds):>10}       "
+                f"{'Losses in the year:':44}{gbp(total_losses):>10}"
+            )
+            print(
+                f"{'Allowable costs (including purchase price):':44}"
+                f"{gbp(total_cost):>10}\n"
+            )
 
     def show_holdings(self, ticker: Ticker | None, show_avg_cost: bool):
-        fields = ["ISIN", "Security", "Cost (£)", "Quantity", "Avg Cost (£)"]
+        fields = ["ISIN", "Security", "Cost (£)", "Quantity", "Average Cost (£)"]
 
-        table = PrettyTable(field_names=fields)
+        table = prettytable.PrettyTable(field_names=fields)
+        table.vrules = prettytable.NONE
 
         if not show_avg_cost:
             table.fields = fields[:-1]
@@ -171,7 +205,10 @@ class TaxCalculator:
                     ticker,
                 )
 
-        for isin, holding in holdings:
+        total_cost = Decimal("0.0")
+        last_idx = len(holdings) - 1
+
+        for idx, (isin, holding) in enumerate(holdings):
             table.add_row(
                 [
                     isin,
@@ -179,10 +216,14 @@ class TaxCalculator:
                     f"{holding.cost:.2f}",
                     holding.quantity,
                     f"{holding.cost / holding.quantity:.2f}",
-                ]
+                ],
+                divider=idx == last_idx,
             )
+            total_cost += round(holding.cost, 2)
 
-        print(table)
+        table.add_row(["", "", total_cost, "", ""])
+
+        print(table, "\n")
 
     def _calculate_capital_gains(self) -> None:
         logging.info("Calculating capital gains")

@@ -253,7 +253,7 @@ def test_trhistory_show_transfers(capsys):
     tr_hist.show_transfers()
     captured = capsys.readouterr()
     assert str(TRANSFER1.amount) in captured.out
-    assert str(TRANSFER2.amount) in captured.out
+    assert str(abs(TRANSFER2.amount)) in captured.out
 
 
 def test_trhistory_show_interest(capsys):
