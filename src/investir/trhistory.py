@@ -3,9 +3,14 @@ from typing import NamedTuple
 
 import prettytable
 
-from .transaction import Order, Acquisition, Dividend, Transfer, Interest
+from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
 from .typing import ISIN, Ticker
 from .utils import multiple_filter
+
+
+def unique_and_sorted(transactions: list[Transaction] | None):
+    """Remove duplicated transactions and sort them by timestamp."""
+    return sorted(set(transactions or []), key=lambda tr: tr.timestamp)
 
 
 class Security(NamedTuple):
@@ -14,36 +19,31 @@ class Security(NamedTuple):
 
 
 class TrHistory:
-    def __init__(self) -> None:
-        self._orders: list[Order] = []
-        self._dividends: list[Dividend] = []
-        self._transfers: list[Transfer] = []
-        self._interest: list[Interest] = []
+    def __init__(
+        self, *, orders=None, dividends=None, transfers=None, interest=None
+    ) -> None:
+        self._orders: list[Order] = unique_and_sorted(orders)
+        self._dividends: list[Dividend] = unique_and_sorted(dividends)
+        self._transfers: list[Transfer] = unique_and_sorted(transfers)
+        self._interest: list[Interest] = unique_and_sorted(interest)
 
-    def insert_orders(self, orders: list[Order]) -> None:
-        self._orders = TrHistory._insert(self._orders, orders)
-
-    def insert_dividends(self, dividends: list[Dividend]) -> None:
-        self._dividends = TrHistory._insert(self._dividends, dividends)
-
-    def insert_transfers(self, transfers: list[Transfer]) -> None:
-        self._transfers = TrHistory._insert(self._transfers, transfers)
-
-    def insert_interest(self, interest: list[Interest]) -> None:
-        self._interest = TrHistory._insert(self._interest, interest)
-
+    @property
     def orders(self) -> list[Order]:
-        return self._orders[:]
+        return self._orders
 
+    @property
     def dividends(self) -> list[Dividend]:
-        return self._dividends[:]
+        return self._dividends
 
+    @property
     def transfers(self) -> list[Transfer]:
-        return self._transfers[:]
+        return self._transfers
 
+    @property
     def interest(self) -> list[Interest]:
-        return self._interest[:]
+        return self._interest
 
+    @property
     def securities(self) -> list[Security]:
         securities = {o.isin: o.name for o in self._orders}
         return sorted(
@@ -219,12 +219,3 @@ class TrHistory:
         table.add_row(["", total_interest])
 
         print(table, "\n")
-
-    @staticmethod
-    def _insert(l1, l2):
-        """Remove duplicates and sort by timestamp."""
-        if len(l2) != len(set(l2)):
-            raise ValueError("Input file has duplicated entries")
-
-        result = list(set(l1 + l2))
-        return sorted(result, key=lambda tr: tr.timestamp)

@@ -87,8 +87,7 @@ def test_securities_data_initialisation_without_cache(
 ):
     cache_file = tmp_path / "cache.yaml"
 
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
 
     data_cache, data_provider_mock = create_securities_data_cache(
         tr_hist,
@@ -149,8 +148,7 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
         Split(date_effective=datetime(2024, 1, 1), ratio=Decimal("40.0"))
     ]
 
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
     data_cache, data_provider_mock = create_securities_data_cache(
         tr_hist,

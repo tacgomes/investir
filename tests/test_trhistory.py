@@ -1,8 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
 
-import pytest
-
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
@@ -78,8 +76,6 @@ INTEREST2 = Interest(datetime(2024, 2, 5, 14, 7, 20), Decimal("500.0"))
 
 
 def test_trhistory_duplicates_on_different_files_are_removed():
-    tr_hist = TrHistory()
-
     # Create an order almost identical to ORDER1 other than the `id`
     # field which is automatically populated and it will be different.
     # For comparison purposes, the orders should be equivalent.
@@ -94,95 +90,58 @@ def test_trhistory_duplicates_on_different_files_are_removed():
         transaction_id=ORDER1.transaction_id,
     )
 
-    tr_hist.insert_orders([ORDER1])
-    tr_hist.insert_orders([order1b])
-    assert len(tr_hist.orders()) == 1
-
-    tr_hist.insert_dividends([DIVIDEND1])
-    tr_hist.insert_dividends([DIVIDEND1])
-    assert len(tr_hist.dividends()) == 1
-
-    tr_hist.insert_transfers([TRANSFER1])
-    tr_hist.insert_transfers([TRANSFER1])
-    assert len(tr_hist.transfers()) == 1
-
-    tr_hist.insert_interest([INTEREST1])
-    tr_hist.insert_interest([INTEREST1])
-    assert len(tr_hist.interest()) == 1
-
-
-def test_trhistory_duplicates_on_same_file_are_not_allowed():
-    tr_hist = TrHistory()
-
-    order1b = Acquisition(
-        ORDER1.timestamp,
-        isin=ORDER1.isin,
-        ticker=ORDER1.ticker,
-        name=ORDER1.name,
-        amount=ORDER1.amount,
-        quantity=ORDER1.quantity,
-        fees=ORDER1.fees,
-        transaction_id=ORDER1.transaction_id,
+    tr_hist = TrHistory(
+        orders=[ORDER1, order1b],
+        dividends=[DIVIDEND1, DIVIDEND1],
+        transfers=[TRANSFER1, TRANSFER1],
+        interest=[INTEREST1, INTEREST1],
     )
 
-    with pytest.raises(ValueError):
-        tr_hist.insert_orders([ORDER1, order1b])
-        assert len(tr_hist.orders()) == 1
-
-    with pytest.raises(ValueError):
-        tr_hist.insert_dividends([DIVIDEND1, DIVIDEND1])
-
-    with pytest.raises(ValueError):
-        tr_hist.insert_transfers([TRANSFER1, TRANSFER1])
-
-    with pytest.raises(ValueError):
-        tr_hist.insert_interest([INTEREST1, INTEREST1])
+    assert len(tr_hist.orders) == 1
+    assert len(tr_hist.dividends) == 1
+    assert len(tr_hist.transfers) == 1
+    assert len(tr_hist.interest) == 1
 
 
 def test_trhistory_transactions_are_sorted_by_timestamp():
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER2, ORDER1])
+    tr_hist = TrHistory(orders=[ORDER2, ORDER1])
 
-    orders = tr_hist.orders()
+    orders = tr_hist.orders
     assert len(orders) == 2
     assert orders[0].isin == ORDER1.isin
     assert orders[1].isin == ORDER2.isin
 
 
 def test_trhistory_dividends_are_sorted_by_timestamp():
-    tr_hist = TrHistory()
-    tr_hist.insert_dividends([DIVIDEND2, DIVIDEND1])
+    tr_hist = TrHistory(dividends=[DIVIDEND2, DIVIDEND1])
 
-    dividends = tr_hist.dividends()
+    dividends = tr_hist.dividends
     assert len(dividends) == 2
     assert dividends[0].isin == DIVIDEND1.isin
     assert dividends[1].isin == DIVIDEND2.isin
 
 
 def test_trhistory_transfers_are_sorted_by_timestamp():
-    tr_hist = TrHistory()
-    tr_hist.insert_transfers([TRANSFER2, TRANSFER1])
+    tr_hist = TrHistory(transfers=[TRANSFER2, TRANSFER1])
 
-    transfers = tr_hist.transfers()
+    transfers = tr_hist.transfers
     assert len(transfers) == 2
     assert transfers[0].amount == Decimal("3000")
     assert transfers[1].amount == Decimal("-1000")
 
 
 def test_trhistory_interest_is_sorted_by_timestamp():
-    tr_hist = TrHistory()
-    tr_hist.insert_interest([INTEREST2, INTEREST1])
+    tr_hist = TrHistory(interest=[INTEREST2, INTEREST1])
 
-    interest = tr_hist.interest()
+    interest = tr_hist.interest
     assert len(interest) == 2
     assert interest[0].amount == INTEREST1.amount
     assert interest[1].amount == INTEREST2.amount
 
 
 def test_trhistory_securities():
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tr_hist.securities() == [
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
+    assert tr_hist.securities == [
         ("GOOG-ISIN", "Alphabet"),
         ("AMZN-ISIN", "Amazon"),
         ("AAPL-ISIN", "Apple"),
@@ -190,8 +149,7 @@ def test_trhistory_securities():
 
 
 def test_get_security_name():
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
     assert tr_hist.get_security_name(ISIN("AMZN-ISIN")) == "Amazon"
     assert tr_hist.get_security_name(ISIN("GOOG-ISIN")) == "Alphabet"
     assert tr_hist.get_security_name(ISIN("AAPL-ISIN")) == "Apple"
@@ -199,8 +157,7 @@ def test_get_security_name():
 
 
 def test_get_ticker_isin():
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2, ORDER3, ORDER4])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
     assert tr_hist.get_ticker_isin(Ticker("AMZN")) == ISIN("AMZN-ISIN")
     assert tr_hist.get_ticker_isin(Ticker("GOOG")) == ISIN("GOOG-ISIN")
     assert tr_hist.get_ticker_isin(Ticker("AAPL")) == ISIN("AAPL-ISIN")
@@ -224,14 +181,12 @@ def test_get_ticker_isin_when_ticker_ambigous():
         quantity=Decimal("1.0"),
     )
 
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([order1, order2])
+    tr_hist = TrHistory(orders=[order1, order2])
     assert tr_hist.get_ticker_isin(Ticker("ASML")) is None
 
 
 def test_trhistory_show_orders(capsys):
-    tr_hist = TrHistory()
-    tr_hist.insert_orders([ORDER1, ORDER2])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2])
     tr_hist.show_orders()
     captured = capsys.readouterr()
     assert ORDER1.name in captured.out
@@ -239,8 +194,7 @@ def test_trhistory_show_orders(capsys):
 
 
 def test_trhistory_show_dividends(capsys):
-    tr_hist = TrHistory()
-    tr_hist.insert_dividends([DIVIDEND1, DIVIDEND2])
+    tr_hist = TrHistory(dividends=[DIVIDEND1, DIVIDEND2])
     tr_hist.show_dividends()
     captured = capsys.readouterr()
     assert DIVIDEND1.name in captured.out
@@ -248,8 +202,7 @@ def test_trhistory_show_dividends(capsys):
 
 
 def test_trhistory_show_transfers(capsys):
-    tr_hist = TrHistory()
-    tr_hist.insert_transfers([TRANSFER1, TRANSFER2])
+    tr_hist = TrHistory(transfers=[TRANSFER1, TRANSFER2])
     tr_hist.show_transfers()
     captured = capsys.readouterr()
     assert str(TRANSFER1.amount) in captured.out
@@ -257,8 +210,7 @@ def test_trhistory_show_transfers(capsys):
 
 
 def test_trhistory_show_interest(capsys):
-    tr_hist = TrHistory()
-    tr_hist.insert_interest([INTEREST1, INTEREST2])
+    tr_hist = TrHistory(interest=[INTEREST1, INTEREST2])
     tr_hist.show_interest()
     captured = capsys.readouterr()
     assert str(INTEREST1.amount) in captured.out

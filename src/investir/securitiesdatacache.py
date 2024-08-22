@@ -35,10 +35,10 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
     def _initialise(self):
         self._load_cache()
 
-        orders = self._tr_hist.orders()
+        orders = self._tr_hist.orders
         update_cache = False
 
-        for isin, name in self._tr_hist.securities():
+        for isin, name in self._tr_hist.securities:
             if (security_data := self._securities_data.get(isin)) is not None:
                 last_order = next(o for o in reversed(orders) if o.isin == isin)
 

@@ -20,8 +20,7 @@ from investir.typing import ISIN, Ticker
 def fixture_create_tax_calculator(mocker, tmp_path):
 
     def _method(orders: list[Order], splits: list[Split] | None = None):
-        tr_hist = TrHistory()
-        tr_hist.insert_orders(orders)
+        tr_hist = TrHistory(orders=orders)
 
         if splits is None:
             splits = []

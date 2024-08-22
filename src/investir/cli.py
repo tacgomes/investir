@@ -121,7 +121,12 @@ def create_holdings_command(subparser, parent_parser) -> None:
     )
 
 
-def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
+def parse_input_files(args: argparse.Namespace) -> TrHistory:
+    orders = []
+    dividends = []
+    transfers = []
+    interest = []
+
     for csv_file in args.input_files:
         logging.info("Parsing input file: %s", csv_file)
         if csv_parser := ParserFactory.create_parser(csv_file):
@@ -139,21 +144,27 @@ def parse_input_files(args: argparse.Namespace, tr_hist: TrHistory) -> None:
                 len(result.interest),
             )
 
-            tr_hist.insert_orders(result.orders)
-            tr_hist.insert_dividends(result.dividends)
-            tr_hist.insert_transfers(result.transfers)
-            tr_hist.insert_interest(result.interest)
+            orders += result.orders
+            dividends += result.dividends
+            transfers += result.transfers
+            interest += result.interest
         else:
             logging.critical("Unable to find a parser for %s", csv_file)
             sys.exit(1)
 
+    tr_hist = TrHistory(
+        orders=orders, dividends=dividends, transfers=transfers, interest=interest
+    )
+
     logging.info(
         "Total: %s orders, %s dividend payments, %s transfers, %s interest payments",
-        len(tr_hist.orders()),
-        len(tr_hist.dividends()),
-        len(tr_hist.transfers()),
-        len(tr_hist.interest()),
+        len(tr_hist.orders),
+        len(tr_hist.dividends),
+        len(tr_hist.transfers),
+        len(tr_hist.interest),
     )
+
+    return tr_hist
 
 
 def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
@@ -278,5 +289,5 @@ def main() -> None:
     tr_hist = TrHistory()
 
     setup_logging(args.log_level, args.colour)
-    parse_input_files(args, tr_hist)
+    tr_hist = parse_input_files(args)
     run_command(args, tr_hist)

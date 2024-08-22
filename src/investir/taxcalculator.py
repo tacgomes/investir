@@ -231,12 +231,12 @@ class TaxCalculator:
         # First normalise the orders by retroactively adjusting their
         # share quantity for any eventual share sub-division or share
         # consolidation event.
-        orders = self._normalise_orders(self._tr_hist.orders())
+        orders = self._normalise_orders(self._tr_hist.orders)
 
         # Group together orders that have the same isin, date and type.
         same_day = self._group_same_day(orders)
 
-        for isin, name in self._tr_hist.securities():
+        for isin, name in self._tr_hist.securities:
             logging.debug("Calculating capital gains for %s (%s)", name, isin)
 
             # Merge orders that were issued in the same day and have
