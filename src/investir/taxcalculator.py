@@ -1,10 +1,11 @@
 import logging
 
 from collections import defaultdict, namedtuple
+from collections.abc import Callable, Sequence, Mapping
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Callable, TypeAlias
+from typing import TypeAlias
 
 import prettytable
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 GroupKey = namedtuple("GroupKey", ["isin", "date", "type"])
-GroupDict: TypeAlias = dict[GroupKey, list[Order]]
+GroupDict: TypeAlias = Mapping[GroupKey, Sequence[Order]]
 
 
 def same_day_match(ord1: Acquisition, ord2: Disposal) -> bool:
@@ -92,7 +93,7 @@ class TaxCalculator:
 
         self._calculate_capital_gains()
 
-    def capital_gains(self, tax_year: Year | None = None) -> list[CapitalGain]:
+    def capital_gains(self, tax_year: Year | None = None) -> Sequence[CapitalGain]:
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
 
@@ -265,10 +266,10 @@ class TaxCalculator:
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.isin)
             )
 
-    def _normalise_orders(self, orders: list[Order]) -> list[Order]:
+    def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
         return [o.adjust_quantity(self._securities_data[o.isin].splits) for o in orders]
 
-    def _group_same_day(self, orders: list[Order]) -> GroupDict:
+    def _group_same_day(self, orders: Sequence[Order]) -> GroupDict:
         same_day = defaultdict(list)
         for o in orders:
             key = GroupKey(o.isin, o.date, type(o))

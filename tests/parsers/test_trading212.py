@@ -1,4 +1,5 @@
 import csv
+from collections.abc import Callable, Mapping, Sequence
 from decimal import Decimal
 from datetime import datetime, timezone
 from typing import Final
@@ -73,10 +74,10 @@ DIVIDEND: Final = {
 
 
 @pytest.fixture(name="create_parser")
-def fixture_create_parser(tmp_path):
+def fixture_create_parser(tmp_path) -> Callable:
     config.include_fx_fees = True
 
-    def _create_parser(rows):
+    def _create_parser(rows: Sequence[Mapping[str, str]]) -> Trading212Parser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
             field_names = (
@@ -93,7 +94,7 @@ def fixture_create_parser(tmp_path):
 
 
 @pytest.fixture(name="create_parser_format_unrecognised")
-def fixture_create_parser_format_unrecognised(tmp_path):
+def fixture_create_parser_format_unrecognised(tmp_path) -> Trading212Parser:
     csv_file = tmp_path / "transactions.csv"
     with csv_file.open("w", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=("Field1", "Field2"))

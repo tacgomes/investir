@@ -1,6 +1,7 @@
 import csv
 import logging
 
+from collections.abc import Mapping
 from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
 from typing import Final
@@ -124,7 +125,7 @@ class FreetradeParser(Parser):
         )
 
     def _parse_order(  # pylint: disable=too-many-locals
-        self, row: dict[str, str]
+        self, row: Mapping[str, str]
     ) -> None:
         title = row["Title"]
         timestamp = parse_timestamp(row["Timestamp"])
@@ -182,7 +183,7 @@ class FreetradeParser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
-    def _parse_dividend(self, row: dict[str, str]):
+    def _parse_dividend(self, row: Mapping[str, str]):
         title = row["Title"]
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])
@@ -224,7 +225,7 @@ class FreetradeParser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
-    def _parse_transfer(self, row: dict[str, str]):
+    def _parse_transfer(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Timestamp"])
         tr_type = row["Type"]
         total_amount = Decimal(row["Total Amount"])
@@ -236,7 +237,7 @@ class FreetradeParser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
-    def _parse_interest(self, row: dict[str, str]):
+    def _parse_interest(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])
 

@@ -2,7 +2,7 @@ import logging
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import NamedTuple
+from typing import ClassVar, NamedTuple
 
 from .transaction import Order, Dividend, Transfer, Interest
 
@@ -33,16 +33,16 @@ class Parser(ABC):
 
 
 class ParserFactory:
-    _parsers: list[Parser] = []
+    _parsers: ClassVar[list[type[Parser]]] = []
 
     @classmethod
-    def register_parser(cls, parser) -> None:
+    def register_parser(cls, parser: type[Parser]) -> None:
         cls._parsers.append(parser)
 
     @classmethod
     def create_parser(cls, filename: Path) -> Parser | None:
         for parser_class in cls._parsers:
-            parser = parser_class(filename)  # type: ignore[operator]
+            parser = parser_class(filename)  # type: ignore[call-arg]
             if parser.can_parse():
                 logger.info("Found parser: %s", type(parser).name())
                 return parser

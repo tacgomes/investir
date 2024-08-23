@@ -25,14 +25,12 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
     ) -> None:
         self._data_provider = data_provider
         self._tr_hist = tr_hist
-        self._cache_file = cache_file
-        if self._cache_file is None:
-            self._cache_file = DEFAULT_CACHE_DIR / DEFAULT_CACHE_FILENAME
+        self._cache_file = cache_file or (DEFAULT_CACHE_DIR / DEFAULT_CACHE_FILENAME)
         self._securities_data: dict[ISIN, SecurityData] = {}
 
         self._initialise()
 
-    def _initialise(self):
+    def _initialise(self) -> None:
         self._load_cache()
 
         orders = self._tr_hist.orders
@@ -55,7 +53,7 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
         if update_cache:
             self._update_cache()
 
-    def _load_cache(self):
+    def _load_cache(self) -> None:
         if self._cache_file.exists():
             logging.info("Loading securities cache from %s", self._cache_file)
 
@@ -63,7 +61,7 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
                 data = yaml.load(file, Loader=yaml.FullLoader)
                 self._securities_data = data["securities"]
 
-    def _update_cache(self):
+    def _update_cache(self) -> None:
         if self._cache_file.exists():
             logging.info("Updating securities cache on %s", self._cache_file)
         else:

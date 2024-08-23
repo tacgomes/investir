@@ -1,5 +1,8 @@
+from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -72,8 +75,10 @@ NFLX_SPLITS = [
 
 
 @pytest.fixture(name="create_securities_data_cache")
-def _create_securities_data_cache(mocker):
-    def _method(tr_hist, cache_file, data):
+def _create_securities_data_cache(mocker) -> Callable:
+    def _method(
+        tr_hist: TrHistory, cache_file: Path, data: Sequence[SecurityData]
+    ) -> tuple[SecuritiesDataCache, Any]:
         data_provider = YahooFinanceDataProvider()
         mock = mocker.patch.object(data_provider, "get_security_data")
         mock.side_effect = data

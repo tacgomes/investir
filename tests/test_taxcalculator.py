@@ -1,3 +1,4 @@
+from collections.abc import Callable, Sequence
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 
@@ -17,9 +18,11 @@ from investir.typing import ISIN, Ticker
 
 
 @pytest.fixture(name="create_tax_calculator")
-def fixture_create_tax_calculator(mocker, tmp_path):
+def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
 
-    def _method(orders: list[Order], splits: list[Split] | None = None):
+    def _method(
+        orders: Sequence[Order], splits: Sequence[Split] | None = None
+    ) -> TaxCalculator:
         tr_hist = TrHistory(orders=orders)
 
         if splits is None:

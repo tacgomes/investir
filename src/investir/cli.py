@@ -1,4 +1,4 @@
-import argparse
+from argparse import ArgumentParser, Namespace as ArgsNamespace
 import importlib.metadata
 import logging
 import operator
@@ -18,7 +18,7 @@ from .trhistory import TrHistory
 logger = logging.getLogger(__name__)
 
 
-def path(parser: argparse.ArgumentParser, file: str) -> pathlib.Path:
+def path(parser: ArgumentParser, file: str) -> pathlib.Path:
     try:
         with open(file, encoding="utf-8"):
             pass
@@ -27,7 +27,7 @@ def path(parser: argparse.ArgumentParser, file: str) -> pathlib.Path:
     return pathlib.Path(file)
 
 
-def create_orders_command(subparser, parent_parser) -> None:
+def create_orders_command(subparser, parent_parser: ArgumentParser) -> None:
     parser = subparser.add_parser(
         "orders", help="show share buy/sell orders", parents=[parent_parser]
     )
@@ -51,7 +51,7 @@ def create_orders_command(subparser, parent_parser) -> None:
     )
 
 
-def create_dividends_command(subparser, parent_parser) -> None:
+def create_dividends_command(subparser, parent_parser: ArgumentParser) -> None:
     parser = subparser.add_parser(
         "dividends", help="show share dividends", parents=[parent_parser]
     )
@@ -59,7 +59,7 @@ def create_dividends_command(subparser, parent_parser) -> None:
     parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
 
 
-def create_transfers_command(subparser, parent_parser) -> None:
+def create_transfers_command(subparser, parent_parser: ArgumentParser) -> None:
     parser = subparser.add_parser(
         "transfers", help="show cash transfers", parents=[parent_parser]
     )
@@ -81,13 +81,13 @@ def create_transfers_command(subparser, parent_parser) -> None:
     )
 
 
-def create_interest_command(subparser, parent_parser) -> None:
+def create_interest_command(subparser, parent_parser: ArgumentParser) -> None:
     subparser.add_parser(
         "interest", help="show interest earned on cash", parents=[parent_parser]
     )
 
 
-def create_capital_gains_command(subparser, parent_parser) -> None:
+def create_capital_gains_command(subparser, parent_parser: ArgumentParser) -> None:
     parser = subparser.add_parser(
         "capital-gains", help="show capital gains report", parents=[parent_parser]
     )
@@ -109,7 +109,7 @@ def create_capital_gains_command(subparser, parent_parser) -> None:
     )
 
 
-def create_holdings_command(subparser, parent_parser) -> None:
+def create_holdings_command(subparser, parent_parser: ArgumentParser) -> None:
     parser = subparser.add_parser(
         "holdings", help="show holdings", parents=[parent_parser]
     )
@@ -121,7 +121,7 @@ def create_holdings_command(subparser, parent_parser) -> None:
     )
 
 
-def parse_input_files(args: argparse.Namespace) -> TrHistory:
+def parse_input_files(args: ArgsNamespace) -> TrHistory:
     orders = []
     dividends = []
     transfers = []
@@ -167,7 +167,7 @@ def parse_input_files(args: argparse.Namespace) -> TrHistory:
     return tr_hist
 
 
-def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
+def run_command(args: ArgsNamespace, tr_hist: TrHistory) -> None:
     filters = []
 
     def filter_set(filter_name):
@@ -215,7 +215,7 @@ def run_command(args: argparse.Namespace, tr_hist: TrHistory) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
 
     parser.add_argument(
         "--no-strict",
@@ -263,7 +263,7 @@ def main() -> None:
         version=f'{parser.prog} v{importlib.metadata.version("investir")}',
     )
 
-    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser = ArgumentParser(add_help=False)
 
     parent_parser.add_argument("--tax-year", type=int, help="filter by tax year")
 

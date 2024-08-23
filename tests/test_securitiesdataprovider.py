@@ -1,3 +1,4 @@
+from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import PropertyMock, Mock
@@ -43,12 +44,11 @@ NFLX_SPLITS = [
 
 
 @pytest.fixture(name="yf_ticker_mocker")
-def _yf_ticker_mocker(mocker):
-    def _method(info_se, splits_se):
+def _yf_ticker_mocker(mocker) -> Callable:
+    def _method(
+        info_se: Sequence[str] | Exception, splits_se: Sequence[pd.Series]
+    ) -> tuple[PropertyMock, PropertyMock]:
         ticker_mock = Mock()
-
-        if isinstance(info_se, list):
-            info_se = [{"shortName": name} for name in info_se]
 
         splits_prop_mock = PropertyMock(side_effect=splits_se)
         type(ticker_mock).splits = splits_prop_mock
@@ -64,7 +64,8 @@ def _yf_ticker_mocker(mocker):
 
 def test_dataprovider_security_data(yf_ticker_mocker):
     info_prop_mock, splits_prop_mock = yf_ticker_mocker(
-        ["Amazon", "Netflix"], [AMZN_PSERIES, NFLX_PSERIES]
+        [{"shortName": "Amazon"}, {"shortName": "Netflix"}],
+        [AMZN_PSERIES, NFLX_PSERIES],
     )
     data_provider = YahooFinanceDataProvider()
     security_data = data_provider.get_security_data(ISIN("AMZN-ISIN"))

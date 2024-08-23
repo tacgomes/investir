@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
@@ -10,26 +11,30 @@ class InvestirError(Exception):
 
 class ParseError(InvestirError):
 
-    def __init__(self, file: Path, row: dict, message: str) -> None:
+    def __init__(self, file: Path, row: Mapping[str, str], message: str) -> None:
         super().__init__(f"{file}: {message} on row {row}")
 
 
 class TransactionTypeError(ParseError):
 
-    def __init__(self, file: Path, row: dict, tr_type: str) -> None:
+    def __init__(self, file: Path, row: Mapping[str, str], tr_type: str) -> None:
         super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
 
 
 class CurrencyError(ParseError):
 
-    def __init__(self, file: Path, row: dict, currency: str) -> None:
+    def __init__(self, file: Path, row: Mapping[str, str], currency: str) -> None:
         super().__init__(file, row, f"Currency not supported ('{currency}')")
 
 
 class CalculatedAmountError(ParseError):
 
     def __init__(
-        self, file: Path, row: dict, csv_amount: Decimal, cal_amount: Decimal
+        self,
+        file: Path,
+        row: Mapping[str, str],
+        csv_amount: Decimal,
+        cal_amount: Decimal,
     ) -> None:
         super().__init__(
             file,
@@ -41,13 +46,13 @@ class CalculatedAmountError(ParseError):
 
 class FeesError(ParseError):
 
-    def __init__(self, file: Path, row: dict) -> None:
+    def __init__(self, file: Path, row: Mapping[str, str]) -> None:
         super().__init__(file, row, "Stamp duty and conversion fees are both non-zero")
 
 
 class OrderDateError(ParseError):
 
-    def __init__(self, file: Path, row: dict) -> None:
+    def __init__(self, file: Path, row: Mapping[str, str]) -> None:
         super().__init__(
             file, row, "Orders executed before 6 April of 2008 are not supported"
         )

@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from decimal import Decimal
 from typing import Final
 
@@ -26,13 +26,13 @@ def date_to_tax_year(date: datetime.date) -> Year:
     return Year(tax_year_start.year - 1)
 
 
-def multiple_filter(filters, iterable: Iterable):
+def multiple_filter(filters: Sequence[Callable] | None, iterable: Iterable) -> Iterable:
     if not filters:
         return iterable
     return filter(lambda x: all(f(x) for f in filters), iterable)
 
 
-def raise_or_warn(ex: Exception):
+def raise_or_warn(ex: Exception) -> None:
     if config.strict:
         raise ex
     logging.warning(ex)
@@ -42,5 +42,5 @@ def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
     return Decimal(val) if val.strip() else default
 
 
-def dict2str(d: dict[str, str]) -> str:
+def dict2str(d: Mapping[str, str]) -> str:
     return str({k: v for k, v in d.items() if v.strip()})

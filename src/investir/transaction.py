@@ -1,14 +1,22 @@
 from abc import ABC
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from decimal import Decimal
 from functools import reduce
 import operator
-from typing import ClassVar
+import sys
+from typing import ClassVar, TypeVar
 
 from .securitydata import Split
 from .typing import ISIN, Ticker, Year
 from .utils import date_to_tax_year
+
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    Self = TypeVar("Self", bound="Order")
 
 
 @dataclass(frozen=True)
@@ -38,7 +46,7 @@ class Order(Transaction, ABC):
 
     order_count: ClassVar[int] = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         Order.order_count += 1
         object.__setattr__(self, "id", Order.order_count)
 
@@ -46,7 +54,7 @@ class Order(Transaction, ABC):
     def price(self) -> Decimal:
         return self.amount / self.quantity
 
-    def split(self, split_quantity: Decimal):  # -> tuple[Self, Self] (3.11+)
+    def split(self: Self, split_quantity: Decimal) -> tuple[Self, Self]:
         assert self.quantity >= split_quantity
 
         match_amount = self.price * split_quantity
@@ -112,7 +120,7 @@ class Order(Transaction, ABC):
             notes=notes,
         )
 
-    def adjust_quantity(self, splits: list[Split]) -> "Order":
+    def adjust_quantity(self, splits: Sequence[Split]) -> "Order":
         split_ratios = [s.ratio for s in splits if self.timestamp < s.date_effective]
 
         if not split_ratios:

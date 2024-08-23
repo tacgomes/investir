@@ -1,6 +1,7 @@
 import csv
 import logging
 
+from collections.abc import Mapping
 from datetime import timezone
 from decimal import Decimal
 from pathlib import Path
@@ -139,7 +140,7 @@ class Trading212Parser(Parser):
         )
 
     def _parse_order(  # pylint: disable=too-many-locals
-        self, row: dict[str, str]
+        self, row: Mapping[str, str]
     ) -> None:
         action = row["Action"]
         timestamp = parse_timestamp(row["Time"])
@@ -204,7 +205,7 @@ class Trading212Parser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
-    def _parse_dividend(self, row: dict[str, str]):
+    def _parse_dividend(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Time"])
         isin = row["ISIN"]
         ticker = row["Ticker"]
@@ -239,7 +240,7 @@ class Trading212Parser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
-    def _parse_transfer(self, row: dict[str, str]):
+    def _parse_transfer(self, row: Mapping[str, str]):
         action = row["Action"]
         timestamp = parse_timestamp(row["Time"])
         total = Decimal(row["Total"])
@@ -252,7 +253,7 @@ class Trading212Parser(Parser):
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
-    def _parse_interest(self, row: dict[str, str]):
+    def _parse_interest(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Time"])
         total = Decimal(row["Total"])
         tr_id = row["ID"]

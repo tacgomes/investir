@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -13,7 +14,7 @@ class Split(yaml.YAMLObject):
     yaml_tag = "!split"
 
     @classmethod
-    def from_yaml(cls, loader, node):
+    def from_yaml(cls, loader, node) -> "Split":
         value = loader.construct_scalar(node)
         timestamp, ratio = value.split(",")
         return Split(parse_timestamp(timestamp), Decimal(ratio))
@@ -31,6 +32,6 @@ class Split(yaml.YAMLObject):
 @dataclass
 class SecurityData(yaml.YAMLObject):
     name: str = ""
-    splits: list[Split] = field(default_factory=list)
+    splits: Sequence[Split] = field(default_factory=list)
     last_updated: datetime = datetime.now(timezone.utc).replace(microsecond=0)
     yaml_tag = "!security"

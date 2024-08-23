@@ -1,5 +1,6 @@
+from collections.abc import Callable, Sequence
 from decimal import Decimal
-from typing import NamedTuple
+from typing import NamedTuple, TypeVar
 
 import prettytable
 
@@ -8,7 +9,10 @@ from .typing import ISIN, Ticker
 from .utils import multiple_filter
 
 
-def unique_and_sorted(transactions: list[Transaction] | None):
+T = TypeVar("T", bound=Transaction)
+
+
+def unique_and_sorted(transactions: Sequence[T] | None) -> Sequence[T]:
     """Remove duplicated transactions and sort them by timestamp."""
     return sorted(set(transactions or []), key=lambda tr: tr.timestamp)
 
@@ -20,31 +24,36 @@ class Security(NamedTuple):
 
 class TrHistory:
     def __init__(
-        self, *, orders=None, dividends=None, transfers=None, interest=None
+        self,
+        *,
+        orders: Sequence[Order] | None = None,
+        dividends: Sequence[Dividend] | None = None,
+        transfers: Sequence[Transfer] | None = None,
+        interest: Sequence[Interest] | None = None,
     ) -> None:
-        self._orders: list[Order] = unique_and_sorted(orders)
-        self._dividends: list[Dividend] = unique_and_sorted(dividends)
-        self._transfers: list[Transfer] = unique_and_sorted(transfers)
-        self._interest: list[Interest] = unique_and_sorted(interest)
+        self._orders = unique_and_sorted(orders)
+        self._dividends = unique_and_sorted(dividends)
+        self._transfers = unique_and_sorted(transfers)
+        self._interest = unique_and_sorted(interest)
 
     @property
-    def orders(self) -> list[Order]:
+    def orders(self) -> Sequence[Order]:
         return self._orders
 
     @property
-    def dividends(self) -> list[Dividend]:
+    def dividends(self) -> Sequence[Dividend]:
         return self._dividends
 
     @property
-    def transfers(self) -> list[Transfer]:
+    def transfers(self) -> Sequence[Transfer]:
         return self._transfers
 
     @property
-    def interest(self) -> list[Interest]:
+    def interest(self) -> Sequence[Interest]:
         return self._interest
 
     @property
-    def securities(self) -> list[Security]:
+    def securities(self) -> Sequence[Security]:
         securities = {o.isin: o.name for o in self._orders}
         return sorted(
             (Security(isin, name) for isin, name in securities.items()),
@@ -63,7 +72,7 @@ class TrHistory:
 
         return next(iter(isins))
 
-    def show_orders(self, filters=None) -> None:
+    def show_orders(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
             field_names=(
                 "Date",
@@ -130,7 +139,7 @@ class TrHistory:
 
         print(table, "\n")
 
-    def show_dividends(self, filters=None):
+    def show_dividends(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
             field_names=(
                 "Date",
@@ -169,7 +178,7 @@ class TrHistory:
 
         print(table, "\n")
 
-    def show_transfers(self, filters=None):
+    def show_transfers(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
             field_names=("Date", "Deposited (£)", "Withdrew (£)")
         )
@@ -199,7 +208,7 @@ class TrHistory:
 
         print(table, "\n")
 
-    def show_interest(self, filters=None) -> None:
+    def show_interest(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(field_names=("Date", "Amount (£)"))
         table.vrules = prettytable.NONE
 
