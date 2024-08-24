@@ -1,4 +1,4 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence, ValuesView
 from decimal import Decimal
 from typing import NamedTuple, TypeVar
 
@@ -35,6 +35,7 @@ class TrHistory:
         self._dividends = unique_and_sorted(dividends)
         self._transfers = unique_and_sorted(transfers)
         self._interest = unique_and_sorted(interest)
+        self._securities: Mapping[ISIN, Security] = {}
 
     @property
     def orders(self) -> Sequence[Order]:
@@ -53,16 +54,12 @@ class TrHistory:
         return self._interest
 
     @property
-    def securities(self) -> Sequence[Security]:
-        securities = {o.isin: o.name for o in self._orders}
-        return sorted(
-            (Security(isin, name) for isin, name in securities.items()),
-            key=lambda t: t.name,
-        )
+    def securities(self) -> ValuesView[Security]:
+        return self._securities_map().values()
 
     def get_security_name(self, isin: ISIN) -> str | None:
-        securities = {o.isin: o.name for o in self._orders}
-        return securities.get(isin)
+        security = self._securities_map().get(isin)
+        return security.name if security else None
 
     def get_ticker_isin(self, ticker: Ticker) -> ISIN | None:
         isins = set(o.isin for o in self._orders if o.ticker == ticker)
@@ -228,3 +225,11 @@ class TrHistory:
         table.add_row(["", total_interest])
 
         print(table, "\n")
+
+    def _securities_map(self) -> Mapping[ISIN, Security]:
+        if not self._securities:
+            self._securities = {
+                o.isin: Security(o.isin, o.name)
+                for o in sorted(self._orders, key=lambda o: o.name)
+            }
+        return self._securities

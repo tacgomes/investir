@@ -141,11 +141,11 @@ def test_trhistory_interest_is_sorted_by_timestamp():
 
 def test_trhistory_securities():
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tr_hist.securities == [
+    assert tuple(tr_hist.securities) == (
         ("GOOG-ISIN", "Alphabet"),
         ("AMZN-ISIN", "Amazon"),
         ("AAPL-ISIN", "Apple"),
-    ]
+    )
 
 
 def test_get_security_name():
