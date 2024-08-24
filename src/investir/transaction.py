@@ -1,6 +1,6 @@
 from abc import ABC
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, date
 from decimal import Decimal
 from functools import reduce
@@ -65,22 +65,16 @@ class Order(Transaction, ABC):
         remainder_quantity = self.quantity - match_quantity
         remainder_fees = self.fees - match_fees
 
-        match = type(self)(
-            self.timestamp,
-            isin=self.isin,
-            ticker=self.ticker,
-            name=self.name,
+        match = replace(
+            self,
             amount=match_amount,
             quantity=match_quantity,
             fees=match_fees,
             notes=f"Splitted from order {self.number}",
         )
 
-        remainder = type(self)(
-            self.timestamp,
-            isin=self.isin,
-            ticker=self.ticker,
-            name=self.name,
+        remainder = replace(
+            self,
             amount=remainder_amount,
             quantity=remainder_quantity,
             fees=remainder_fees,
@@ -96,8 +90,6 @@ class Order(Transaction, ABC):
         isin = orders[0].isin
         assert all(order.isin == isin for order in orders)
 
-        order_class = type(orders[0])
-
         timestamp = orders[0].timestamp.replace(
             hour=0, minute=0, second=0, microsecond=0
         )
@@ -109,11 +101,9 @@ class Order(Transaction, ABC):
         notes = "Merged from orders "
         notes += ",".join(str(order.number) for order in orders)
 
-        return order_class(
-            timestamp,
-            isin=isin,
-            ticker=orders[0].ticker,
-            name=orders[0].name,
+        return replace(
+            orders[0],
+            timestamp=timestamp,
             amount=amount,
             quantity=quantity,
             fees=fees,
@@ -128,15 +118,11 @@ class Order(Transaction, ABC):
 
         quantity = reduce(operator.mul, [self.quantity] + split_ratios)
 
-        return type(self)(
-            self.timestamp,
+        return replace(
+            self,
             isin=self.isin,
-            ticker=self.ticker,
-            name=self.name,
-            amount=self.amount,
             quantity=quantity,
             original_quantity=self.quantity,
-            fees=self.fees,
             notes=(
                 f"Adjusted from order {self.number} after applying the "
                 f"following split ratios: {', '.join(map(str, split_ratios))}"

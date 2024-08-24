@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime
 from decimal import Decimal
 
@@ -80,16 +81,7 @@ def test_trhistory_duplicates_on_different_files_are_removed():
     # `number` field which is automatically populated and it will be
     # different. For comparison purposes, the orders should be
     # equivalent.
-    order1b = Acquisition(
-        ORDER1.timestamp,
-        isin=ORDER1.isin,
-        ticker=ORDER1.ticker,
-        name=ORDER1.name,
-        amount=ORDER1.amount,
-        quantity=ORDER1.quantity,
-        fees=ORDER1.fees,
-        tr_id=ORDER1.tr_id,
-    )
+    order1b = replace(ORDER1)
 
     tr_hist = TrHistory(
         orders=[ORDER1, order1b],
