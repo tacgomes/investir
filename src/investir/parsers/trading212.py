@@ -199,7 +199,7 @@ class Trading212Parser(Parser):
                 amount=total - fees,
                 quantity=num_shares,
                 fees=allowable_fees,
-                transaction_id=tr_id,
+                tr_id=tr_id,
             )
         )
 
@@ -234,7 +234,7 @@ class Trading212Parser(Parser):
                 name=name,
                 amount=total,
                 withheld=None,
-                transaction_id=tr_id,
+                tr_id=tr_id,
             )
         )
 
@@ -249,7 +249,7 @@ class Trading212Parser(Parser):
         if action == "Withdrawal":
             total *= -1
 
-        self._transfers.append(Transfer(timestamp, transaction_id=tr_id, amount=total))
+        self._transfers.append(Transfer(timestamp, tr_id=tr_id, amount=total))
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
@@ -258,6 +258,6 @@ class Trading212Parser(Parser):
         total = Decimal(row["Total"])
         tr_id = row["ID"]
 
-        self._interest.append(Interest(timestamp, transaction_id=tr_id, amount=total))
+        self._interest.append(Interest(timestamp, tr_id=tr_id, amount=total))
 
         logging.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])

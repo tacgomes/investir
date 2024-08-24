@@ -14,7 +14,7 @@ ORDER1 = Acquisition(
     amount=Decimal("10.0"),
     quantity=Decimal("1.0"),
     fees=Decimal("0.5"),
-    transaction_id="ORDER1",
+    tr_id="ORDER1",
 )
 
 ORDER2 = Disposal(
@@ -25,7 +25,7 @@ ORDER2 = Disposal(
     amount=Decimal("15.0"),
     quantity=Decimal("2.0"),
     fees=Decimal("1.0"),
-    transaction_id="ORDER2",
+    tr_id="ORDER2",
 )
 
 ORDER3 = Disposal(
@@ -35,7 +35,7 @@ ORDER3 = Disposal(
     name="Apple",
     amount=Decimal("1.0"),
     quantity=Decimal("1.0"),
-    transaction_id="ORDER3",
+    tr_id="ORDER3",
 )
 
 ORDER4 = Disposal(
@@ -45,7 +45,7 @@ ORDER4 = Disposal(
     name="Apple",
     amount=Decimal("1.0"),
     quantity=Decimal("1.0"),
-    transaction_id="ORDER4",
+    tr_id="ORDER4",
 )
 
 DIVIDEND1 = Dividend(
@@ -76,9 +76,10 @@ INTEREST2 = Interest(datetime(2024, 2, 5, 14, 7, 20), Decimal("500.0"))
 
 
 def test_trhistory_duplicates_on_different_files_are_removed():
-    # Create an order almost identical to ORDER1 other than the `id`
-    # field which is automatically populated and it will be different.
-    # For comparison purposes, the orders should be equivalent.
+    # Create an order almost identical to ORDER1 other than the
+    # `number` field which is automatically populated and it will be
+    # different. For comparison purposes, the orders should be
+    # equivalent.
     order1b = Acquisition(
         ORDER1.timestamp,
         isin=ORDER1.isin,
@@ -87,7 +88,7 @@ def test_trhistory_duplicates_on_different_files_are_removed():
         amount=ORDER1.amount,
         quantity=ORDER1.quantity,
         fees=ORDER1.fees,
-        transaction_id=ORDER1.transaction_id,
+        tr_id=ORDER1.tr_id,
     )
 
     tr_hist = TrHistory(

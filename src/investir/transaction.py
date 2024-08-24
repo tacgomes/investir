@@ -23,7 +23,7 @@ else:
 class Transaction(ABC):
     timestamp: datetime
     amount: Decimal
-    transaction_id: str | None = None
+    tr_id: str | None = None
     notes: str | None = None
 
     @property
@@ -36,7 +36,7 @@ class Transaction(ABC):
 
 @dataclass(kw_only=True, frozen=True)
 class Order(Transaction, ABC):
-    id: int = field(default=0, compare=False)
+    number: int = field(default=0, compare=False)
     isin: ISIN
     ticker: Ticker | None = None
     name: str = ""
@@ -48,7 +48,7 @@ class Order(Transaction, ABC):
 
     def __post_init__(self) -> None:
         Order.order_count += 1
-        object.__setattr__(self, "id", Order.order_count)
+        object.__setattr__(self, "number", Order.order_count)
 
     @property
     def price(self) -> Decimal:
@@ -73,7 +73,7 @@ class Order(Transaction, ABC):
             amount=match_amount,
             quantity=match_quantity,
             fees=match_fees,
-            notes=f"Splitted from order {self.id}",
+            notes=f"Splitted from order {self.number}",
         )
 
         remainder = type(self)(
@@ -84,7 +84,7 @@ class Order(Transaction, ABC):
             amount=remainder_amount,
             quantity=remainder_quantity,
             fees=remainder_fees,
-            notes=f"Splitted from order {self.id}",
+            notes=f"Splitted from order {self.number}",
         )
 
         return match, remainder
@@ -107,7 +107,7 @@ class Order(Transaction, ABC):
         fees = Decimal(sum(order.fees for order in orders))
 
         notes = "Merged from orders "
-        notes += ",".join(str(order.id) for order in orders)
+        notes += ",".join(str(order.number) for order in orders)
 
         return order_class(
             timestamp,
@@ -138,7 +138,7 @@ class Order(Transaction, ABC):
             original_quantity=self.quantity,
             fees=self.fees,
             notes=(
-                f"Adjusted from order {self.id} after applying the "
+                f"Adjusted from order {self.number} after applying the "
                 f"following split ratios: {', '.join(map(str, split_ratios))}"
             ),
         )

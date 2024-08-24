@@ -177,7 +177,7 @@ class FreetradeParser(Parser):
                 amount=total_amount - fees,
                 quantity=quantity,
                 fees=allowable_fees,
-                transaction_id=order_id,
+                tr_id=order_id,
             )
         )
 

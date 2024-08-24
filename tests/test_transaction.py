@@ -19,12 +19,12 @@ def test_acquisition_order():
         amount=Decimal("100.0"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
-        transaction_id="ORDER",
+        tr_id="ORDER",
     )
 
     assert order.date == date(2022, 4, 6)
     assert order.tax_year() == 2022
-    assert order.id == count + 1
+    assert order.number == count + 1
     assert order.price == order.amount / order.quantity
     assert order.total_cost == order.amount + order.fees
 
@@ -40,12 +40,12 @@ def test_disposal_order():
         amount=Decimal("50.0"),
         quantity=Decimal("10.0"),
         fees=Decimal("1.7"),
-        transaction_id="ORDER",
+        tr_id="ORDER",
     )
 
     assert order.date == date(2023, 4, 6)
     assert order.tax_year() == 2023
-    assert order.id == count + 1
+    assert order.number == count + 1
     assert order.price == order.amount / order.quantity
     assert order.net_proceeds == order.amount - order.fees
 
@@ -161,7 +161,7 @@ def test_order_adjust_quantity():
     assert order2_adjusted.fees == order2.fees
     assert order2_adjusted.quantity == order2.quantity * ratio
     assert order2_adjusted.original_quantity == order2.quantity
-    assert order2_adjusted.transaction_id == order2.transaction_id
+    assert order2_adjusted.tr_id == order2.tr_id
     assert "Adjusted from order" in order2_adjusted.notes
 
     order1_adjusted = order1.adjust_quantity(splits)
@@ -175,5 +175,5 @@ def test_order_adjust_quantity():
     assert order1_adjusted.fees == order1.fees
     assert order1_adjusted.quantity == order1.quantity * ratio
     assert order1_adjusted.original_quantity == order1.quantity
-    assert order1_adjusted.transaction_id == order1.transaction_id
+    assert order1_adjusted.tr_id == order1.tr_id
     assert "Adjusted from order" in order1_adjusted.notes
