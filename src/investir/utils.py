@@ -26,7 +26,7 @@ def date_to_tax_year(date: datetime.date) -> Year:
     return Year(tax_year_start.year - 1)
 
 
-def multiple_filter(filters: Sequence[Callable] | None, iterable: Iterable) -> Iterable:
+def multifilter(filters: Sequence[Callable] | None, iterable: Iterable) -> Iterable:
     if not filters:
         return iterable
     return filter(lambda x: all(f(x) for f in filters), iterable)

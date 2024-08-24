@@ -6,7 +6,7 @@ import prettytable
 
 from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
 from .typing import ISIN, Ticker
-from .utils import multiple_filter
+from .utils import multifilter
 
 
 T = TypeVar("T", bound=Transaction)
@@ -85,7 +85,7 @@ class TrHistory:
         )
         table.vrules = prettytable.NONE
 
-        transactions = list(multiple_filter(filters, self._orders))
+        transactions = list(multifilter(filters, self._orders))
         last_idx = len(transactions) - 1
         total_total_cost = total_net_proceeds = total_fees = Decimal("0.0")
 
@@ -149,7 +149,7 @@ class TrHistory:
         )
         table.vrules = prettytable.NONE
 
-        transactions = list(multiple_filter(filters, self._dividends))
+        transactions = list(multifilter(filters, self._dividends))
         last_idx = len(transactions) - 1
         total_paid = total_withheld = Decimal("0.0")
 
@@ -181,7 +181,7 @@ class TrHistory:
         )
         table.vrules = prettytable.NONE
 
-        transactions = list(multiple_filter(filters, self._transfers))
+        transactions = list(multifilter(filters, self._transfers))
         last_idx = len(transactions) - 1
         total_deposited = total_withdrew = Decimal("0.0")
 
@@ -209,7 +209,7 @@ class TrHistory:
         table = prettytable.PrettyTable(field_names=("Date", "Amount (£)"))
         table.vrules = prettytable.NONE
 
-        transactions = list(multiple_filter(filters, self._interest))
+        transactions = list(multifilter(filters, self._interest))
         last_idx = len(transactions) - 1
         total_interest = Decimal("0.0")
 
