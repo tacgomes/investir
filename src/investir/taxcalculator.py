@@ -185,7 +185,14 @@ class TaxCalculator:
             )
 
     def show_holdings(self, ticker: Ticker | None, show_avg_cost: bool):
-        fields = ["ISIN", "Security", "Cost (£)", "Quantity", "Average Cost (£)"]
+        fields = [
+            "ISIN",
+            "Security",
+            "Cost (£)",
+            "Allocation (%)",
+            "Quantity",
+            "Average Cost (£)",
+        ]
 
         table = prettytable.PrettyTable(field_names=fields)
         table.vrules = prettytable.NONE
@@ -206,7 +213,7 @@ class TaxCalculator:
                     ticker,
                 )
 
-        total_cost = Decimal("0.0")
+        total_cost = sum(round(holding.cost, 2) for _, holding in holdings)
         last_idx = len(holdings) - 1
 
         for idx, (isin, holding) in enumerate(holdings):
@@ -215,14 +222,14 @@ class TaxCalculator:
                     isin,
                     self._tr_hist.get_security_name(isin),
                     f"{holding.cost:.2f}",
+                    f"{holding.cost / total_cost * 100:.2f}",
                     holding.quantity,
                     f"{holding.cost / holding.quantity:.2f}",
                 ],
                 divider=idx == last_idx,
             )
-            total_cost += round(holding.cost, 2)
 
-        table.add_row(["", "", total_cost, "", ""])
+        table.add_row(["", "", total_cost, "", "", ""])
 
         print(table, "\n")
 
