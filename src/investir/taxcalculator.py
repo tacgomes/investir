@@ -184,21 +184,18 @@ class TaxCalculator:
                 f"{gbp(total_cost):>10}\n"
             )
 
-    def show_holdings(self, ticker: Ticker | None, show_avg_cost: bool):
-        fields = [
-            "ISIN",
-            "Security",
-            "Cost (£)",
-            "Allocation (%)",
-            "Quantity",
-            "Average Cost (£)",
-        ]
-
-        table = prettytable.PrettyTable(field_names=fields)
+    def show_holdings(self, ticker: Ticker | None):
+        table = prettytable.PrettyTable(
+            field_names=[
+                "ISIN",
+                "Security",
+                "Cost (£)",
+                "Allocation (%)",
+                "Quantity",
+                "Average Cost (£)",
+            ]
+        )
         table.vrules = prettytable.NONE
-
-        if not show_avg_cost:
-            table.fields = fields[:-1]
 
         holdings = sorted(self._holdings.items(), key=lambda x: x[1].cost, reverse=True)
 

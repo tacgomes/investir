@@ -116,10 +116,6 @@ def create_holdings_command(subparser, parent_parser: ArgumentParser) -> None:
 
     parser.add_argument("--ticker", help="filter by a ticker")
 
-    parser.add_argument(
-        "--show-avg-cost", action="store_true", help="show the average cost per share"
-    )
-
 
 def parse_input_files(args: ArgsNamespace) -> TrHistory:
     orders = []
@@ -209,7 +205,7 @@ def run_command(args: ArgsNamespace, tr_hist: TrHistory) -> None:
                 args.tax_year, args.ticker, args.gains_only, args.losses_only
             )
         case "holdings":
-            tax_calculator.show_holdings(args.ticker, args.show_avg_cost)
+            tax_calculator.show_holdings(args.ticker)
         case _:
             raise AssertionError(f"Unknown command: {args.command}")
 
