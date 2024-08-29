@@ -1,6 +1,8 @@
 import logging
 from typing import Final
 
+from .config import config
+
 
 class CustomFormatter(logging.Formatter):
     CSI: Final = "\033["
@@ -27,15 +29,15 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def setup_logging(log_level: int | None, color: bool) -> None:
+def setup_logging() -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.NOTSET)
 
     fmt = "%(levelname)8s | %(message)s"
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(log_level if log_level is not None else logging.INFO)
+    console_handler.setLevel(config.log_level)
     console_handler.setFormatter(
-        CustomFormatter(fmt) if color else logging.Formatter(fmt)
+        CustomFormatter(fmt) if config.use_colour else logging.Formatter(fmt)
     )
 
     logger.addHandler(console_handler)
