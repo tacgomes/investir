@@ -6,10 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "investir"
 version = "0.3alpha"
 dependencies = [
+  "click ~= 8.1.0",
   "platformdirs ~= 4.2.0",
   "prettytable ~= 3.10.0",
   "python-dateutil ~= 2.8.0",
   "PyYAML ~= 6.0.0",
+  "typer ~= 0.12.0",
   "yfinance ~= 0.2.40",
 ]
 optional-dependencies.lint = [

@@ -1,9 +1,13 @@
-from argparse import ArgumentParser, Namespace as ArgsNamespace
+from collections.abc import Callable, Sequence
+from datetime import datetime
 import importlib.metadata
 import logging
 import operator
-import pathlib
-import sys
+from pathlib import Path
+from typing import Annotated, Optional
+
+import click
+import typer
 
 from .config import config
 from .securitiesdatacache import SecuritiesDataCache
@@ -12,125 +16,74 @@ from .exceptions import InvestirError
 from .logging import setup_logging
 from .parser import ParserFactory
 from .taxcalculator import TaxCalculator
-from .transaction import Acquisition, Disposal
+from .transaction import Acquisition, Disposal, Transaction
 from .trhistory import TrHistory
+from .typing import Year, Ticker
 
 logger = logging.getLogger(__name__)
 
 
-def path(parser: ArgumentParser, file: str) -> pathlib.Path:
-    try:
-        with open(file, encoding="utf-8"):
-            pass
-    except IOError as err:
-        parser.error(str(err))
-    return pathlib.Path(file)
+class OrderedCommands(typer.core.TyperGroup):
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        return list(self.commands.keys())
 
 
-def create_orders_command(subparser, parent_parser: ArgumentParser) -> None:
-    parser = subparser.add_parser(
-        "orders", help="show share buy/sell orders", parents=[parent_parser]
-    )
-
-    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
-
-    type_group = parser.add_mutually_exclusive_group()
-    type_group.add_argument(
-        "--acquisitions",
-        action="store_const",
-        const=Acquisition,
-        dest="order_type",
-        help="show only acquisitions",
-    )
-    type_group.add_argument(
-        "--disposals",
-        action="store_const",
-        const=Disposal,
-        dest="order_type",
-        help="show only disposals",
-    )
+class MutuallyExclusiveOption(click.exceptions.UsageError):
+    def __init__(self, opt1: str, opt2: str) -> None:
+        super().__init__(f"Option {opt1} cannot be used together with option {opt2}")
 
 
-def create_dividends_command(subparser, parent_parser: ArgumentParser) -> None:
-    parser = subparser.add_parser(
-        "dividends", help="show share dividends", parents=[parent_parser]
-    )
+app = typer.Typer(
+    cls=OrderedCommands,
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+)
 
-    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
+FilesArg = Annotated[
+    list[Path],
+    typer.Argument(
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="CSV files with the account activity.",
+        show_default=False,
+    ),
+]
 
+TaxYearOpt = Annotated[
+    Optional[int],
+    typer.Option(
+        min=2008,
+        max=datetime.now().year,
+        metavar="TAX-YEAR",
+        help="Filter by tax year.",
+        show_default=False,
+    ),
+]
 
-def create_transfers_command(subparser, parent_parser: ArgumentParser) -> None:
-    parser = subparser.add_parser(
-        "transfers", help="show cash transfers", parents=[parent_parser]
-    )
-
-    type_group = parser.add_mutually_exclusive_group()
-    type_group.add_argument(
-        "--deposits",
-        action="store_const",
-        const=operator.gt,
-        dest="amount",
-        help="show only acquisitions",
-    )
-    type_group.add_argument(
-        "--withdrawals",
-        action="store_const",
-        const=operator.lt,
-        dest="amount",
-        help="show only disposals",
-    )
-
-
-def create_interest_command(subparser, parent_parser: ArgumentParser) -> None:
-    subparser.add_parser(
-        "interest", help="show interest earned on cash", parents=[parent_parser]
-    )
+TickerOpt = Annotated[
+    Optional[str],
+    typer.Option(metavar="TICKER", help="Filter by ticker.", show_default=False),
+]
 
 
-def create_capital_gains_command(subparser, parent_parser: ArgumentParser) -> None:
-    parser = subparser.add_parser(
-        "capital-gains", help="show capital gains report", parents=[parent_parser]
-    )
-
-    parser.add_argument("--ticker", help="filter by a ticker", dest="ticker")
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--gains",
-        action="store_true",
-        dest="gains_only",
-        help="show only capital gains",
-    )
-    group.add_argument(
-        "--losses",
-        action="store_true",
-        dest="losses_only",
-        help="show only capital losses",
-    )
-
-
-def create_holdings_command(subparser, parent_parser: ArgumentParser) -> None:
-    parser = subparser.add_parser(
-        "holdings", help="show holdings", parents=[parent_parser]
-    )
-
-    parser.add_argument("--ticker", help="filter by a ticker")
-
-
-def parse_input_files(args: ArgsNamespace) -> TrHistory:
+def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     orders = []
     dividends = []
     transfers = []
     interest = []
 
-    for csv_file in args.input_files:
-        logging.info("Parsing input file: %s", csv_file)
-        if csv_parser := ParserFactory.create_parser(csv_file):
+    def abort(message: str) -> None:
+        logging.critical(message)
+        raise typer.Exit(code=1)
+
+    for path in input_files:
+        logging.info("Parsing input file: %s", path)
+        if parser := ParserFactory.create_parser(path):
             try:
-                result = csv_parser.parse()
+                result = parser.parse()
             except InvestirError as ex:
-                logging.critical(ex)
-                sys.exit(1)
+                abort(str(ex))
             logging.info(
                 "Parsed: "
                 "%s orders, %s dividend payments, %s transfers, %s interest payments",
@@ -145,8 +98,7 @@ def parse_input_files(args: ArgsNamespace) -> TrHistory:
             transfers += result.transfers
             interest += result.interest
         else:
-            logging.critical("Unable to find a parser for %s", csv_file)
-            sys.exit(1)
+            abort(f"Unable to find a parser for {path}")
 
     tr_hist = TrHistory(
         orders=orders, dividends=dividends, transfers=transfers, interest=interest
@@ -160,130 +112,204 @@ def parse_input_files(args: ArgsNamespace) -> TrHistory:
         len(tr_hist.interest),
     )
 
-    return tr_hist
-
-
-def run_command(args: ArgsNamespace, tr_hist: TrHistory) -> None:
-    filters = []
-
-    def filter_set(filter_name):
-        return getattr(args, filter_name, None) is not None
-
-    if filter_set("ticker"):
-        filters.append(lambda tr: tr.ticker == args.ticker)
-
-    if filter_set("order_type"):
-        filters.append(lambda tr: isinstance(tr, args.order_type))
-
-    if filter_set("amount"):
-        filters.append(lambda tr: args.amount(tr.amount, 0.0))
-
-    if filter_set("tax_year"):
-        filters.append(lambda tr: tr.tax_year() == args.tax_year)
-
     try:
         securities_data = SecuritiesDataCache(YahooFinanceDataProvider(), tr_hist)
         tax_calculator = TaxCalculator(tr_hist, securities_data)
     except InvestirError as ex:
-        logging.critical(ex)
-        sys.exit(1)
+        abort(str(ex))
 
-    if args.log_level != logging.CRITICAL:
+    if config.log_level != logging.CRITICAL:
         print()
 
-    match args.command:
-        case "orders":
-            tr_hist.show_orders(filters)
-        case "dividends":
-            tr_hist.show_dividends(filters)
-        case "transfers":
-            tr_hist.show_transfers(filters)
-        case "interest":
-            tr_hist.show_interest(filters)
-        case "capital-gains":
-            tax_calculator.show_capital_gains(
-                args.tax_year, args.ticker, args.gains_only, args.losses_only
-            )
-        case "holdings":
-            tax_calculator.show_holdings(args.ticker)
-        case _:
-            raise AssertionError(f"Unknown command: {args.command}")
+    return tr_hist, tax_calculator
+
+
+def create_filters(
+    tax_year: int | None = None,
+    ticker: str | None = None,
+    tr_type: type[Transaction] | None = None,
+    amount_op: Callable | None = None,
+) -> Sequence[Callable[[Transaction], bool]]:
+    filters = []
+
+    if tax_year is not None:
+        filters.append(lambda tr: tr.tax_year() == Year(tax_year))
+
+    if ticker is not None:
+        filters.append(lambda tr: tr.ticker == ticker)
+
+    if tr_type is not None:
+        filters.append(lambda tr: isinstance(tr, tr_type))
+
+    if amount_op is not None:
+        filters.append(lambda tr: amount_op(tr.amount, 0.0))
+
+    return filters
+
+
+def version_callback(value: bool):
+    if value:
+        print(f"v{importlib.metadata.version('investir')}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main_callback(  # pylint: disable=too-many-arguments,unused-argument
+    strict: Annotated[
+        bool, typer.Option(help="Abort if data integrity issues are found.")
+    ] = True,
+    include_fx_fees: Annotated[
+        bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
+    ] = True,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Enable additional logging.")
+    ] = False,
+    quiet: Annotated[
+        bool, typer.Option("--quiet", help="Disable all non-critical logging.")
+    ] = False,
+    colour: Annotated[bool, typer.Option(help="Show coloured output.")] = True,
+    version: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--version",
+            callback=version_callback,
+            help="Show version information and exit.",
+        ),
+    ] = None,
+) -> None:
+    if verbose and quiet:
+        raise MutuallyExclusiveOption("--verbose", "--quiet")
+
+    config.strict = strict
+    config.include_fx_fees = include_fx_fees
+
+    if quiet:
+        config.log_level = logging.CRITICAL
+    elif verbose:
+        config.log_level = logging.DEBUG
+
+    config.use_colour = colour
+
+    setup_logging()
+
+
+@app.command("orders")
+def orders_command(
+    files: FilesArg,
+    tax_year: TaxYearOpt = None,
+    ticker: TickerOpt = None,
+    acquisitions_only: Annotated[
+        bool, typer.Option("--acquisitions", help="Show only acquisitions.")
+    ] = False,
+    disposals_only: Annotated[
+        bool, typer.Option("--disposals", help="Show only disposals.")
+    ] = False,
+) -> None:
+    """
+    Show share buy/sell orders.
+    """
+    if acquisitions_only and disposals_only:
+        raise MutuallyExclusiveOption("--acquisitions", "--disposals")
+
+    tr_hist, _ = parse(files)
+
+    tr_type: type[Transaction] | None = None
+    if acquisitions_only:
+        tr_type = Acquisition
+    elif disposals_only:
+        tr_type = Disposal
+
+    filters = create_filters(tax_year=tax_year, ticker=ticker, tr_type=tr_type)
+    tr_hist.show_orders(filters)
+
+
+@app.command("dividends")
+def dividends_command(
+    files: FilesArg,
+    tax_year: TaxYearOpt = None,
+    ticker: TickerOpt = None,
+) -> None:
+    """
+    Show share dividends paid out.
+    """
+    tr_hist, _ = parse(files)
+    filters = create_filters(tax_year=tax_year, ticker=ticker)
+    tr_hist.show_dividends(filters)
+
+
+@app.command("transfers")
+def transfers_command(
+    files: FilesArg,
+    tax_year: TaxYearOpt = None,
+    deposits_only: Annotated[
+        bool, typer.Option("--deposits", help="Show only deposits.")
+    ] = False,
+    withdrawals_only: Annotated[
+        bool, typer.Option("--withdrawals", help="Show only withdrawals.")
+    ] = False,
+) -> None:
+    """
+    Show cash deposits and cash withdrawals.
+    """
+    if deposits_only and withdrawals_only:
+        raise MutuallyExclusiveOption("--deposits", "--withdrawals")
+
+    tr_hist, _ = parse(files)
+
+    if deposits_only:
+        amount_op = operator.gt
+    elif withdrawals_only:
+        amount_op = operator.lt
+    else:
+        amount_op = None
+
+    filters = create_filters(tax_year=tax_year, amount_op=amount_op)
+    tr_hist.show_transfers(filters)
+
+
+@app.command("interest")
+def interest_command(files: FilesArg, tax_year: TaxYearOpt = None) -> None:
+    """
+    Show interest earned on cash.
+    """
+    tr_hist, _ = parse(files)
+    filters = create_filters(tax_year=tax_year)
+    tr_hist.show_interest(filters)
+
+
+@app.command("capital-gains")
+def capital_gains_command(
+    files: FilesArg,
+    gains_only: Annotated[
+        bool, typer.Option("--gains", help="Show only capital gains.")
+    ] = False,
+    losses_only: Annotated[
+        bool, typer.Option("--losses", help="Show only capital losses.")
+    ] = False,
+    tax_year: TaxYearOpt = None,
+    ticker: TickerOpt = None,
+) -> None:
+    """
+    Show capital gains report.
+    """
+    if gains_only and losses_only:
+        raise MutuallyExclusiveOption("--gains", "--losses")
+
+    _, tax_calculator = parse(files)
+    tax_year = Year(tax_year) if tax_year else None
+    ticker = Ticker(ticker) if ticker else None
+    tax_calculator.show_capital_gains(tax_year, ticker, gains_only, losses_only)
+
+
+@app.command("holdings")
+def holdings_command(files: FilesArg, ticker: TickerOpt = None) -> None:
+    """
+    Show current holdings.
+    """
+    _, tax_calculator = parse(files)
+    ticker = Ticker(ticker) if ticker else None
+    tax_calculator.show_holdings(ticker)
 
 
 def main() -> None:
-    parser = ArgumentParser()
-
-    parser.add_argument(
-        "--no-strict",
-        action="store_false",
-        dest="strict",
-        default=True,
-        help="disable aborting the program when encountering certain errors",
-    )
-
-    parser.add_argument(
-        "--exclude-fx-fees",
-        action="store_false",
-        default=False,
-        help="exclude foreign exchange fees as an allowable cost",
-    )
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--quiet",
-        dest="log_level",
-        action="store_const",
-        const=logging.CRITICAL,
-        help="disable all non-critical logging",
-    )
-    group.add_argument(
-        "--verbose",
-        dest="log_level",
-        action="store_const",
-        const=logging.DEBUG,
-        help="enable additional logging",
-    )
-
-    parser.add_argument(
-        "--no-colour",
-        action="store_false",
-        dest="colour",
-        default=True,
-        help="disable coloured output",
-    )
-
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f'{parser.prog} v{importlib.metadata.version("investir")}',
-    )
-
-    parent_parser = ArgumentParser(add_help=False)
-
-    parent_parser.add_argument("--tax-year", type=int, help="filter by tax year")
-
-    parent_parser.add_argument(
-        "input_files",
-        type=lambda file: path(parser, file),
-        nargs="+",
-        metavar="INPUT",
-        help="input CSV file with the transaction records",
-    )
-
-    subparser = parser.add_subparsers(dest="command", required=True)
-    create_orders_command(subparser, parent_parser)
-    create_dividends_command(subparser, parent_parser)
-    create_transfers_command(subparser, parent_parser)
-    create_interest_command(subparser, parent_parser)
-    create_capital_gains_command(subparser, parent_parser)
-    create_holdings_command(subparser, parent_parser)
-
-    args = parser.parse_args()
-    config.strict = args.strict
-    config.include_fx_fees = not args.exclude_fx_fees
-    tr_hist = TrHistory()
-
-    setup_logging(args.log_level, args.colour)
-    tr_hist = parse_input_files(args)
-    run_command(args, tr_hist)
+    app()
