@@ -123,7 +123,7 @@ class TaxCalculator:
                     "Date Disposed",
                     "Date Acquired",
                     "ISIN",
-                    "Security",
+                    "Name",
                     "Quantity",
                     "Cost (£)",
                     "Proceeds (£)",
@@ -188,7 +188,7 @@ class TaxCalculator:
         table = prettytable.PrettyTable(
             field_names=[
                 "ISIN",
-                "Security",
+                "Name",
                 "Cost (£)",
                 "Allocation (%)",
                 "Quantity",

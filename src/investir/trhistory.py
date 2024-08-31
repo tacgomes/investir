@@ -74,7 +74,7 @@ class TrHistory:
             field_names=(
                 "Date",
                 "ISIN",
-                "Security",
+                "Name",
                 "Ticker",
                 "Total Cost (£)",
                 "Net Proceeds (£)",
@@ -141,7 +141,7 @@ class TrHistory:
             field_names=(
                 "Date",
                 "ISIN",
-                "Security",
+                "Name",
                 "Ticker",
                 "Amount (£)",
                 "Tax widhheld (£)",
