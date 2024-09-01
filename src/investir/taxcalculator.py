@@ -104,21 +104,21 @@ class TaxCalculator:
 
     def show_capital_gains(
         self,
-        tax_year: Year | None,
-        ticker: Ticker | None,
+        tax_year_filter: Year | None,
+        ticker_filter: Ticker | None,
         gains_only: bool,
         losses_only: bool,
     ):
         assert not (gains_only and losses_only)
 
-        if tax_year is not None:
-            tax_years = [tax_year]
+        if tax_year_filter is not None:
+            tax_years = [tax_year_filter]
         else:
             tax_years = sorted(self._capital_gains.keys())
 
-        for year in tax_years:
+        for tax_year in tax_years:
             table = prettytable.PrettyTable(
-                title=f"Tax year {year}-{year + 1}",
+                title=f"Tax year {tax_year}-{tax_year + 1}",
                 field_names=(
                     "Date Disposed",
                     "Date Acquired",
@@ -136,7 +136,7 @@ class TaxCalculator:
             disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
 
             for cg in self.capital_gains(tax_year):
-                if ticker is not None and cg.disposal.ticker != ticker:
+                if ticker_filter is not None and cg.disposal.ticker != ticker_filter:
                     continue
 
                 if gains_only and cg.gain_loss < 0.0:
@@ -184,7 +184,7 @@ class TaxCalculator:
                 f"{gbp(total_cost):>10}\n"
             )
 
-    def show_holdings(self, ticker: Ticker | None):
+    def show_holdings(self, ticker_filter: Ticker | None):
         table = prettytable.PrettyTable(
             field_names=[
                 "ISIN",
@@ -199,15 +199,15 @@ class TaxCalculator:
 
         holdings = sorted(self._holdings.items(), key=lambda x: x[1].cost, reverse=True)
 
-        if ticker is not None:
-            isin = self._tr_hist.get_ticker_isin(ticker)
+        if ticker_filter is not None:
+            isin = self._tr_hist.get_ticker_isin(ticker_filter)
             if isin is not None:
                 holdings = [(isin, self._holdings[isin])]
             else:
                 logger.warning(
                     "Ignoring ticker filter as %s was not found or is ambiguous "
                     "(used on different securities)",
-                    ticker,
+                    ticker_filter,
                 )
 
         total_cost = sum(round(holding.cost, 2) for _, holding in holdings)
