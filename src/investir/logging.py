@@ -29,7 +29,7 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def setup_logging() -> None:
+def configure_logger() -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.NOTSET)
 

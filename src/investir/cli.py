@@ -13,7 +13,7 @@ from .config import config
 from .securitiesdatacache import SecuritiesDataCache
 from .securitiesdataprovider import YahooFinanceDataProvider
 from .exceptions import InvestirError
-from .logging import setup_logging
+from .logging import configure_logger
 from .parser import ParserFactory
 from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal, Transaction
@@ -190,7 +190,7 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
 
     config.use_colour = colour
 
-    setup_logging()
+    configure_logger()
 
 
 @app.command("orders")
