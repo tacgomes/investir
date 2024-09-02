@@ -633,8 +633,10 @@ def test_integrity_disposal_without_acquisition(create_tax_calculator):
         amount=Decimal("120.0"),
     )
 
+    tax_calculator = create_tax_calculator([order])
+
     with pytest.raises(IncompleteRecordsError):
-        create_tax_calculator([order])
+        tax_calculator.capital_gains()
 
 
 def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
@@ -652,8 +654,10 @@ def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
         amount=Decimal("120.0"),
     )
 
+    tax_calculator = create_tax_calculator([order1, order2])
+
     with pytest.raises(IncompleteRecordsError):
-        create_tax_calculator([order1, order2])
+        tax_calculator.capital_gains()
 
 
 def test_rppaccounts_example(create_tax_calculator):

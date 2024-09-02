@@ -91,15 +91,16 @@ class TaxCalculator:
         self._holdings: dict[ISIN, Section104Holding] = {}
         self._capital_gains: dict[Year, list[CapitalGain]] = defaultdict(list)
 
+    def capital_gains(self, tax_year: Year | None = None) -> Sequence[CapitalGain]:
         self._calculate_capital_gains()
 
-    def capital_gains(self, tax_year: Year | None = None) -> Sequence[CapitalGain]:
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
 
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
     def holding(self, isin: ISIN) -> Section104Holding | None:
+        self._calculate_capital_gains()
         return self._holdings.get(isin)
 
     def show_capital_gains(
@@ -110,6 +111,8 @@ class TaxCalculator:
         losses_only: bool,
     ):
         assert not (gains_only and losses_only)
+
+        self._calculate_capital_gains()
 
         if tax_year_filter is not None:
             tax_years = [tax_year_filter]
@@ -185,6 +188,8 @@ class TaxCalculator:
             )
 
     def show_holdings(self, ticker_filter: Ticker | None):
+        self._calculate_capital_gains()
+
         table = prettytable.PrettyTable(
             field_names=[
                 "ISIN",
@@ -231,6 +236,10 @@ class TaxCalculator:
         print(table, "\n")
 
     def _calculate_capital_gains(self) -> None:
+        if self._capital_gains or self._holdings:
+            # Capital gains already calculated.
+            return
+
         logging.info("Calculating capital gains")
 
         # First normalise the orders by retroactively adjusting their
