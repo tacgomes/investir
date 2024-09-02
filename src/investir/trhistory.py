@@ -6,7 +6,7 @@ import prettytable
 
 from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
 from .typing import ISIN, Ticker
-from .utils import multifilter
+from .utils import multifilter, printtable
 
 
 T = TypeVar("T", bound=Transaction)
@@ -134,7 +134,7 @@ class TrHistory:
             ]
         )
 
-        print(table, "\n")
+        printtable(table)
 
     def show_dividends(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
@@ -173,7 +173,7 @@ class TrHistory:
 
         table.add_row(["", "", "", "", total_paid, total_withheld])
 
-        print(table, "\n")
+        printtable(table)
 
     def show_transfers(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
@@ -203,7 +203,7 @@ class TrHistory:
 
         table.add_row(["", total_deposited, total_withdrew])
 
-        print(table, "\n")
+        printtable(table)
 
     def show_interest(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(field_names=("Date", "Amount (£)"))
@@ -224,7 +224,7 @@ class TrHistory:
 
         table.add_row(["", total_interest])
 
-        print(table, "\n")
+        printtable(table)
 
     def _securities_map(self) -> Mapping[ISIN, Security]:
         if not self._securities:
