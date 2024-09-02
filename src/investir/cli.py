@@ -118,9 +118,6 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     except InvestirError as ex:
         abort(str(ex))
 
-    if config.log_level != logging.CRITICAL:
-        print()
-
     return tr_hist, tax_calculator
 
 

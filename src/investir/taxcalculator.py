@@ -14,7 +14,7 @@ from .exceptions import IncompleteRecordsError
 from .typing import ISIN, Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
-from .utils import raise_or_warn
+from .utils import raise_or_warn, printtable
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ class TaxCalculator:
         self._calculate_capital_gains()
         return self._holdings.get(isin)
 
-    def show_capital_gains(
+    def show_capital_gains(  # pylint: disable=too-many-locals
         self,
         tax_year_filter: Year | None,
         ticker_filter: Ticker | None,
@@ -119,7 +119,7 @@ class TaxCalculator:
         else:
             tax_years = sorted(self._capital_gains.keys())
 
-        for tax_year in tax_years:
+        for tax_year_idx, tax_year in enumerate(tax_years, 1):
             table = prettytable.PrettyTable(
                 title=f"Tax year {tax_year}-{tax_year + 1}",
                 field_names=(
@@ -169,7 +169,7 @@ class TaxCalculator:
                 else:
                     total_losses += abs(cg.gain_loss)
 
-            print(table)
+            printtable(table, leading_newline=tax_year_idx == 1, trailing_newline=False)
 
             def gbp(amount):
                 return "£" + f"{amount:.2f}"
@@ -233,7 +233,7 @@ class TaxCalculator:
 
         table.add_row(["", "", total_cost, "", "", ""])
 
-        print(table, "\n")
+        printtable(table)
 
     def _calculate_capital_gains(self) -> None:
         if self._capital_gains or self._holdings:
