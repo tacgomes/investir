@@ -18,6 +18,15 @@ class SecuritiesDataProvider(ABC):
         pass
 
 
+class NoopDataProvider(SecuritiesDataProvider):
+    @staticmethod
+    def name() -> str:
+        return "Noop"
+
+    def get_security_data(self, _isin: ISIN) -> SecurityData:
+        return SecurityData("", [])
+
+
 class YahooFinanceDataProvider(SecuritiesDataProvider):
     @staticmethod
     def name() -> str:

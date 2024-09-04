@@ -11,7 +11,11 @@ import typer
 
 from .config import config
 from .securitiesdatacache import SecuritiesDataCache
-from .securitiesdataprovider import YahooFinanceDataProvider
+from .securitiesdataprovider import (
+    NoopDataProvider,
+    SecuritiesDataProvider,
+    YahooFinanceDataProvider,
+)
 from .exceptions import InvestirError
 from .logging import configure_logger
 from .parser import ParserFactory
@@ -113,7 +117,12 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     )
 
     try:
-        securities_data = SecuritiesDataCache(YahooFinanceDataProvider(), tr_hist)
+        data_provider: SecuritiesDataProvider
+        if not config.offline:
+            data_provider = YahooFinanceDataProvider()
+        else:
+            data_provider = NoopDataProvider()
+        securities_data = SecuritiesDataCache(data_provider, tr_hist)
         tax_calculator = TaxCalculator(tr_hist, securities_data)
     except InvestirError as ex:
         abort(str(ex))
@@ -155,6 +164,16 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
     strict: Annotated[
         bool, typer.Option(help="Abort if data integrity issues are found.")
     ] = True,
+    offline: Annotated[
+        bool,
+        typer.Option(
+            "--offline",
+            help=(
+                "Disable fetching additional data about securities (e.g. list of "
+                "share sub-division events) from the Internet."
+            ),
+        ),
+    ] = False,
     include_fx_fees: Annotated[
         bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
     ] = True,
@@ -178,6 +197,7 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
         raise MutuallyExclusiveOption("--verbose", "--quiet")
 
     config.strict = strict
+    config.offline = offline
     config.include_fx_fees = include_fx_fees
 
     if quiet:
