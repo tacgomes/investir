@@ -2,9 +2,8 @@ from collections.abc import Callable, Mapping, Sequence, ValuesView
 from decimal import Decimal
 from typing import NamedTuple, TypeVar
 
-import prettytable
-
 from .exceptions import AmbiguousTickerError
+from .prettytable import PrettyTable
 from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
 from .typing import ISIN, Ticker
 from .utils import multifilter, printtable
@@ -74,7 +73,7 @@ class TrHistory:
                 raise AmbiguousTickerError(ticker)
 
     def show_orders(self, filters: Sequence[Callable] | None = None) -> None:
-        table = prettytable.PrettyTable(
+        table = PrettyTable(
             field_names=(
                 "Date",
                 "ISIN",
@@ -87,20 +86,19 @@ class TrHistory:
                 "Fees (£)",
             )
         )
-        table.vrules = prettytable.NONE
 
         transactions = list(multifilter(filters, self._orders))
         last_idx = len(transactions) - 1
         total_total_cost = total_net_proceeds = total_fees = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
-            net_proceeds = ""
-            total_cost = ""
+            net_proceeds = None
+            total_cost = None
             if isinstance(tr, Acquisition):
-                total_cost = f"{tr.total_cost:.2f}"
+                total_cost = tr.total_cost
                 total_total_cost += round(tr.total_cost, 2)
             else:
-                net_proceeds = f"{tr.net_proceeds:.2f}"
+                net_proceeds = tr.net_proceeds
                 total_net_proceeds += round(tr.net_proceeds, 2)
 
             divider = (
@@ -116,7 +114,7 @@ class TrHistory:
                     total_cost,
                     net_proceeds,
                     tr.quantity,
-                    f"{tr.price:.2f}",
+                    tr.price,
                     tr.fees,
                 ],
                 divider=divider,
@@ -142,7 +140,7 @@ class TrHistory:
             printtable(table)
 
     def show_dividends(self, filters: Sequence[Callable] | None = None) -> None:
-        table = prettytable.PrettyTable(
+        table = PrettyTable(
             field_names=(
                 "Date",
                 "ISIN",
@@ -152,17 +150,13 @@ class TrHistory:
                 "Tax widhheld (£)",
             )
         )
-        table.vrules = prettytable.NONE
 
         transactions = list(multifilter(filters, self._dividends))
         last_idx = len(transactions) - 1
         total_paid = total_withheld = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
-            if tr.withheld is None:
-                withheld = "?"
-            else:
-                withheld = f"{tr.withheld:.2f}"
+            if tr.withheld is not None:
                 total_withheld += round(tr.withheld, 2)
 
             divider = (
@@ -170,7 +164,7 @@ class TrHistory:
             )
 
             table.add_row(
-                [tr.date, tr.isin, tr.name, tr.ticker, tr.amount, withheld],
+                [tr.date, tr.isin, tr.name, tr.ticker, tr.amount, tr.withheld],
                 divider=divider,
             )
 
@@ -182,10 +176,7 @@ class TrHistory:
             printtable(table)
 
     def show_transfers(self, filters: Sequence[Callable] | None = None) -> None:
-        table = prettytable.PrettyTable(
-            field_names=("Date", "Deposited (£)", "Withdrew (£)")
-        )
-        table.vrules = prettytable.NONE
+        table = PrettyTable(field_names=("Date", "Deposited (£)", "Withdrew (£)"))
 
         transactions = list(multifilter(filters, self._transfers))
         last_idx = len(transactions) - 1
@@ -213,8 +204,7 @@ class TrHistory:
             printtable(table)
 
     def show_interest(self, filters: Sequence[Callable] | None = None) -> None:
-        table = prettytable.PrettyTable(field_names=("Date", "Amount (£)"))
-        table.vrules = prettytable.NONE
+        table = PrettyTable(field_names=("Date", "Amount (£)"))
 
         transactions = list(multifilter(filters, self._interest))
         last_idx = len(transactions) - 1
