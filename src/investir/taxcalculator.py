@@ -169,23 +169,26 @@ class TaxCalculator:
                 else:
                     total_losses += abs(cg.gain_loss)
 
-            printtable(table, leading_newline=tax_year_idx == 1, trailing_newline=False)
+            if table.rows:
+                printtable(
+                    table, leading_newline=tax_year_idx == 1, trailing_newline=False
+                )
 
-            def gbp(amount):
-                return "£" + f"{amount:.2f}"
+                def gbp(amount):
+                    return "£" + f"{amount:.2f}"
 
-            print(
-                f"{'Number of disposals:':44}{num_disposals:>10}       "
-                f"{'Gains in the year, before losses:':44}{gbp(total_gains):>10}"
-            )
-            print(
-                f"{'Disposal proceeds:':44}{gbp(disposal_proceeds):>10}       "
-                f"{'Losses in the year:':44}{gbp(total_losses):>10}"
-            )
-            print(
-                f"{'Allowable costs (including purchase price):':44}"
-                f"{gbp(total_cost):>10}\n"
-            )
+                print(
+                    f"{'Number of disposals:':44}{num_disposals:>10}       "
+                    f"{'Gains in the year, before losses:':44}{gbp(total_gains):>10}"
+                )
+                print(
+                    f"{'Disposal proceeds:':44}{gbp(disposal_proceeds):>10}       "
+                    f"{'Losses in the year:':44}{gbp(total_losses):>10}"
+                )
+                print(
+                    f"{'Allowable costs (including purchase price):':44}"
+                    f"{gbp(total_cost):>10}\n"
+                )
 
     def show_holdings(self, ticker_filter: Ticker | None):
         self._calculate_capital_gains()
@@ -235,7 +238,8 @@ class TaxCalculator:
 
         table.add_row(["", "", total_cost, "", "", ""])
 
-        printtable(table)
+        if holdings:
+            printtable(table)
 
     def _calculate_capital_gains(self) -> None:
         if self._capital_gains or self._holdings:
