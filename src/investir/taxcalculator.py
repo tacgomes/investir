@@ -7,9 +7,8 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import TypeAlias
 
-import prettytable
-
 from .exceptions import AmbiguousTickerError, IncompleteRecordsError
+from .prettytable import PrettyTable
 from .securitiesdatacache import SecuritiesDataCache
 from .typing import ISIN, Ticker, Year
 from .transaction import Order, Acquisition, Disposal
@@ -120,7 +119,7 @@ class TaxCalculator:
             tax_years = sorted(self._capital_gains.keys())
 
         for tax_year_idx, tax_year in enumerate(tax_years, 1):
-            table = prettytable.PrettyTable(
+            table = PrettyTable(
                 title=f"Tax year {tax_year}-{tax_year + 1}",
                 field_names=(
                     "Date Disposed",
@@ -133,7 +132,6 @@ class TaxCalculator:
                     "Gain/loss (£)",
                 ),
             )
-            table.vrules = prettytable.NONE
 
             num_disposals = 0
             disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
@@ -155,9 +153,9 @@ class TaxCalculator:
                         cg.disposal.isin,
                         cg.disposal.name,
                         cg.quantity,
-                        f"{cg.cost:.2f}",
-                        f"{cg.disposal.amount:.2f}",
-                        f"{cg.gain_loss:.2f}",
+                        cg.cost,
+                        cg.disposal.amount,
+                        cg.gain_loss,
                     ]
                 )
 
@@ -193,7 +191,7 @@ class TaxCalculator:
     def show_holdings(self, ticker_filter: Ticker | None):
         self._calculate_capital_gains()
 
-        table = prettytable.PrettyTable(
+        table = PrettyTable(
             field_names=[
                 "ISIN",
                 "Name",
@@ -203,7 +201,6 @@ class TaxCalculator:
                 "Average Cost (£)",
             ]
         )
-        table.vrules = prettytable.NONE
 
         holdings = []
 
@@ -228,10 +225,10 @@ class TaxCalculator:
                 [
                     isin,
                     self._tr_hist.get_security_name(isin),
-                    f"{holding.cost:.2f}",
-                    f"{holding.cost / total_cost * 100:.2f}",
+                    holding.cost,
+                    holding.cost / total_cost * 100,
                     holding.quantity,
-                    f"{holding.cost / holding.quantity:.2f}",
+                    holding.cost / holding.quantity,
                 ],
                 divider=idx == last_idx,
             )
