@@ -138,7 +138,8 @@ class TrHistory:
             ]
         )
 
-        printtable(table)
+        if transactions:
+            printtable(table)
 
     def show_dividends(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
@@ -177,7 +178,8 @@ class TrHistory:
 
         table.add_row(["", "", "", "", total_paid, total_withheld])
 
-        printtable(table)
+        if transactions:
+            printtable(table)
 
     def show_transfers(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
@@ -207,7 +209,8 @@ class TrHistory:
 
         table.add_row(["", total_deposited, total_withdrew])
 
-        printtable(table)
+        if transactions:
+            printtable(table)
 
     def show_interest(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(field_names=("Date", "Amount (£)"))
@@ -228,7 +231,8 @@ class TrHistory:
 
         table.add_row(["", total_interest])
 
-        printtable(table)
+        if transactions:
+            printtable(table)
 
     def _securities_map(self) -> Mapping[ISIN, Security]:
         if not self._securities:
