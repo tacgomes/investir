@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
-from .typing import ISIN
+from .typing import ISIN, Ticker
 
 
 class InvestirError(Exception):
@@ -65,3 +65,9 @@ class IncompleteRecordsError(InvestirError):
             f"Records appear to be incomplete for {name} ({isin}): "
             f"share quantity cannot be negative"
         )
+
+
+class AmbiguousTickerError(InvestirError):
+
+    def __init__(self, ticker: Ticker) -> None:
+        super().__init__(f"Ticker {ticker} is ambiguous (used on different securities)")
