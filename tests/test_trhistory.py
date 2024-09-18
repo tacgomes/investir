@@ -2,6 +2,9 @@ from dataclasses import replace
 from datetime import datetime
 from decimal import Decimal
 
+import pytest
+
+from investir.exceptions import AmbiguousTickerError
 from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
@@ -175,7 +178,8 @@ def test_get_ticker_isin_when_ticker_ambigous():
     )
 
     tr_hist = TrHistory(orders=[order1, order2])
-    assert tr_hist.get_ticker_isin(Ticker("ASML")) is None
+    with pytest.raises(AmbiguousTickerError):
+        tr_hist.get_ticker_isin(Ticker("ASML"))
 
 
 def test_trhistory_show_orders(capsys):

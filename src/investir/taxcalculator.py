@@ -9,8 +9,8 @@ from typing import TypeAlias
 
 import prettytable
 
+from .exceptions import AmbiguousTickerError, IncompleteRecordsError
 from .securitiesdatacache import SecuritiesDataCache
-from .exceptions import IncompleteRecordsError
 from .typing import ISIN, Ticker, Year
 from .transaction import Order, Acquisition, Disposal
 from .trhistory import TrHistory
@@ -202,18 +202,20 @@ class TaxCalculator:
         )
         table.vrules = prettytable.NONE
 
-        holdings = sorted(self._holdings.items(), key=lambda x: x[1].cost, reverse=True)
+        holdings = []
 
-        if ticker_filter is not None:
-            isin = self._tr_hist.get_ticker_isin(ticker_filter)
-            if isin is not None:
-                holdings = [(isin, self._holdings[isin])]
+        if ticker_filter is None:
+            holdings = sorted(
+                self._holdings.items(), key=lambda x: x[1].cost, reverse=True
+            )
+        else:
+            try:
+                isin = self._tr_hist.get_ticker_isin(ticker_filter)
+            except AmbiguousTickerError as e:
+                logger.warning(e)
             else:
-                logger.warning(
-                    "Ignoring ticker filter as %s was not found or is ambiguous "
-                    "(used on different securities)",
-                    ticker_filter,
-                )
+                if isin in self._holdings:
+                    holdings = [(isin, self._holdings[isin])]
 
         total_cost = sum(round(holding.cost, 2) for _, holding in holdings)
         last_idx = len(holdings) - 1

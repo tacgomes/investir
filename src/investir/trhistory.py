@@ -4,6 +4,7 @@ from typing import NamedTuple, TypeVar
 
 import prettytable
 
+from .exceptions import AmbiguousTickerError
 from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
 from .typing import ISIN, Ticker
 from .utils import multifilter, printtable
@@ -64,10 +65,13 @@ class TrHistory:
     def get_ticker_isin(self, ticker: Ticker) -> ISIN | None:
         isins = set(o.isin for o in self._orders if o.ticker == ticker)
 
-        if not len(isins) == 1:
-            return None
-
-        return next(iter(isins))
+        match len(isins):
+            case 0:
+                return None
+            case 1:
+                return next(iter(isins))
+            case _:
+                raise AmbiguousTickerError(ticker)
 
     def show_orders(self, filters: Sequence[Callable] | None = None) -> None:
         table = prettytable.PrettyTable(
