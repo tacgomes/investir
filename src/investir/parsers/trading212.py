@@ -1,6 +1,5 @@
 import csv
 import logging
-
 from collections.abc import Mapping
 from datetime import timezone
 from decimal import Decimal
@@ -9,8 +8,8 @@ from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
 
+from investir.config import config
 from investir.const import MIN_TIMESTAMP
-from investir.utils import read_decimal, dict2str
 from investir.exceptions import (
     CalculatedAmountError,
     CurrencyError,
@@ -19,9 +18,7 @@ from investir.exceptions import (
     ParseError,
     TransactionTypeError,
 )
-from investir.config import config
 from investir.parser import Parser, ParsingResult
-from investir.typing import ISIN, Ticker
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -30,8 +27,8 @@ from investir.transaction import (
     Order,
     Transfer,
 )
-from investir.utils import raise_or_warn
-
+from investir.typing import ISIN, Ticker
+from investir.utils import dict2str, raise_or_warn, read_decimal
 
 logger = logging.getLogger(__name__)
 

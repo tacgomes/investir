@@ -1,7 +1,7 @@
 import csv
 from collections.abc import Callable, Mapping, Sequence
-from decimal import Decimal
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Final
 
 import pytest
@@ -18,7 +18,6 @@ from investir.exceptions import (
 from investir.parsers.trading212 import Trading212Parser
 from investir.transaction import Acquisition, Disposal
 from investir.typing import ISIN, Ticker
-
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 

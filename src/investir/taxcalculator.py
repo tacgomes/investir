@@ -1,7 +1,6 @@
 import logging
-
 from collections import defaultdict, namedtuple
-from collections.abc import Callable, Sequence, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
@@ -10,10 +9,10 @@ from typing import TypeAlias
 from .exceptions import AmbiguousTickerError, IncompleteRecordsError
 from .prettytable import PrettyTable
 from .securitiesdatacache import SecuritiesDataCache
-from .typing import ISIN, Ticker, Year
-from .transaction import Order, Acquisition, Disposal
+from .transaction import Acquisition, Disposal, Order
 from .trhistory import TrHistory
-from .utils import raise_or_warn, printtable
+from .typing import ISIN, Ticker, Year
+from .utils import printtable, raise_or_warn
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-from platformdirs import user_cache_dir
 import yaml
+from platformdirs import user_cache_dir
 
 from .securitiesdataprovider import SecuritiesDataProvider
 from .securitydata import SecurityData

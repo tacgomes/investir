@@ -1,11 +1,11 @@
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
 
 from investir.securitydata import Split
+from investir.transaction import Acquisition, Disposal, Order
 from investir.typing import ISIN, Ticker
-from investir.transaction import Order, Acquisition, Disposal
 
 
 def test_acquisition_order():

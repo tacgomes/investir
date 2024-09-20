@@ -1,8 +1,8 @@
-from collections.abc import Callable, Sequence
-from datetime import datetime
 import importlib.metadata
 import logging
 import operator
+from collections.abc import Callable, Sequence
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -10,19 +10,19 @@ import click
 import typer
 
 from .config import config
+from .exceptions import InvestirError
+from .logging import configure_logger
+from .parser import ParserFactory
 from .securitiesdatacache import SecuritiesDataCache
 from .securitiesdataprovider import (
     NoopDataProvider,
     SecuritiesDataProvider,
     YahooFinanceDataProvider,
 )
-from .exceptions import InvestirError
-from .logging import configure_logger
-from .parser import ParserFactory
 from .taxcalculator import TaxCalculator
 from .transaction import Acquisition, Disposal, Transaction
 from .trhistory import TrHistory
-from .typing import Year, Ticker
+from .typing import Ticker, Year
 
 logger = logging.getLogger(__name__)
 

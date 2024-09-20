@@ -1,16 +1,16 @@
 from collections.abc import Callable, Sequence
-from datetime import datetime, date, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
 
+from investir.exceptions import IncompleteRecordsError
 from investir.securitiesdatacache import SecuritiesDataCache
 from investir.securitiesdataprovider import (
     SecurityData,
     Split,
     YahooFinanceDataProvider,
 )
-from investir.exceptions import IncompleteRecordsError
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory

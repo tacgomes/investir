@@ -5,10 +5,9 @@ from decimal import Decimal
 import pytest
 
 from investir.exceptions import AmbiguousTickerError
-from investir.transaction import Acquisition, Disposal, Dividend, Transfer, Interest
+from investir.transaction import Acquisition, Disposal, Dividend, Interest, Transfer
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
-
 
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),

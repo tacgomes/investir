@@ -2,11 +2,11 @@ import datetime
 from decimal import Decimal
 
 from investir.utils import (
-    tax_year_period,
     date_to_tax_year,
+    dict2str,
     multifilter,
     read_decimal,
-    dict2str,
+    tax_year_period,
 )
 
 

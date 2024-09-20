@@ -1,11 +1,9 @@
 import logging
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar, NamedTuple
 
-from .transaction import Order, Dividend, Transfer, Interest
-
+from .transaction import Dividend, Interest, Order, Transfer
 
 logger = logging.getLogger(__name__)
 

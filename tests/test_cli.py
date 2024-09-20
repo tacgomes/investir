@@ -1,14 +1,13 @@
-from collections.abc import Iterable
 import logging
 import os
-from pathlib import Path
 import shlex
+from collections.abc import Iterable
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from investir.cli import app
-
 
 PROJECT_DIR = Path(__file__).parent.parent
 DATA_FILE = str(PROJECT_DIR / "data" / "freetrade.csv")

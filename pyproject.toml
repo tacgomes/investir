@@ -15,10 +15,11 @@ dependencies = [
   "yfinance ~= 0.2.40",
 ]
 optional-dependencies.lint = [
-  "flake8 ~= 7.0.0",
   "black ~= 24.1.0",
-  "pylint ~= 3.2.0",
+  "isort ~= 5.13.0",
+  "flake8 ~= 7.0.0",
   "mypy ~= 1.9.0",
+  "pylint ~= 3.2.0",
 ]
 optional-dependencies.test = [
   "pandas ~= 2.2.0",
@@ -55,6 +56,9 @@ investir = "investir.cli:main"
 Homepage = "https://github.com/tacgomes/investir"
 Repository = "https://github.com/tacgomes/investir"
 "Bug Tracker" = "https://github.com/tacgomes/investir/issues"
+
+[tool.isort]
+profile = "black"
 
 [[tool.mypy.overrides]]
 module = "yfinance"
