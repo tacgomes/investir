@@ -30,6 +30,10 @@ jobs:
       run: |
         black --check .
 
+    - name: Run isort
+      run: |
+        isort . --check-only --diff
+
     - name: Run Pylint
       run: |
         pylint $(git ls-files '*.py')

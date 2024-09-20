@@ -1,6 +1,5 @@
 import datetime
 import logging
-
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from decimal import Decimal
 from typing import Final

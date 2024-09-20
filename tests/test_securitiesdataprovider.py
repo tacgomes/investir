@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import PropertyMock, Mock
+from unittest.mock import Mock, PropertyMock
 
 import pandas as pd
 import pytest
@@ -10,7 +10,6 @@ import yfinance
 from investir.securitiesdataprovider import YahooFinanceDataProvider
 from investir.securitydata import Split
 from investir.typing import ISIN
-
 
 AMZN_PSERIES = pd.Series(
     data=[10.0, 3.0],

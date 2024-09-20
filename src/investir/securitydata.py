@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from dateutil.parser import parse as parse_timestamp
 import yaml
+from dateutil.parser import parse as parse_timestamp
 
 
 @dataclass

@@ -4,10 +4,9 @@ from typing import NamedTuple, TypeVar
 
 from .exceptions import AmbiguousTickerError
 from .prettytable import PrettyTable
-from .transaction import Transaction, Order, Acquisition, Dividend, Transfer, Interest
+from .transaction import Acquisition, Dividend, Interest, Order, Transaction, Transfer
 from .typing import ISIN, Ticker
 from .utils import multifilter, printtable
-
 
 T = TypeVar("T", bound=Transaction)
 

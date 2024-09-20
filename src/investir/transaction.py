@@ -1,17 +1,16 @@
+import operator
+import sys
 from abc import ABC
 from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 from functools import reduce
-import operator
-import sys
 from typing import ClassVar, TypeVar
 
 from .securitydata import Split
 from .typing import ISIN, Ticker, Year
 from .utils import date_to_tax_year
-
 
 if sys.version_info >= (3, 11):
     from typing import Self

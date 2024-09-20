@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 import yaml
 
-from investir.securitiesdatacache import SecuritiesDataCache, VERSION
+from investir.securitiesdatacache import VERSION, SecuritiesDataCache
 from investir.securitiesdataprovider import (
     SecurityData,
     Split,
@@ -16,7 +16,6 @@ from investir.securitiesdataprovider import (
 from investir.transaction import Acquisition, Disposal
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
-
 
 ORDER1 = Acquisition(
     datetime(2018, 1, 1, tzinfo=timezone.utc),
