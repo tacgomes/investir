@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "investir"
-version = "0.3alpha"
+version = "1.0"
 dependencies = [
   "click ~= 8.1.0",
   "platformdirs ~= 4.2.0",
@@ -38,7 +38,7 @@ readme = "README.md"
 license = {text = "MIT License"}
 keywords = ["HMRC", "Shares", "Stock", "Tax", "Capital Gains", "Freetrade", "Trading212"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: End Users/Desktop",
   "License :: OSI Approved :: MIT License",
