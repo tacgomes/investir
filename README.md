@@ -35,9 +35,9 @@ environment] for the installation:
     $ python -m venv .venv
     $ source .venv/bin/activate
 
-**Investir** can be installed directly using the URL for this repository:
+**Investir** can be installed from the Python Package Index (PyPI):
 
-    (.venv)$ python -m pip install git+https://github.com/tacgomes/investir
+    (.venv)$ python -m pip install investir
 
 If you type `investir` and press the enter key, **Investir**'s command
 help should now be displayed.
