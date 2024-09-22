@@ -1,4 +1,7 @@
-![Continuous integration check on the main branch](https://github.com/tacgomes/investir/actions/workflows/ci.yml/badge.svg)
+[![CI badge][ci-badge]][actions]
+[![Version badge][version-badge]][version]
+[![Python versions badge][pyversions-badge]][pyversions]
+[![License badge][license-badge]][license]
 
 # Investir
 
@@ -222,6 +225,16 @@ execute an [editable install]:
   program will terminate if encounters transactions whose base currency
   is not in pound sterling (GBP). These transactions can be ignored
   instead by using the `--no-strict` command-line option.
+
+[ci-badge]: https://github.com/tacgomes/investir/actions/workflows/ci.yml/badge.svg
+[version-badge]: https://img.shields.io/pypi/v/investir.svg
+[pyversions-badge]: https://img.shields.io/pypi/pyversions/investir.svg
+[license-badge]: https://img.shields.io/pypi/l/investir.svg
+
+[actions]: https://github.com/tacgomes/investir/actions
+[version]: https://pypi.org/project/investir/
+[pyversions]: https://wiki.python.org/moin/BeginnersGuide/Download
+[license]: https://github.com/tacgomes/investir/blob/master/LICENSE
 
 [share identification rules]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
 [virtual environment]: https://docs.python.org/3/library/venv.html
