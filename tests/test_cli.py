@@ -107,7 +107,7 @@ def test_cli_output(request, runner, cmd, expected):
     else:
         assert expected_output.exists()
         assert result.exit_code == EX_OK
-        assert result.stdout == expected_output.read_text()
+        assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
 def test_capital_gains_multiple_input_files(runner):
@@ -116,7 +116,7 @@ def test_capital_gains_multiple_input_files(runner):
     result = runner.invoke(app, ["--offline", "capital-gains", data_file1, data_file2])
     assert result.exit_code == EX_OK
     expected_output = OUTPUTS_DIR / "capital_gains"
-    assert result.stdout == expected_output.read_text()
+    assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
 def test_orders_command_no_results(runner):
