@@ -200,7 +200,7 @@ class Trading212Parser(Parser):
             )
         )
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_dividend(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Time"])
@@ -235,7 +235,7 @@ class Trading212Parser(Parser):
             )
         )
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
     def _parse_transfer(self, row: Mapping[str, str]):
         action = row["Action"]
@@ -248,7 +248,7 @@ class Trading212Parser(Parser):
 
         self._transfers.append(Transfer(timestamp, tr_id=tr_id, amount=total))
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
     def _parse_interest(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Time"])
@@ -257,4 +257,4 @@ class Trading212Parser(Parser):
 
         self._interest.append(Interest(timestamp, tr_id=tr_id, amount=total))
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])

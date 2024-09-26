@@ -78,17 +78,17 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     interest = []
 
     def abort(message: str) -> None:
-        logging.critical(message)
+        logger.critical(message)
         raise typer.Exit(code=1)
 
     for path in input_files:
-        logging.info("Parsing input file: %s", path)
+        logger.info("Parsing input file: %s", path)
         if parser := ParserFactory.create_parser(path):
             try:
                 result = parser.parse()
             except InvestirError as ex:
                 abort(str(ex))
-            logging.info(
+            logger.info(
                 "Parsed: "
                 "%s orders, %s dividend payments, %s transfers, %s interest payments",
                 len(result.orders),
@@ -108,7 +108,7 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
         orders=orders, dividends=dividends, transfers=transfers, interest=interest
     )
 
-    logging.info(
+    logger.info(
         "Total: %s orders, %s dividend payments, %s transfers, %s interest payments",
         len(tr_hist.orders),
         len(tr_hist.dividends),
