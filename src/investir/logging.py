@@ -53,6 +53,7 @@ def configure_logger() -> None:
             "loggers": {
                 "root": {"level": "NOTSET", "handlers": ["console"]},
                 "investir": {"level": config.log_level},
+                "yfinance": {"level": logging.CRITICAL},
             },
         }
     )
