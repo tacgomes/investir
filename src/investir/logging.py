@@ -1,4 +1,5 @@
 import logging
+import logging.config
 from typing import Final
 
 from .config import config
@@ -13,8 +14,11 @@ class CustomFormatter(logging.Formatter):
     BOLD_RED: Final = f"{CSI}1;31m"
     RESET: Final = f"{CSI}0m"
 
-    def __init__(self, fmt: str) -> None:
-        super().__init__()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        fmt = kwargs.get("fmt", "%(message)s")
+
         self.formats = {
             logging.DEBUG: self.BRIGHT_CYAN + fmt + self.RESET,
             logging.INFO: self.BOLD_WHITE + fmt + self.RESET,
@@ -30,14 +34,25 @@ class CustomFormatter(logging.Formatter):
 
 
 def configure_logger() -> None:
-    logger = logging.getLogger()
-    logger.setLevel(logging.NOTSET)
-
-    fmt = "%(levelname)8s | %(message)s"
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(config.log_level)
-    console_handler.setFormatter(
-        CustomFormatter(fmt) if config.use_colour else logging.Formatter(fmt)
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+            "formatters": {
+                "standard": {
+                    "()": CustomFormatter if config.use_colour else logging.Formatter,
+                    "format": "%(levelname)8s | %(message)s",
+                }
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "standard",
+                },
+            },
+            "loggers": {
+                "root": {"level": "NOTSET", "handlers": ["console"]},
+                "investir": {"level": config.log_level},
+            },
+        }
     )
-
-    logger.addHandler(console_handler)
