@@ -41,12 +41,12 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
                 last_order = next(o for o in reversed(orders) if o.isin == isin)
 
                 if security_data.last_updated > last_order.timestamp:
-                    logging.debug(
+                    logger.debug(
                         "Securities cache for %s (%s) is up-to-date", name, isin
                     )
                     continue
 
-            logging.info("Fetching information for %s (%s)", name, isin)
+            logger.info("Fetching information for %s (%s)", name, isin)
             self._securities_data[isin] = self._data_provider.get_security_data(isin)
             update_cache = True
 
@@ -55,7 +55,7 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
 
     def _load_cache(self) -> None:
         if self._cache_file.exists():
-            logging.info("Loading securities cache from %s", self._cache_file)
+            logger.info("Loading securities cache from %s", self._cache_file)
 
             with self._cache_file.open("r") as file:
                 data = yaml.load(file, Loader=yaml.FullLoader)
@@ -63,9 +63,9 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
 
     def _update_cache(self) -> None:
         if self._cache_file.exists():
-            logging.info("Updating securities cache on %s", self._cache_file)
+            logger.info("Updating securities cache on %s", self._cache_file)
         else:
-            logging.info("Creating securities cache on %s", self._cache_file)
+            logger.info("Creating securities cache on %s", self._cache_file)
 
         self._cache_file.parent.mkdir(parents=True, exist_ok=True)
         securities_info = dict(sorted(self._securities_data.items()))

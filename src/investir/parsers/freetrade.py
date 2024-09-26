@@ -178,7 +178,7 @@ class FreetradeParser(Parser):
             )
         )
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_dividend(self, row: Mapping[str, str]):
         title = row["Title"]
@@ -220,7 +220,7 @@ class FreetradeParser(Parser):
             )
         )
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
     def _parse_transfer(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Timestamp"])
@@ -232,7 +232,7 @@ class FreetradeParser(Parser):
 
         self._transfers.append(Transfer(timestamp, total_amount))
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
     def _parse_interest(self, row: Mapping[str, str]):
         timestamp = parse_timestamp(row["Timestamp"])
@@ -240,4 +240,4 @@ class FreetradeParser(Parser):
 
         self._interest.append(Interest(timestamp, total_amount))
 
-        logging.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])

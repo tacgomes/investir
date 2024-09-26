@@ -242,7 +242,7 @@ class TaxCalculator:
             # Capital gains already calculated.
             return
 
-        logging.info("Calculating capital gains")
+        logger.info("Calculating capital gains")
 
         # First normalise the orders by retroactively adjusting their
         # share quantity for any eventual share sub-division or share
@@ -253,7 +253,7 @@ class TaxCalculator:
         same_day = self._group_same_day(orders)
 
         for isin, name in self._tr_hist.securities:
-            logging.debug("Calculating capital gains for %s (%s)", name, isin)
+            logger.debug("Calculating capital gains for %s (%s)", name, isin)
 
             # Merge orders that were issued in the same day and have
             # the same type, and place them in the acquisitions or
@@ -299,7 +299,7 @@ class TaxCalculator:
         for orders in security_orders:
             if len(orders) > 1:
                 order = Order.merge(*orders)
-                logging.debug('    New "same-day" merged order: %s', order)
+                logger.debug('    New "same-day" merged order: %s', order)
             else:
                 order = orders[0]
 
@@ -380,7 +380,7 @@ class TaxCalculator:
                                 isin, self._tr_hist.get_security_name(isin) or "?"
                             )
                         )
-                        logging.warning("Not calculating holding for %s", isin)
+                        logger.warning("Not calculating holding for %s", isin)
                         del self._holdings[isin]
                         break
 
@@ -396,6 +396,6 @@ class TaxCalculator:
                             isin, self._tr_hist.get_security_name(isin) or "?"
                         )
                     )
-                    logging.warning("Not calculating holding for %s", isin)
+                    logger.warning("Not calculating holding for %s", isin)
                     del self._holdings[isin]
                     break

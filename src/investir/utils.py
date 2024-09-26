@@ -9,6 +9,8 @@ from prettytable import PrettyTable
 from .config import config
 from .typing import Year
 
+logger = logging.getLogger(__name__)
+
 TAX_YEAR_MONTH: Final = 4
 TAX_YEAR_START_DAY: Final = 6
 TAX_YEAR_END_DAY: Final = 5
@@ -36,7 +38,7 @@ def multifilter(filters: Sequence[Callable] | None, iterable: Iterable) -> Itera
 def raise_or_warn(ex: Exception) -> None:
     if config.strict:
         raise ex
-    logging.warning(ex)
+    logger.warning(ex)
 
 
 def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
