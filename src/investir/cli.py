@@ -122,7 +122,7 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
             data_provider = YahooFinanceDataProvider()
         else:
             data_provider = NoopDataProvider()
-        securities_data = SecuritiesDataCache(data_provider, tr_hist)
+        securities_data = SecuritiesDataCache(data_provider, tr_hist, config.cache_file)
         tax_calculator = TaxCalculator(tr_hist, securities_data)
     except InvestirError as ex:
         abort(str(ex))
@@ -174,6 +174,16 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
             ),
         ),
     ] = False,
+    cache_file: Annotated[
+        Path,
+        typer.Option(
+            dir_okay=False,
+            help=(
+                "Cache file to store additional data about securities fetched "
+                "from the Internet."
+            ),
+        ),
+    ] = config.cache_file,
     include_fx_fees: Annotated[
         bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
     ] = True,
@@ -198,6 +208,7 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
 
     config.strict = strict
     config.offline = offline
+    config.cache_file = cache_file
     config.include_fx_fees = include_fx_fees
 
     if quiet:

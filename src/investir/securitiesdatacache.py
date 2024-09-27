@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 
 import yaml
-from platformdirs import user_cache_dir
 
 from .securitiesdataprovider import SecuritiesDataProvider
 from .securitydata import SecurityData
@@ -12,8 +11,6 @@ from .typing import ISIN
 logger = logging.getLogger(__name__)
 
 VERSION = 1
-DEFAULT_CACHE_DIR = Path(user_cache_dir()) / "investir"
-DEFAULT_CACHE_FILENAME = "securities.yaml"
 
 
 class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
@@ -21,11 +18,11 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
         self,
         data_provider: SecuritiesDataProvider,
         tr_hist: TrHistory,
-        cache_file: Path | None = None,
+        cache_file: Path,
     ) -> None:
         self._data_provider = data_provider
         self._tr_hist = tr_hist
-        self._cache_file = cache_file or (DEFAULT_CACHE_DIR / DEFAULT_CACHE_FILENAME)
+        self._cache_file = cache_file
         self._securities_data: dict[ISIN, SecurityData] = {}
 
         self._initialise()
