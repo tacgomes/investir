@@ -81,4 +81,4 @@ def test_dataprovider_security_not_found(yf_ticker_mocker):
     yf_ticker_mocker(yfinance.exceptions.YFException, [])
     data_provider = YahooFinanceDataProvider()
     security_data = data_provider.get_security_data(ISIN("NOT-FOUND"))
-    assert security_data is not None
+    assert security_data is None

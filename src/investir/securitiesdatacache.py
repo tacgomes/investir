@@ -46,9 +46,14 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
                     )
                     continue
 
-            logger.info("Fetching information for %s (%s)", name, isin)
-            self._securities_data[isin] = self._data_provider.get_security_data(isin)
             update_cache = True
+
+            logger.info("Fetching information for %s - %s", isin, name)
+            if data := self._data_provider.get_security_data(isin):
+                self._securities_data[isin] = data
+            else:
+                logger.warning("Failed to fetch information for %s - %s", isin, name)
+                self._securities_data[isin] = SecurityData(name, [])
 
         if update_cache:
             self._update_cache()
