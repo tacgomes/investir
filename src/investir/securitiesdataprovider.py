@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
@@ -5,6 +6,8 @@ import yfinance
 
 from .securitydata import SecurityData, Split
 from .typing import ISIN
+
+logger = logging.getLogger(__name__)
 
 
 class SecuritiesDataProvider(ABC):
@@ -14,7 +17,7 @@ class SecuritiesDataProvider(ABC):
         pass
 
     @abstractmethod
-    def get_security_data(self, isin: ISIN) -> SecurityData:
+    def get_security_data(self, isin: ISIN) -> SecurityData | None:
         pass
 
 
@@ -32,12 +35,13 @@ class YahooFinanceDataProvider(SecuritiesDataProvider):
     def name() -> str:
         return "Yahoo Finance"
 
-    def get_security_data(self, isin: ISIN) -> SecurityData:
+    def get_security_data(self, isin: ISIN) -> SecurityData | None:
         try:
             yf_data = yfinance.Ticker(isin)
             name = yf_data.info["shortName"]
-        except yfinance.exceptions.YFException:
-            return SecurityData("", [])
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.debug("Exception from yfinance: %s", str(e))
+            return None
 
         splits = [
             Split(pd_date.to_pydatetime(), Decimal(ratio))

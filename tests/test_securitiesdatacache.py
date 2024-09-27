@@ -50,6 +50,14 @@ ORDER4 = Acquisition(
 )
 
 ORDER5 = Acquisition(
+    datetime(2024, 3, 1, tzinfo=timezone.utc),
+    isin=ISIN("NOTF-ISIN"),
+    name="Not Found",
+    amount=Decimal("5.0"),
+    quantity=Decimal("1.0"),
+)
+
+ORDER6 = Acquisition(
     datetime(2024, 6, 1, tzinfo=timezone.utc),
     isin=ISIN("MSFT-ISIN"),
     name="Microsoft",
@@ -91,7 +99,7 @@ def test_securities_data_initialisation_without_cache(
 ):
     cache_file = tmp_path / "cache.yaml"
 
-    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
     data_cache, data_provider_mock = create_securities_data_cache(
         tr_hist,
@@ -99,25 +107,27 @@ def test_securities_data_initialisation_without_cache(
         [
             SecurityData(name="Amazon", splits=AMZN_SPLITS),
             SecurityData(name="Netflix", splits=NFLX_SPLITS),
+            None,
         ],
     )
     assert data_cache[ISIN("AMZN-ISIN")].name == "Amazon"
     assert data_cache[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
     assert data_cache[ISIN("NFLX-ISIN")].name == "Netflix"
     assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert data_provider_mock.call_count == 2
+    assert data_cache[ISIN("NOTF-ISIN")].name == "Not Found"
+    assert data_cache[ISIN("NOTF-ISIN")].splits == []
+    assert data_provider_mock.call_count == 3
 
     assert cache_file.exists()
     with cache_file.open("r") as file:
         data = yaml.load(file, Loader=yaml.FullLoader)
     assert data["version"] == VERSION
     assert data["securities"].get(ISIN("AMZN-ISIN")).name == "Amazon"
-    assert (
-        data["securities"].get(ISIN("AMZN-ISIN")).splits
-        == data["securities"].get(ISIN("AMZN-ISIN")).splits
-    )
+    assert data["securities"].get(ISIN("AMZN-ISIN")).splits == AMZN_SPLITS
     assert data["securities"].get(ISIN("NFLX-ISIN")).name == "Netflix"
     assert data["securities"].get(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
+    assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
+    assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
 
     data_cache, data_provider_mock = create_securities_data_cache(
         tr_hist, cache_file, None
@@ -126,6 +136,8 @@ def test_securities_data_initialisation_without_cache(
     assert data_cache[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
     assert data_cache[ISIN("NFLX-ISIN")].name == "Netflix"
     assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
+    assert data_cache[ISIN("NOTF-ISIN")].name == "Not Found"
+    assert data_cache[ISIN("NOTF-ISIN")].splits == []
     assert data_provider_mock.call_count == 0
 
 
@@ -152,7 +164,7 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
         Split(date_effective=datetime(2024, 1, 1), ratio=Decimal("40.0"))
     ]
 
-    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
+    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5, ORDER6])
 
     data_cache, data_provider_mock = create_securities_data_cache(
         tr_hist,
@@ -161,13 +173,14 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
             SecurityData(name="Amazon", splits=amazn_splits),
             SecurityData(name="Microsoft", splits=[]),
             SecurityData(name="Netflix", splits=NFLX_SPLITS),
+            None,
         ],
     )
 
     assert data_cache[ISIN("AMZN-ISIN")].splits == amazn_splits
     assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
     assert not data_cache[ISIN("MSFT-ISIN")].splits
-    assert data_provider_mock.call_count == 3
+    assert data_provider_mock.call_count == 4
 
     with cache_file.open("r") as file:
         data = yaml.load(file, yaml.FullLoader)
@@ -176,11 +189,14 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
         ISIN("AMZN-ISIN"),
         ISIN("MSFT-ISIN"),
         ISIN("NFLX-ISIN"),
+        ISIN("NOTF-ISIN"),
     )
 
     assert data["securities"].get(ISIN("AMZN-ISIN")).name == "Amazon"
     assert data["securities"].get(ISIN("AMZN-ISIN")).splits == amazn_splits
+    assert data["securities"].get(ISIN("MSFT-ISIN")).name == "Microsoft"
+    assert data["securities"].get(ISIN("MSFT-ISIN")).splits == []
     assert data["securities"].get(ISIN("NFLX-ISIN")).name == "Netflix"
     assert data["securities"].get(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
-    assert data["securities"].get(ISIN("MSFT-ISIN")).name == "Microsoft"
-    assert not data["securities"].get(ISIN("MSFT-ISIN")).splits
+    assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
+    assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
