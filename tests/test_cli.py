@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from investir.cli import app
 
@@ -15,10 +15,15 @@ OUTPUTS_DIR = PROJECT_DIR / "tests" / "test_cli"
 EX_OK = getattr(os, "EX_OK", 0)
 
 
-@pytest.fixture(name="runner")
-def fixture_create_runner() -> Iterable:
+@pytest.fixture(name="execute")
+def fixture_execute() -> Iterable:
+    def _execute(args: list[str]) -> Result:
+        runner = CliRunner(mix_stderr=False)
+        global_opts = ["--offline"]
+        return runner.invoke(app, global_opts + args)
+
     logging.disable()
-    yield CliRunner(mix_stderr=False)
+    yield _execute
     logging.disable(logging.NOTSET)
 
 
@@ -98,8 +103,8 @@ test_data = [
 
 
 @pytest.mark.parametrize("cmd,expected", test_data)
-def test_cli_output(request, runner, cmd, expected):
-    result = runner.invoke(app, ["--offline"] + shlex.split(cmd) + [DATA_FILE])
+def test_cli_output(request, execute, cmd, expected):
+    result = execute(shlex.split(cmd) + [DATA_FILE])
     expected_output = OUTPUTS_DIR / expected
 
     if request.config.getoption("--regen-outputs"):
@@ -110,73 +115,73 @@ def test_cli_output(request, runner, cmd, expected):
         assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
-def test_capital_gains_multiple_input_files(runner):
+def test_capital_gains_multiple_input_files(execute):
     data_file1 = str(PROJECT_DIR / "data" / "trading212_2021-2022.csv")
     data_file2 = str(PROJECT_DIR / "data" / "trading212_2022-2023.csv")
-    result = runner.invoke(app, ["--offline", "capital-gains", data_file1, data_file2])
+    result = execute(["capital-gains", data_file1, data_file2])
     assert result.exit_code == EX_OK
     expected_output = OUTPUTS_DIR / "capital_gains"
     assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
-def test_orders_command_no_results(runner):
-    result = runner.invoke(app, ["orders", "--tax-year", "2008", DATA_FILE])
+def test_orders_command_no_results(execute):
+    result = execute(["orders", "--tax-year", "2008", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_dividends_command_no_results(runner):
-    result = runner.invoke(app, ["dividends", "--tax-year", "2008", DATA_FILE])
+def test_dividends_command_no_results(execute):
+    result = execute(["dividends", "--tax-year", "2008", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_transfers_command_no_results(runner):
-    result = runner.invoke(app, ["transfers", "--tax-year", "2008", DATA_FILE])
+def test_transfers_command_no_results(execute):
+    result = execute(["transfers", "--tax-year", "2008", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_interest_command_no_results(runner):
-    result = runner.invoke(app, ["interest", "--tax-year", "2008", DATA_FILE])
+def test_interest_command_no_results(execute):
+    result = execute(["interest", "--tax-year", "2008", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_capital_gains_command_no_results(runner):
-    result = runner.invoke(app, ["capital-gains", "--tax-year", "2008", DATA_FILE])
+def test_capital_gains_command_no_results(execute):
+    result = execute(["capital-gains", "--tax-year", "2008", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_holdings_no_results(runner):
-    result = runner.invoke(app, ["holdings", "--ticker", "NOTFOUND", DATA_FILE])
+def test_holdings_no_results(execute):
+    result = execute(["holdings", "--ticker", "NOTFOUND", DATA_FILE])
     assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
 
 
-def test_orders_command_mutually_exclusive_filters(runner):
-    result = runner.invoke(app, ["orders", "--acquisitions", "--disposals", DATA_FILE])
+def test_orders_command_mutually_exclusive_filters(execute):
+    result = execute(["orders", "--acquisitions", "--disposals", DATA_FILE])
     assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
 
 
-def test_transfers_command_mutually_exclusive_filters(runner):
-    result = runner.invoke(app, ["transfers", "--deposits", "--withdrawals", DATA_FILE])
+def test_transfers_command_mutually_exclusive_filters(execute):
+    result = execute(["transfers", "--deposits", "--withdrawals", DATA_FILE])
     assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
 
 
-def test_capital_gains_command_mutually_exclusive_filters(runner):
-    result = runner.invoke(app, ["capital-gains", "--gains", "--losses", DATA_FILE])
+def test_capital_gains_command_mutually_exclusive_filters(execute):
+    result = execute(["capital-gains", "--gains", "--losses", DATA_FILE])
     assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
