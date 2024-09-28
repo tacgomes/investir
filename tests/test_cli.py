@@ -19,7 +19,7 @@ EX_OK = getattr(os, "EX_OK", 0)
 def fixture_execute() -> Iterable:
     def _execute(args: list[str]) -> Result:
         runner = CliRunner(mix_stderr=False)
-        global_opts = ["--offline"]
+        global_opts = ["--offline", "--cache-file", os.devnull]
         return runner.invoke(app, global_opts + args)
 
     logging.disable()
