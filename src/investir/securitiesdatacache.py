@@ -60,8 +60,8 @@ class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
             logger.info("Loading securities cache from %s", self._cache_file)
 
             with self._cache_file.open("r") as file:
-                data = yaml.load(file, Loader=yaml.FullLoader)
-                self._securities_data = data["securities"]
+                if data := yaml.load(file, Loader=yaml.FullLoader):
+                    self._securities_data = data["securities"]
 
     def _update_cache(self) -> None:
         if self._cache_file.exists():

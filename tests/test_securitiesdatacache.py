@@ -1,3 +1,4 @@
+import os
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -200,3 +201,11 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
     assert data["securities"].get(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
     assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
     assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
+
+
+def test_empty_data_cache_does_not_raise_exception(create_securities_data_cache):
+    create_securities_data_cache(
+        TrHistory(),
+        Path(os.devnull),
+        [],
+    )
