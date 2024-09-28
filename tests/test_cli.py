@@ -104,84 +104,90 @@ test_data = [
 
 @pytest.mark.parametrize("cmd,expected", test_data)
 def test_cli_output(request, execute, cmd, expected):
-    result = execute(shlex.split(cmd) + [DATA_FILE])
     expected_output = OUTPUTS_DIR / expected
+    result = execute(shlex.split(cmd) + [DATA_FILE])
 
     if request.config.getoption("--regen-outputs"):
         expected_output.write_text(result.stdout)
     else:
-        assert expected_output.exists()
+        assert not result.stderr
         assert result.exit_code == EX_OK
+
+        assert expected_output.exists()
         assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
 def test_capital_gains_multiple_input_files(execute):
+    expected_output = OUTPUTS_DIR / "capital_gains"
     data_file1 = str(PROJECT_DIR / "data" / "trading212_2021-2022.csv")
     data_file2 = str(PROJECT_DIR / "data" / "trading212_2022-2023.csv")
     result = execute(["capital-gains", data_file1, data_file2])
+
+    assert not result.stderr
     assert result.exit_code == EX_OK
-    expected_output = OUTPUTS_DIR / "capital_gains"
+
+    assert expected_output.exists()
     assert result.stdout == expected_output.read_text(encoding="utf-8")
 
 
 def test_orders_command_no_results(execute):
     result = execute(["orders", "--tax-year", "2008", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_dividends_command_no_results(execute):
     result = execute(["dividends", "--tax-year", "2008", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_transfers_command_no_results(execute):
     result = execute(["transfers", "--tax-year", "2008", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_interest_command_no_results(execute):
     result = execute(["interest", "--tax-year", "2008", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_capital_gains_command_no_results(execute):
     result = execute(["capital-gains", "--tax-year", "2008", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_holdings_no_results(execute):
     result = execute(["holdings", "--ticker", "NOTFOUND", DATA_FILE])
-    assert result.exit_code == EX_OK
     assert not result.stdout
     assert not result.stderr
+    assert result.exit_code == EX_OK
 
 
 def test_orders_command_mutually_exclusive_filters(execute):
     result = execute(["orders", "--acquisitions", "--disposals", DATA_FILE])
-    assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
+    assert result.exit_code != EX_OK
 
 
 def test_transfers_command_mutually_exclusive_filters(execute):
     result = execute(["transfers", "--deposits", "--withdrawals", DATA_FILE])
-    assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
+    assert result.exit_code != EX_OK
 
 
 def test_capital_gains_command_mutually_exclusive_filters(execute):
     result = execute(["capital-gains", "--gains", "--losses", DATA_FILE])
-    assert result.exit_code != EX_OK
     assert not result.stdout
     assert "Usage:" in result.stderr
+    assert result.exit_code != EX_OK
