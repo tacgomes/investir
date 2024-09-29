@@ -163,7 +163,7 @@ def version_callback(value: bool):
 def main_callback(  # pylint: disable=too-many-arguments,unused-argument
     strict: Annotated[
         bool, typer.Option(help="Abort if data integrity issues are found.")
-    ] = True,
+    ] = config.strict,
     offline: Annotated[
         bool,
         typer.Option(
@@ -173,7 +173,7 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
                 "share sub-division events) from the Internet."
             ),
         ),
-    ] = False,
+    ] = config.offline,
     cache_file: Annotated[
         Path,
         typer.Option(
@@ -186,14 +186,16 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
     ] = config.cache_file,
     include_fx_fees: Annotated[
         bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
-    ] = True,
+    ] = config.include_fx_fees,
     verbose: Annotated[
         bool, typer.Option("--verbose", help="Enable additional logging.")
     ] = False,
     quiet: Annotated[
         bool, typer.Option("--quiet", help="Disable all non-critical logging.")
     ] = False,
-    colour: Annotated[bool, typer.Option(help="Show coloured output.")] = True,
+    colour: Annotated[
+        bool, typer.Option(help="Show coloured output.")
+    ] = config.use_colour,
     version: Annotated[
         Optional[bool],
         typer.Option(
@@ -213,7 +215,8 @@ def main_callback(  # pylint: disable=too-many-arguments,unused-argument
 
     if quiet:
         config.log_level = logging.CRITICAL
-    elif verbose:
+
+    if verbose:
         config.log_level = logging.DEBUG
 
     config.use_colour = colour
