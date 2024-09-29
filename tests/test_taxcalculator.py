@@ -16,6 +16,8 @@ from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
 
+# pylint: disable=too-many-lines
+
 
 @pytest.fixture(name="create_tax_calculator")
 def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
@@ -873,3 +875,380 @@ def test_rppaccounts_example(create_tax_calculator):
     assert cg.gain_loss == Decimal("43493.75")
 
     assert tax_calculator.holding(Ticker("X")) is None
+
+
+# The following tests are based on the HMRC examples for calculating the
+# capital gains or losses on the disposal of cryptoassets. The gain/loss
+# is calculated in the same exact way as if the assets were shares from
+# a company and not cryptoassets.
+
+
+def test_hmrc_example_crypto22251(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22251
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-A"),
+        quantity=Decimal("100.0"),
+        amount=Decimal("1000.0"),
+    )
+
+    order2 = Acquisition(
+        datetime(2020, 9, 18, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-A"),
+        quantity=Decimal("50.0"),
+        amount=Decimal("125000.0"),
+    )
+
+    order3 = Disposal(
+        datetime(2020, 12, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-A"),
+        quantity=Decimal("50.0"),
+        amount=Decimal("300000.0"),
+    )
+
+    tax_calculator = create_tax_calculator([order1, order2, order3])
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 12, 1)
+    assert cg.date_acquired is None
+    assert cg.cost == Decimal("42000.0")
+    assert cg.gain_loss == Decimal("258000.0")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-A"))
+    assert holding.quantity == Decimal("100.0")
+    assert holding.cost == Decimal("84000.0")
+
+
+def test_hmrc_example_crypto22252(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22252
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-B"),
+        quantity=Decimal("5000.0"),
+        amount=Decimal("500.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2020, 6, 23, 9, 0, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-B"),
+        quantity=Decimal("1000.0"),
+        amount=Decimal("800.0"),
+    )
+
+    order3 = Acquisition(
+        datetime(2020, 6, 23, 13, 0, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-B"),
+        quantity=Decimal("1600.0"),
+        amount=Decimal("1000.0"),
+    )
+
+    order4 = Disposal(
+        datetime(2020, 6, 23, 19, 0, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-B"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("600.0"),
+    )
+
+    tax_calculator = create_tax_calculator([order1, order2, order3, order4])
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 6, 23)
+    assert cg.date_acquired == date(2020, 6, 23)
+    assert cg.cost == Decimal("937.5")
+    assert cg.gain_loss == Decimal("462.5")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-B"))
+    assert holding.quantity == Decimal("5100.0")
+    assert holding.cost == Decimal("562.5")
+
+
+def test_hmrc_example_crypto22253(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22253
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("2000.0"),
+        amount=Decimal("1000.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2020, 3, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("1000.0"),
+        amount=Decimal("400.0"),
+    )
+
+    order3 = Disposal(
+        datetime(2020, 4, 20, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("150.0"),
+    )
+
+    order4 = Acquisition(
+        datetime(2020, 4, 21, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("700.0"),
+        amount=Decimal("175.0"),
+    )
+
+    order5 = Acquisition(
+        datetime(2020, 4, 28, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("100.0"),
+    )
+
+    order6 = Acquisition(
+        datetime(2020, 5, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-C"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("150.0"),
+    )
+
+    tax_calculator = create_tax_calculator(
+        [order1, order2, order3, order4, order5, order6]
+    )
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 4
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 3, 31)
+    assert cg.date_acquired == date(2020, 4, 21)
+    assert cg.cost == Decimal("175.0")
+    assert cg.gain_loss == Decimal("105.0")
+
+    cg = capital_gains[1]
+    assert cg.disposal.date == date(2020, 3, 31)
+    assert cg.date_acquired == date(2020, 4, 28)
+    assert cg.cost == Decimal("60.0")
+    assert cg.gain_loss == Decimal("60.0")
+
+    cg = capital_gains[2]
+    assert cg.disposal.date == date(2020, 4, 20)
+    assert cg.date_acquired == date(2020, 4, 28)
+    assert cg.cost == Decimal("40.0")
+    assert cg.gain_loss == Decimal("20.0")
+
+    cg = capital_gains[3]
+    assert cg.disposal.date == date(2020, 4, 20)
+    assert cg.date_acquired == date(2020, 5, 1)
+    assert cg.cost == Decimal("90.0")
+    assert cg.gain_loss == Decimal("0.0")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-C"))
+    assert holding.quantity == Decimal("2200.0")
+    assert holding.cost == Decimal("1060.0")
+
+
+def test_hmrc_example_crypto22254(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22254
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("8000.0"),
+        amount=Decimal("1000.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("5000.0"),
+        amount=Decimal("500.0"),
+    )
+
+    order3 = Acquisition(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("4000.0"),
+        amount=Decimal("320.0"),
+    )
+
+    order4 = Acquisition(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("1000.0"),
+        amount=Decimal("75.0"),
+    )
+
+    order5 = Acquisition(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("1000.0"),
+        amount=Decimal("70.0"),
+    )
+
+    order6 = Disposal(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("2000.0"),
+        amount=Decimal("142.0"),
+    )
+
+    order7 = Acquisition(
+        datetime(2020, 1, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-D"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("35.0"),
+    )
+
+    tax_calculator = create_tax_calculator(
+        [order1, order2, order3, order4, order5, order6, order7]
+    )
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 2
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 1, 31)
+    assert cg.date_acquired == date(2020, 1, 31)
+    assert cg.cost == Decimal("500.0")
+    assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("96.14")
+
+    cg = capital_gains[1]
+    assert cg.disposal.date == date(2020, 1, 31)
+    assert cg.date_acquired is None
+    assert cg.cost == Decimal("62.5")
+    assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("-16.64")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-D"))
+    assert holding.quantity == Decimal("7500.0")
+    assert holding.cost == Decimal("937.5")
+
+
+def test_hmrc_example_crypto22255(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22255
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-E"),
+        quantity=Decimal("14000.0"),
+        amount=Decimal("200000.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2020, 8, 30, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-E"),
+        quantity=Decimal("4000.0"),
+        amount=Decimal("160000.0"),
+    )
+
+    order3 = Acquisition(
+        datetime(2020, 9, 11, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-E"),
+        quantity=Decimal("500.0"),
+        amount=Decimal("17500.0"),
+    )
+
+    tax_calculator = create_tax_calculator([order1, order2, order3])
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 2
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 8, 30)
+    assert cg.date_acquired == date(2020, 9, 11)
+    assert cg.cost == Decimal("17500.0")
+    assert cg.gain_loss == Decimal("2500.0")
+
+    cg = capital_gains[1]
+    assert cg.disposal.date == date(2020, 8, 30)
+    assert cg.date_acquired is None
+    assert cg.cost == Decimal("50000.0")
+    assert cg.gain_loss == Decimal("90000.0")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-E"))
+    assert holding.quantity == Decimal("10500.0")
+    assert holding.cost == Decimal("150000.0")
+
+
+def test_hmrc_example_crypto22256(create_tax_calculator):
+    """
+    https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22256
+    """
+    order1 = Acquisition(
+        datetime(2019, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("100000.0"),
+        amount=Decimal("300000.0"),
+    )
+
+    order2 = Acquisition(
+        datetime(2020, 7, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("10000.0"),
+        amount=Decimal("45000.0"),
+    )
+
+    order3 = Disposal(
+        datetime(2020, 7, 31, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("30000.0"),
+        amount=Decimal("150000.0"),
+    )
+
+    order4 = Disposal(
+        datetime(2020, 8, 5, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("20000.0"),
+        amount=Decimal("100000.0"),
+    )
+
+    order5 = Acquisition(
+        datetime(2020, 8, 6, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("50000.0"),
+        amount=Decimal("225000.0"),
+    )
+
+    order6 = Disposal(
+        datetime(2020, 8, 7, tzinfo=timezone.utc),
+        isin=ISIN("TOKEN-F"),
+        quantity=Decimal("100000.0"),
+        amount=Decimal("150000.0"),
+    )
+
+    tax_calculator = create_tax_calculator(
+        [order1, order2, order3, order4, order5, order6]
+    )
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 4
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2020, 7, 31)
+    assert cg.date_acquired == date(2020, 7, 31)
+    assert cg.cost == Decimal("45000.0")
+    assert cg.gain_loss == Decimal("5000.0")
+
+    cg = capital_gains[1]
+    assert cg.disposal.date == date(2020, 7, 31)
+    assert cg.date_acquired == date(2020, 8, 6)
+    assert cg.cost == Decimal("90000.0")
+    assert cg.gain_loss == Decimal("10000.0")
+
+    cg = capital_gains[2]
+    assert cg.disposal.date == date(2020, 8, 5)
+    assert cg.date_acquired == date(2020, 8, 6)
+    assert cg.cost == Decimal("90000.0")
+    assert cg.gain_loss == Decimal("10000.0")
+
+    cg = capital_gains[3]
+    assert cg.disposal.date == date(2020, 8, 7)
+    assert cg.date_acquired is None
+    assert cg.cost.quantize(Decimal("0.00")) == Decimal("313636.36")
+    assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("-163636.36")
+
+    holding = tax_calculator.holding(ISIN("TOKEN-F"))
+    assert holding.quantity == Decimal("10000.0")
+    assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
