@@ -660,10 +660,105 @@ def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
         tax_calculator.capital_gains()
 
 
+def test_section_104_disposal_with_share_split(create_tax_calculator):
+    order1 = Acquisition(
+        datetime(2014, 5, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("11.0"),
+        amount=Decimal("3300.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2014, 6, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("1.0"),
+        amount=Decimal("500.0"),
+    )
+
+    order3 = Acquisition(
+        datetime(2014, 8, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("10.0"),
+        amount=Decimal("1000.0"),
+    )
+
+    order4 = Disposal(
+        datetime(2014, 9, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("5.0"),
+        amount=Decimal("1100.0"),
+    )
+
+    tax_calculator = create_tax_calculator(
+        [order1, order2, order3, order4],
+        [Split(datetime(2014, 7, 1, tzinfo=timezone.utc), Decimal("3.0"))],
+    )
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 2
+
+    cg = capital_gains[0]
+    assert cg.disposal.date == date(2014, 6, 1)
+    assert cg.date_acquired is None
+    assert cg.cost == Decimal("300.0")
+    assert cg.quantity == Decimal("1.0")
+    assert cg.gain_loss == Decimal("200.0")
+
+    cg = capital_gains[1]
+    assert cg.disposal.date == date(2014, 9, 1)
+    assert cg.date_acquired is None
+    assert cg.cost == Decimal("500.0")
+    assert cg.quantity == Decimal("5.0")
+    assert cg.gain_loss == Decimal("600.0")
+
+    holding = tax_calculator.holding(Ticker("X"))
+    assert holding.quantity == Decimal("35.0")
+    assert holding.cost == Decimal("3500.0")
+
+
+def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
+    order1 = Acquisition(
+        datetime(2019, 1, 18, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("10.0"),
+        amount=Decimal("100.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2019, 1, 20, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("5.0"),
+        amount=Decimal("150.0"),
+    )
+
+    order3 = Acquisition(
+        datetime(2019, 1, 30, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        quantity=Decimal("20.0"),
+        amount=Decimal("160.0"),
+    )
+
+    tax_calculator = create_tax_calculator(
+        [order1, order2, order3],
+        [Split(datetime(2019, 1, 25, tzinfo=timezone.utc), Decimal("3.0"))],
+    )
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    assert cg.date_acquired == order3.date
+    assert cg.cost == Decimal("120.0")
+    assert cg.quantity == Decimal("5.0")
+    assert cg.gain_loss == Decimal("30.0")
+
+    holding = tax_calculator.holding(Ticker("X"))
+    assert holding.quantity == Decimal("35.0")
+    assert holding.cost == Decimal("140.0")
+
+
 def test_rppaccounts_example(create_tax_calculator):
     """
-    Rawlinson Pryde & Partners Accountants full example:
-      https://rppaccounts.co.uk/taxation-of-shares/
+    Rawlinson Pryde & Partners Accountants calculation example:
+    https://rppaccounts.co.uk/taxation-of-shares/
     """
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
@@ -778,98 +873,3 @@ def test_rppaccounts_example(create_tax_calculator):
     assert cg.gain_loss == Decimal("43493.75")
 
     assert tax_calculator.holding(Ticker("X")) is None
-
-
-def test_section_104_disposal_with_share_split(create_tax_calculator):
-    order1 = Acquisition(
-        datetime(2014, 5, 1, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("11.0"),
-        amount=Decimal("3300.0"),
-    )
-
-    order2 = Disposal(
-        datetime(2014, 6, 1, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("1.0"),
-        amount=Decimal("500.0"),
-    )
-
-    order3 = Acquisition(
-        datetime(2014, 8, 1, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("10.0"),
-        amount=Decimal("1000.0"),
-    )
-
-    order4 = Disposal(
-        datetime(2014, 9, 1, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("5.0"),
-        amount=Decimal("1100.0"),
-    )
-
-    tax_calculator = create_tax_calculator(
-        [order1, order2, order3, order4],
-        [Split(datetime(2014, 7, 1, tzinfo=timezone.utc), Decimal("3.0"))],
-    )
-    capital_gains = tax_calculator.capital_gains()
-    assert len(capital_gains) == 2
-
-    cg = capital_gains[0]
-    assert cg.disposal.date == date(2014, 6, 1)
-    assert cg.date_acquired is None
-    assert cg.cost == Decimal("300.0")
-    assert cg.quantity == Decimal("1.0")
-    assert cg.gain_loss == Decimal("200.0")
-
-    cg = capital_gains[1]
-    assert cg.disposal.date == date(2014, 9, 1)
-    assert cg.date_acquired is None
-    assert cg.cost == Decimal("500.0")
-    assert cg.quantity == Decimal("5.0")
-    assert cg.gain_loss == Decimal("600.0")
-
-    holding = tax_calculator.holding(Ticker("X"))
-    assert holding.quantity == Decimal("35.0")
-    assert holding.cost == Decimal("3500.0")
-
-
-def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
-    order1 = Acquisition(
-        datetime(2019, 1, 18, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("10.0"),
-        amount=Decimal("100.0"),
-    )
-
-    order2 = Disposal(
-        datetime(2019, 1, 20, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("5.0"),
-        amount=Decimal("150.0"),
-    )
-
-    order3 = Acquisition(
-        datetime(2019, 1, 30, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        quantity=Decimal("20.0"),
-        amount=Decimal("160.0"),
-    )
-
-    tax_calculator = create_tax_calculator(
-        [order1, order2, order3],
-        [Split(datetime(2019, 1, 25, tzinfo=timezone.utc), Decimal("3.0"))],
-    )
-    capital_gains = tax_calculator.capital_gains()
-    assert len(capital_gains) == 1
-
-    cg = capital_gains[0]
-    assert cg.date_acquired == order3.date
-    assert cg.cost == Decimal("120.0")
-    assert cg.quantity == Decimal("5.0")
-    assert cg.gain_loss == Decimal("30.0")
-
-    holding = tax_calculator.holding(Ticker("X"))
-    assert holding.quantity == Decimal("35.0")
-    assert holding.cost == Decimal("140.0")
