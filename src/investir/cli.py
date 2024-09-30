@@ -41,6 +41,7 @@ app = typer.Typer(
     cls=OrderedCommands,
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
+    pretty_exceptions_enable=False,
 )
 
 FilesArg = Annotated[
