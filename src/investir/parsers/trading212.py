@@ -213,6 +213,9 @@ class Trading212Parser(Parser):
         tr_id = row["ID"]
         fx_conversion_fee = row["Currency conversion fee"]
 
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+
         if fx_conversion_fee:
             raise ParseError(self._csv_file, row, "Dividend with conversion fee")
 
@@ -243,6 +246,9 @@ class Trading212Parser(Parser):
         total = Decimal(row["Total"])
         tr_id = row["ID"]
 
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+
         if action == "Withdrawal":
             total *= -1
 
@@ -254,6 +260,9 @@ class Trading212Parser(Parser):
         timestamp = parse_timestamp(row["Time"])
         total = Decimal(row["Total"])
         tr_id = row["ID"]
+
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         self._interest.append(Interest(timestamp, tr_id=tr_id, amount=total))
 
