@@ -154,9 +154,9 @@ def create_filters(
     return filters
 
 
-def version_callback(value: bool):
+def version_callback(value: bool) -> None:
     if value:
-        print(f"v{importlib.metadata.version('investir')}")
+        print(f"{__package__} {importlib.metadata.version(__package__)}")
         raise typer.Exit()
 
 
