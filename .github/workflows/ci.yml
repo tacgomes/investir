@@ -24,26 +24,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install --editable .[lint,test]
 
-    - name: Run Flake8
+    - name: Run linter
       run: |
-        flake8 .
+        ruff check
 
-    - name: Run Black
+    - name: Run style checker
       run: |
-        black --check .
+        ruff format --check
 
-    - name: Run isort
-      run: |
-        isort . --check-only --diff
-
-    - name: Run Pylint
-      run: |
-        pylint $(git ls-files '*.py')
-
-    - name: Run Mypy
+    - name: Run type checker
       run: |
         mypy --non-interactive --install-types .
 
-    - name: Run Pytest
+    - name: Run unit tests
       run: |
         pytest

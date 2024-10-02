@@ -136,9 +136,7 @@ class Trading212Parser(Parser):
             self._orders, self._dividends, self._transfers, self._interest
         )
 
-    def _parse_order(  # pylint: disable=too-many-locals
-        self, row: Mapping[str, str]
-    ) -> None:
+    def _parse_order(self, row: Mapping[str, str]) -> None:
         action = row["Action"]
         timestamp = parse_timestamp(row["Time"])
         isin = row["ISIN"]

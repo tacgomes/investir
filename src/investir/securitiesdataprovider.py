@@ -39,7 +39,7 @@ class YahooFinanceDataProvider(SecuritiesDataProvider):
         try:
             yf_data = yfinance.Ticker(isin)
             name = yf_data.info["shortName"]
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             logger.debug("Exception from yfinance: %s", str(e))
             return None
 

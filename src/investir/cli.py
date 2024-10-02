@@ -161,7 +161,7 @@ def version_callback(value: bool) -> None:
 
 
 @app.callback()
-def main_callback(  # pylint: disable=too-many-arguments,unused-argument
+def main_callback(  # noqa: PLR0913
     strict: Annotated[
         bool, typer.Option(help="Abort if data integrity issues are found.")
     ] = config.strict,
