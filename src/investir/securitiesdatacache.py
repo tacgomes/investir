@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 VERSION = 1
 
 
-class SecuritiesDataCache:  # pylint: disable=too-few-public-methods
+class SecuritiesDataCache:
     def __init__(
         self,
         data_provider: SecuritiesDataProvider,

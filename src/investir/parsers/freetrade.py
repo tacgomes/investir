@@ -121,9 +121,7 @@ class FreetradeParser(Parser):
             self._orders, self._dividends, self._transfers, self._interest
         )
 
-    def _parse_order(  # pylint: disable=too-many-locals
-        self, row: Mapping[str, str]
-    ) -> None:
+    def _parse_order(self, row: Mapping[str, str]) -> None:
         title = row["Title"]
         timestamp = parse_timestamp(row["Timestamp"])
         total_amount = Decimal(row["Total Amount"])

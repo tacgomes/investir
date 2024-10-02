@@ -16,12 +16,9 @@ from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
 
-# pylint: disable=too-many-lines
-
 
 @pytest.fixture(name="create_tax_calculator")
 def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
-
     def _method(
         orders: Sequence[Order], splits: Sequence[Split] | None = None
     ) -> TaxCalculator:

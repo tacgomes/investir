@@ -101,7 +101,7 @@ class TaxCalculator:
         self._calculate_capital_gains()
         return self._holdings.get(isin)
 
-    def show_capital_gains(  # pylint: disable=too-many-locals
+    def show_capital_gains(
         self,
         tax_year_filter: Year | None,
         ticker_filter: Ticker | None,

@@ -107,8 +107,7 @@ def fixture_create_parser_format_unrecognised(tmp_path) -> Trading212Parser:
     return Trading212Parser(csv_file)
 
 
-# pylint: disable=too-many-locals, too-many-statements
-def test_parser_happy_path(create_parser):
+def test_parser_happy_path(create_parser):  # noqa: PLR0915
     acquisition1 = ACQUISITION
     acquisition2 = dict(ACQUISITION)
     acquisition2["Action"] = "Limit buy"
