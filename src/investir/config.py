@@ -14,5 +14,8 @@ class Config:
     log_level: int = logging.INFO
     use_colour: bool = True
 
+    def reset(self) -> None:
+        Config.__init__(self)
+
 
 config = Config()
