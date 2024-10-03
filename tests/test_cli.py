@@ -105,7 +105,7 @@ test_data = [
 @pytest.mark.parametrize("cmd,expected", test_data)
 def test_cli_output(request, execute, cmd, expected):
     expected_output = OUTPUTS_DIR / expected
-    result = execute(shlex.split(cmd) + [DATA_FILE])
+    result = execute([*shlex.split(cmd), DATA_FILE])
 
     if request.config.getoption("--regen-outputs"):
         expected_output.write_text(result.stdout)

@@ -73,6 +73,7 @@ lint.select = [
     "B",   # flake8 bugbear plugin
     "PL",  # Pylint
     "I",   # isort
+    "RUF", # Ruff
 ]
 lint.ignore = [
   "PLR2004",  # Magic value used in comparison

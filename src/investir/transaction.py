@@ -115,7 +115,7 @@ class Order(Transaction, ABC):
         if not split_ratios:
             return self
 
-        quantity = reduce(operator.mul, [self.quantity] + split_ratios)
+        quantity = reduce(operator.mul, [self.quantity, *split_ratios])
 
         return replace(
             self,

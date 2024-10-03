@@ -161,8 +161,9 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
         """
     )
 
-    amazn_splits = AMZN_SPLITS + [
-        Split(date_effective=datetime(2024, 1, 1), ratio=Decimal("40.0"))
+    amazn_splits = [
+        *AMZN_SPLITS,
+        Split(date_effective=datetime(2024, 1, 1), ratio=Decimal("40.0")),
     ]
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5, ORDER6])
