@@ -7,6 +7,10 @@ import yaml
 from dateutil.parser import parse as parse_timestamp
 
 
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(microsecond=0)
+
+
 @dataclass
 class Split(yaml.YAMLObject):
     date_effective: datetime
@@ -33,5 +37,5 @@ class Split(yaml.YAMLObject):
 class SecurityData(yaml.YAMLObject):
     name: str = ""
     splits: Sequence[Split] = field(default_factory=list)
-    last_updated: datetime = datetime.now(timezone.utc).replace(microsecond=0)
+    last_updated: datetime = field(default_factory=utcnow)
     yaml_tag = "!security"
