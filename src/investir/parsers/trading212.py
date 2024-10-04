@@ -82,12 +82,10 @@ class Trading212Parser(Parser):
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
             reader = csv.DictReader(file)
-            if reader.fieldnames is None:
-                return False
-
+            fieldnames = reader.fieldnames or []
             idx = len(self.INITIAL_FIELDS)
-            fields1 = reader.fieldnames[:idx]
-            fields2 = reader.fieldnames[idx:]
+            fields1 = fieldnames[:idx]
+            fields2 = fieldnames[idx:]
 
             if tuple(fields1) != self.INITIAL_FIELDS:
                 return False
