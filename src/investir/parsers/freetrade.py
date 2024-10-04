@@ -78,10 +78,7 @@ class FreetradeParser(Parser):
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
             reader = csv.DictReader(file)
-            if reader.fieldnames:
-                return tuple(reader.fieldnames) == self.FIELDS
-
-        return False
+            return tuple(reader.fieldnames or []) == self.FIELDS
 
     def parse(self) -> ParsingResult:
         parse_fn = {
