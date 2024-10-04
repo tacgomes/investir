@@ -1,7 +1,6 @@
-import logging
 import os
 import shlex
-from collections.abc import Iterable
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -16,15 +15,13 @@ EX_OK = getattr(os, "EX_OK", 0)
 
 
 @pytest.fixture(name="execute")
-def fixture_execute() -> Iterable:
+def fixture_execute() -> Callable:
     def _execute(args: list[str]) -> Result:
         runner = CliRunner(mix_stderr=False)
-        global_opts = ["--offline", "--cache-file", os.devnull]
+        global_opts = ["--quiet", "--offline", "--cache-file", os.devnull]
         return runner.invoke(app, global_opts + args)
 
-    logging.disable()
-    yield _execute
-    logging.disable(logging.NOTSET)
+    return _execute
 
 
 test_data = [
