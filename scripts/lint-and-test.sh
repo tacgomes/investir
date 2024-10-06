@@ -40,4 +40,4 @@ info "[3/4] Running type checker"
 run_tool mypy --non-interactive --install-types --no-color-output .
 
 info "[4/4] Running unit tests"
-run_tool pytest --no-header
+run_tool pytest

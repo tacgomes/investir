@@ -1,4 +1,5 @@
 [![CI badge][ci-badge]][ci-url]
+[![Coverage badge][coverage-badge]][coverage-url]
 [![Version badge][version-badge]][pypi-url]
 [![Python versions badge][pyversions-badge]][pypi-url]
 [![License badge][license-badge]][license-url]
@@ -227,11 +228,13 @@ execute an [editable install]:
   instead by using the `--no-strict` command-line option.
 
 [ci-badge]: https://github.com/tacgomes/investir/actions/workflows/ci.yml/badge.svg
+[coverage-badge]: https://codecov.io/github/tacgomes/investir/graph/badge.svg?token=I0HHSSD83O
 [version-badge]: https://img.shields.io/pypi/v/investir.svg
 [pyversions-badge]: https://img.shields.io/pypi/pyversions/investir.svg
 [license-badge]: https://img.shields.io/pypi/l/investir.svg
 
 [ci-url]: https://github.com/tacgomes/investir/actions?query=branch%3Amain
+[coverage-url]: https://codecov.io/github/tacgomes/investir?displayType=list
 [pypi-url]: https://pypi.org/project/investir/
 [license-url]: https://github.com/tacgomes/investir/blob/master/LICENSE
 
