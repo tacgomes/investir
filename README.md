@@ -1,7 +1,7 @@
-[![CI badge][ci-badge]][actions]
-[![Version badge][version-badge]][version]
-[![Python versions badge][pyversions-badge]][pyversions]
-[![License badge][license-badge]][license]
+[![CI badge][ci-badge]][ci-url]
+[![Version badge][version-badge]][pypi-url]
+[![Python versions badge][pyversions-badge]][pypi-url]
+[![License badge][license-badge]][license-url]
 
 # Investir
 
@@ -231,10 +231,9 @@ execute an [editable install]:
 [pyversions-badge]: https://img.shields.io/pypi/pyversions/investir.svg
 [license-badge]: https://img.shields.io/pypi/l/investir.svg
 
-[actions]: https://github.com/tacgomes/investir/actions
-[version]: https://pypi.org/project/investir/
-[pyversions]: https://wiki.python.org/moin/BeginnersGuide/Download
-[license]: https://github.com/tacgomes/investir/blob/master/LICENSE
+[ci-url]: https://github.com/tacgomes/investir/actions?query=branch%3Amain
+[pypi-url]: https://pypi.org/project/investir/
+[license-url]: https://github.com/tacgomes/investir/blob/master/LICENSE
 
 [share identification rules]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
 [virtual environment]: https://docs.python.org/3/library/venv.html
