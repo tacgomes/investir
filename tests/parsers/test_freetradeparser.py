@@ -18,7 +18,7 @@ from investir.parsers.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
 from investir.typing import ISIN, Ticker
 
-TIMESTAMP = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
+TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
 ACQUISITION: Final = {
     "Title": "Amazon",
@@ -46,6 +46,21 @@ DISPOSAL: Final = {
     "Price per Share in Account Currency": "532.5",
     "Quantity": "2.1",
     "FX Fee Amount": "6.4",
+}
+
+DIVIDEND: Final = {
+    "Title": "Skyworks",
+    "Type": "DIVIDEND",
+    "Timestamp": TIMESTAMP,
+    "Account Currency": "GBP",
+    "Total Amount": "2.47",
+    "Ticker": "SWKS",
+    "ISIN": "SWKS-ISIN",
+    "Base FX Rate": "0.75440000",
+    "Dividend Eligible Quantity": "6.88764135",
+    "Dividend Amount Per Share": "0.56000000",
+    "Dividend Withheld Tax Percentage": "15",
+    "Dividend Withheld Tax Amount": "0.58",
 }
 
 
@@ -80,29 +95,9 @@ def fixture_create_parser_format_unrecognised(tmp_path) -> FreetradeParser:
 
 
 def test_parser_happy_path(create_parser):
-    acquisition = dict(ACQUISITION)
-
+    acquisition = ACQUISITION
     disposal = DISPOSAL
-
-    dividend = {
-        "Title": "Skyworks",
-        "Type": "DIVIDEND",
-        "Timestamp": TIMESTAMP,
-        "Account Currency": "GBP",
-        "Total Amount": "2.47",
-        "Ticker": "SWKS",
-        "ISIN": "SWKS-ISIN",
-        "Base FX Rate": "0.75440000",
-        "FX Fee Amount": "0.00",
-        "Dividend Ex Date": "2021-11-22",
-        "Dividend Pay Date": "2021-12-14",
-        "Dividend Eligible Quantity": "6.88764135",
-        "Dividend Amount Per Share": "0.56000000",
-        "Dividend Gross Distribution Amount": "3.86",
-        "Dividend Net Distribution Amount": "3.28",
-        "Dividend Withheld Tax Percentage": "15",
-        "Dividend Withheld Tax Amount": "0.58",
-    }
+    dividend = DIVIDEND
 
     deposit = {
         "Type": "TOP_UP",
@@ -294,7 +289,16 @@ def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
         parser.parse()
 
 
-def test_parser_calculated_amount_mismatch(create_parser):
+def test_parser_order_too_old(create_parser):
+    order = dict(ACQUISITION)
+    order["Timestamp"] = "2008-04-05T09:00:00.000Z"
+    parser = create_parser([order])
+    assert parser.can_parse()
+    with pytest.raises(OrderDateError):
+        parser.parse()
+
+
+def test_parser_order_calculated_amount_mismatch(create_parser):
     order = dict(ACQUISITION)
     order["Total Amount"] = "7.5"
     parser = create_parser([order])
@@ -303,10 +307,10 @@ def test_parser_calculated_amount_mismatch(create_parser):
         parser.parse()
 
 
-def test_parser_order_too_old(create_parser):
-    order = dict(ACQUISITION)
-    order["Timestamp"] = "2008-04-05T09:00:00.000Z"
-    parser = create_parser([order])
+def test_parser_dividend_calculated_amount_mismatch(create_parser):
+    dividend = dict(DIVIDEND)
+    dividend["Total Amount"] = "2.50"
+    parser = create_parser([dividend])
     assert parser.can_parse()
-    with pytest.raises(OrderDateError):
+    with pytest.raises(CalculatedAmountError):
         parser.parse()

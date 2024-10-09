@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 
+from investir.config import config
 from investir.exceptions import IncompleteRecordsError
 from investir.securitiesdatacache import SecuritiesDataCache
 from investir.securitiesdataprovider import (
@@ -29,6 +30,7 @@ def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
         else:
             assert all(orders[0].isin == o.isin for o in orders)
 
+        config.reset()
         cache_file = tmp_path / "cache.yaml"
         data_provider = YahooFinanceDataProvider()
         mock = mocker.patch.object(data_provider, "get_security_data")
@@ -86,6 +88,10 @@ def test_section_104_disposal(create_tax_calculator):
     assert cg.date_acquired is None
     assert cg.cost.quantize(Decimal("0.00")) == Decimal("3030.67")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("329.33")
+    assert str(cg) == (
+        "2023-05-01 LOBS quantity: 700.0, cost: £3030.67"
+        ", proceeds: £3360.0, gain: £329.33 (Section 104)"
+    )
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2024, 2, 1)
@@ -212,6 +218,10 @@ def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
     assert cg.date_acquired == order2.date + timedelta(days=days_elapsed)
     assert cg.cost == Decimal("120.0")
     assert cg.gain_loss == Decimal("30.0")
+    assert str(cg) == (
+        f"2019-01-20 X    quantity: 5.0, cost: £120.00"
+        f", proceeds: £150.0, gain: £30.00 ({cg.date_acquired})"
+    )
 
     holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("10")
@@ -633,9 +643,12 @@ def test_integrity_disposal_without_acquisition(create_tax_calculator):
     )
 
     tax_calculator = create_tax_calculator([order])
-
     with pytest.raises(IncompleteRecordsError):
         tax_calculator.capital_gains()
+
+    tax_calculator = create_tax_calculator([order])
+    config.strict = False
+    tax_calculator.capital_gains()
 
 
 def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
@@ -654,9 +667,12 @@ def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
     )
 
     tax_calculator = create_tax_calculator([order1, order2])
-
     with pytest.raises(IncompleteRecordsError):
         tax_calculator.capital_gains()
+
+    tax_calculator = create_tax_calculator([order1, order2])
+    config.strict = False
+    tax_calculator.capital_gains()
 
 
 def test_section_104_disposal_with_share_split(create_tax_calculator):
@@ -1249,3 +1265,28 @@ def test_hmrc_example_crypto22256(create_tax_calculator):
     holding = tax_calculator.holding(ISIN("TOKEN-F"))
     assert holding.quantity == Decimal("10000.0")
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
+
+
+def test_show_holdings_ambiguous_ticker(create_tax_calculator, capsys):
+    order1 = Acquisition(
+        datetime(2019, 1, 18, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        ticker="TICKER",
+        quantity=Decimal("10.0"),
+        amount=Decimal("100.0"),
+    )
+
+    order2 = Acquisition(
+        datetime(2019, 1, 20, tzinfo=timezone.utc),
+        isin=ISIN("Y"),
+        ticker="TICKER",
+        quantity=Decimal("5.0"),
+        amount=Decimal("150.0"),
+    )
+
+    tax_calculator = create_tax_calculator([order1, order2])
+    tax_calculator.show_holdings(ticker_filter=Ticker("TICKER"))
+
+    captured = capsys.readouterr()
+    assert not captured.out
+    assert not captured.err

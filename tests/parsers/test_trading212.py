@@ -93,18 +93,15 @@ def fixture_create_parser(tmp_path) -> Callable:
 
 
 @pytest.fixture(name="create_parser_format_unrecognised")
-def fixture_create_parser_format_unrecognised(tmp_path) -> Trading212Parser:
-    csv_file = tmp_path / "transactions.csv"
-    with csv_file.open("w", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=("Field1", "Field2"))
-        writer.writeheader()
-        writer.writerow(
-            {
-                "Field1": "A",
-                "Field2": "B",
-            }
-        )
-    return Trading212Parser(csv_file)
+def fixture_create_parser_format_unrecognised(tmp_path) -> Callable:
+    def _create_parser(fields: Sequence[str]):
+        csv_file = tmp_path / "transactions.csv"
+        with csv_file.open("w", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=fields)
+            writer.writeheader()
+        return Trading212Parser(csv_file)
+
+    return _create_parser
 
 
 def test_parser_happy_path(create_parser):  # noqa: PLR0915
@@ -276,7 +273,24 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):
-    parser = create_parser_format_unrecognised
+    # Fields don't start with initial fields
+    parser = create_parser_format_unrecognised(Trading212Parser.MANDATORY_FIELDS)
+    assert parser.can_parse() is False
+
+    # One mandatory field is missing
+    parser = create_parser_format_unrecognised(
+        [*Trading212Parser.INITIAL_FIELDS, *Trading212Parser.MANDATORY_FIELDS[1:]]
+    )
+    assert parser.can_parse() is False
+
+    # An unsupported field was found
+    parser = create_parser_format_unrecognised(
+        [
+            *Trading212Parser.INITIAL_FIELDS,
+            *Trading212Parser.MANDATORY_FIELDS,
+            "Unknown Field",
+        ]
+    )
     assert parser.can_parse() is False
 
 

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import yfinance
 
-from investir.securitiesdataprovider import YahooFinanceDataProvider
+from investir.securitiesdataprovider import NoopDataProvider, YahooFinanceDataProvider
 from investir.securitydata import Split
 from investir.typing import ISIN
 
@@ -61,24 +61,37 @@ def _yf_ticker_mocker(mocker) -> Callable:
     return _method
 
 
-def test_dataprovider_security_data(yf_ticker_mocker):
+def test_noop_dataprovider():
+    data_provider = NoopDataProvider()
+    assert data_provider.name() == "Noop"
+
+    security_data = data_provider.get_security_data(ISIN("SOME-ISIN"))
+    assert security_data.name == ""
+    assert security_data.splits == []
+
+
+def test_yfinance_dataprovider(yf_ticker_mocker):
     info_prop_mock, splits_prop_mock = yf_ticker_mocker(
         [{"shortName": "Amazon"}, {"shortName": "Netflix"}],
         [AMZN_PSERIES, NFLX_PSERIES],
     )
+
     data_provider = YahooFinanceDataProvider()
+    assert data_provider.name() == "Yahoo Finance"
+
     security_data = data_provider.get_security_data(ISIN("AMZN-ISIN"))
     assert security_data.name == "Amazon"
     assert security_data.splits == AMZN_SPLITS
+
     security_data = data_provider.get_security_data(ISIN("NFLX-ISIN"))
     assert security_data.name == "Netflix"
     assert security_data.splits == NFLX_SPLITS
+
     assert info_prop_mock.call_count == 2
     assert splits_prop_mock.call_count == 2
 
 
-def test_dataprovider_security_not_found(yf_ticker_mocker):
+def test_yfinance_dataprovider_security_not_found(yf_ticker_mocker):
     yf_ticker_mocker(yfinance.exceptions.YFException, [])
     data_provider = YahooFinanceDataProvider()
-    security_data = data_provider.get_security_data(ISIN("NOT-FOUND"))
-    assert security_data is None
+    assert data_provider.get_security_data(ISIN("NOT-FOUND")) is None
