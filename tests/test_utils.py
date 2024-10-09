@@ -1,10 +1,15 @@
 import datetime
 from decimal import Decimal
 
+import pytest
+
+from investir.config import config
+from investir.exceptions import InvestirError
 from investir.utils import (
     date_to_tax_year,
     dict2str,
     multifilter,
+    raise_or_warn,
     read_decimal,
     tax_year_period,
 )
@@ -34,6 +39,15 @@ def test_multifilter():
 
     nums_filtered = multifilter([lambda x: x % 2 == 0, lambda x: x > 3], nums)
     assert list(nums_filtered) == [4, 6]
+
+
+def test_raise_or_warn():
+    config.strict = True
+    with pytest.raises(InvestirError):
+        raise_or_warn(InvestirError("Error"))
+
+    config.strict = False
+    raise_or_warn(InvestirError("Error"))
 
 
 def test_read_decimal():

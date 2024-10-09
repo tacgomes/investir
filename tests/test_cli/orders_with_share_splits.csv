@@ -1,0 +1,3 @@
+Title,Type,Timestamp,Account Currency,Total Amount,Buy / Sell,Ticker,ISIN,Price per Share in Account Currency,Stamp Duty,Quantity,Venue,Order ID,Order Type,Instrument Currency,Total Shares Amount,Price per Share,FX Rate,Base FX Rate,FX Fee (BPS),FX Fee Amount,Dividend Ex Date,Dividend Pay Date,Dividend Eligible Quantity,Dividend Amount Per Share,Dividend Gross Distribution Amount,Dividend Net Distribution Amount,Dividend Withheld Tax Percentage,Dividend Withheld Tax Amount
+Tesla,ORDER,2023-11-21T15:26:05.392Z,GBP,2081.15,SELL,TSLA,US88160R1014,192.11190077,0.00,10.89729471,,,,USD,,240.81522800,,1.25351999,,12.35,,,,,,,,
+Tesla,ORDER,2022-01-27T20:17:11.610Z,GBP,2496.25,BUY,TSLA,US88160R1014,626.89947033,0.00,3.9640327,,,,USD,,838.54000000,,1.33762000,,11.2,,,,,,,,
