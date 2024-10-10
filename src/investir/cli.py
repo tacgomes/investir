@@ -72,15 +72,16 @@ TickerOpt = Annotated[
 ]
 
 
+def abort(message: str) -> None:
+    logger.critical(message)
+    raise typer.Exit(code=1)
+
+
 def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     orders = []
     dividends = []
     transfers = []
     interest = []
-
-    def abort(message: str) -> None:
-        logger.critical(message)
-        raise typer.Exit(code=1)
 
     for path in input_files:
         logger.info("Parsing input file: %s", path)
@@ -117,16 +118,14 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
         len(tr_hist.interest),
     )
 
-    try:
-        data_provider: SecuritiesDataProvider
-        if not config.offline:
-            data_provider = YahooFinanceDataProvider()
-        else:
-            data_provider = NoopDataProvider()
-        securities_data = SecuritiesDataCache(data_provider, tr_hist, config.cache_file)
-        tax_calculator = TaxCalculator(tr_hist, securities_data)
-    except InvestirError as ex:
-        abort(str(ex))
+    data_provider: SecuritiesDataProvider
+    if not config.offline:
+        data_provider = YahooFinanceDataProvider()
+    else:
+        data_provider = NoopDataProvider()
+
+    securities_data = SecuritiesDataCache(data_provider, tr_hist, config.cache_file)
+    tax_calculator = TaxCalculator(tr_hist, securities_data)
 
     return tr_hist, tax_calculator
 
@@ -330,7 +329,10 @@ def capital_gains_command(
     _, tax_calculator = parse(files)
     tax_year = Year(tax_year) if tax_year else None
     ticker = Ticker(ticker) if ticker else None
-    tax_calculator.show_capital_gains(tax_year, ticker, gains_only, losses_only)
+    try:
+        tax_calculator.show_capital_gains(tax_year, ticker, gains_only, losses_only)
+    except InvestirError as ex:
+        abort((str(ex)))
 
 
 @app.command("holdings")
