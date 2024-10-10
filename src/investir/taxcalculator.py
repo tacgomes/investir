@@ -397,5 +397,4 @@ class TaxCalculator:
                         )
                     )
                     logger.warning("Not calculating holding for %s", isin)
-                    del self._holdings[isin]
                     break
