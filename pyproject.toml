@@ -87,7 +87,7 @@ source_pkgs = ["investir"]
 [tool.coverage.report]
 show_missing = true
 exclude_also = [
-    "@(abc\\.)?abstractmethod",
+    "class \\w+\\(Protocol\\):",
     "def main()",
 ]
 

@@ -16,7 +16,7 @@ from investir.exceptions import (
     OrderDateError,
     TransactionTypeError,
 )
-from investir.parser import Parser, ParsingResult
+from investir.parser import ParsingResult
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -31,7 +31,7 @@ from investir.utils import dict2str, raise_or_warn, read_decimal
 logger = logging.getLogger(__name__)
 
 
-class FreetradeParser(Parser):
+class FreetradeParser:
     FIELDS: Final = (
         "Title",
         "Type",

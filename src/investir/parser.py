@@ -1,7 +1,6 @@
 import logging
-from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import ClassVar, NamedTuple
+from typing import ClassVar, NamedTuple, Protocol
 
 from .transaction import Dividend, Interest, Order, Transfer
 
@@ -15,17 +14,14 @@ class ParsingResult(NamedTuple):
     interest: list[Interest]
 
 
-class Parser(ABC):
+class Parser(Protocol):
     @staticmethod
-    @abstractmethod
     def name() -> str:
         pass
 
-    @abstractmethod
     def can_parse(self) -> bool:
         pass
 
-    @abstractmethod
     def parse(self) -> ParsingResult:
         pass
 

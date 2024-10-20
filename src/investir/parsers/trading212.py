@@ -18,7 +18,7 @@ from investir.exceptions import (
     ParseError,
     TransactionTypeError,
 )
-from investir.parser import Parser, ParsingResult
+from investir.parser import ParsingResult
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -33,7 +33,7 @@ from investir.utils import dict2str, raise_or_warn, read_decimal
 logger = logging.getLogger(__name__)
 
 
-class Trading212Parser(Parser):
+class Trading212Parser:
     INITIAL_FIELDS: Final = (
         "Action",
         "Time",
