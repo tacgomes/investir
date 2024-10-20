@@ -2,11 +2,18 @@ from collections.abc import Callable, Mapping, Sequence, ValuesView
 from decimal import Decimal
 from typing import NamedTuple, TypeVar
 
-from .exceptions import AmbiguousTickerError
-from .prettytable import PrettyTable
-from .transaction import Acquisition, Dividend, Interest, Order, Transaction, Transfer
-from .typing import ISIN, Ticker
-from .utils import multifilter, printtable
+from investir.exceptions import AmbiguousTickerError
+from investir.prettytable import PrettyTable
+from investir.transaction import (
+    Acquisition,
+    Dividend,
+    Interest,
+    Order,
+    Transaction,
+    Transfer,
+)
+from investir.typing import ISIN, Ticker
+from investir.utils import multifilter, printtable
 
 T = TypeVar("T", bound=Transaction)
 

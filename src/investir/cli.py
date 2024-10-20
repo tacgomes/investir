@@ -9,20 +9,20 @@ from typing import Annotated, Optional
 import click
 import typer
 
-from .config import config
-from .exceptions import InvestirError
-from .logging import configure_logger
-from .parser import ParserFactory
-from .securitiesdatacache import SecuritiesDataCache
-from .securitiesdataprovider import (
+from investir.config import config
+from investir.exceptions import InvestirError
+from investir.logging import configure_logger
+from investir.parser import ParserFactory
+from investir.securitiesdatacache import SecuritiesDataCache
+from investir.securitiesdataprovider import (
     NoopDataProvider,
     SecuritiesDataProvider,
     YahooFinanceDataProvider,
 )
-from .taxcalculator import TaxCalculator
-from .transaction import Acquisition, Disposal, Transaction
-from .trhistory import TrHistory
-from .typing import Ticker, Year
+from investir.taxcalculator import TaxCalculator
+from investir.transaction import Acquisition, Disposal, Transaction
+from investir.trhistory import TrHistory
+from investir.typing import Ticker, Year
 
 logger = logging.getLogger(__name__)
 

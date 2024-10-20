@@ -6,13 +6,13 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import TypeAlias
 
-from .exceptions import AmbiguousTickerError, IncompleteRecordsError
-from .prettytable import PrettyTable
-from .securitiesdatacache import SecuritiesDataCache
-from .transaction import Acquisition, Disposal, Order
-from .trhistory import TrHistory
-from .typing import ISIN, Ticker, Year
-from .utils import printtable, raise_or_warn
+from investir.exceptions import AmbiguousTickerError, IncompleteRecordsError
+from investir.prettytable import PrettyTable
+from investir.securitiesdatacache import SecuritiesDataCache
+from investir.transaction import Acquisition, Disposal, Order
+from investir.trhistory import TrHistory
+from investir.typing import ISIN, Ticker, Year
+from investir.utils import printtable, raise_or_warn
 
 logger = logging.getLogger(__name__)
 

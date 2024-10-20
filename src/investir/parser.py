@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar, NamedTuple, Protocol
 
-from .transaction import Dividend, Interest, Order, Transfer
+from investir.transaction import Dividend, Interest, Order, Transfer
 
 logger = logging.getLogger(__name__)
 

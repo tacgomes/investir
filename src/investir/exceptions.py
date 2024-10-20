@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
-from .typing import ISIN, Ticker
+from investir.typing import ISIN, Ticker
 
 
 class InvestirError(Exception):
