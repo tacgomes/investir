@@ -1,6 +1,6 @@
 import logging
-from abc import ABC, abstractmethod
 from decimal import Decimal
+from typing import Protocol
 
 import yfinance
 
@@ -10,18 +10,17 @@ from .typing import ISIN
 logger = logging.getLogger(__name__)
 
 
-class SecuritiesDataProvider(ABC):
-    @abstractmethod
+class SecuritiesDataProvider(Protocol):
     def get_security_data(self, isin: ISIN) -> SecurityData | None:
         pass
 
 
-class NoopDataProvider(SecuritiesDataProvider):
+class NoopDataProvider:
     def get_security_data(self, _isin: ISIN) -> SecurityData:
         return SecurityData("", [])
 
 
-class YahooFinanceDataProvider(SecuritiesDataProvider):
+class YahooFinanceDataProvider:
     def get_security_data(self, isin: ISIN) -> SecurityData | None:
         try:
             yf_data = yfinance.Ticker(isin)
