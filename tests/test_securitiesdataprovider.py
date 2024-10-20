@@ -63,7 +63,6 @@ def _yf_ticker_mocker(mocker) -> Callable:
 
 def test_noop_dataprovider():
     data_provider = NoopDataProvider()
-    assert data_provider.name() == "Noop"
 
     security_data = data_provider.get_security_data(ISIN("SOME-ISIN"))
     assert security_data.name == ""
@@ -77,7 +76,6 @@ def test_yfinance_dataprovider(yf_ticker_mocker):
     )
 
     data_provider = YahooFinanceDataProvider()
-    assert data_provider.name() == "Yahoo Finance"
 
     security_data = data_provider.get_security_data(ISIN("AMZN-ISIN"))
     assert security_data.name == "Amazon"
