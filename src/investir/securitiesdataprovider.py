@@ -11,30 +11,17 @@ logger = logging.getLogger(__name__)
 
 
 class SecuritiesDataProvider(ABC):
-    @staticmethod
-    @abstractmethod
-    def name() -> str:
-        pass
-
     @abstractmethod
     def get_security_data(self, isin: ISIN) -> SecurityData | None:
         pass
 
 
 class NoopDataProvider(SecuritiesDataProvider):
-    @staticmethod
-    def name() -> str:
-        return "Noop"
-
     def get_security_data(self, _isin: ISIN) -> SecurityData:
         return SecurityData("", [])
 
 
 class YahooFinanceDataProvider(SecuritiesDataProvider):
-    @staticmethod
-    def name() -> str:
-        return "Yahoo Finance"
-
     def get_security_data(self, isin: ISIN) -> SecurityData | None:
         try:
             yf_data = yfinance.Ticker(isin)
