@@ -3,10 +3,10 @@ from pathlib import Path
 
 import yaml
 
-from .securitiesdataprovider import SecuritiesDataProvider
-from .securitydata import SecurityData
-from .trhistory import TrHistory
-from .typing import ISIN
+from investir.securitiesdataprovider import SecuritiesDataProvider
+from investir.securitydata import SecurityData
+from investir.trhistory import TrHistory
+from investir.typing import ISIN
 
 logger = logging.getLogger(__name__)
 

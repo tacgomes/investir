@@ -6,8 +6,8 @@ from typing import Final
 
 from prettytable import PrettyTable
 
-from .config import config
-from .typing import Year
+from investir.config import config
+from investir.typing import Year
 
 logger = logging.getLogger(__name__)
 

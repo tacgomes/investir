@@ -2,7 +2,7 @@ import logging
 import logging.config
 from typing import Final
 
-from .config import config
+from investir.config import config
 
 
 class CustomFormatter(logging.Formatter):
