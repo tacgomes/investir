@@ -14,7 +14,7 @@ from investir.exceptions import (
     OrderDateError,
     TransactionTypeError,
 )
-from investir.parsers.freetrade import FreetradeParser
+from investir.parser.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
 from investir.typing import ISIN, Ticker
 

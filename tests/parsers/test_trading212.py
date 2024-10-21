@@ -15,7 +15,7 @@ from investir.exceptions import (
     ParseError,
     TransactionTypeError,
 )
-from investir.parsers.trading212 import Trading212Parser
+from investir.parser.trading212 import Trading212Parser
 from investir.transaction import Acquisition, Disposal
 from investir.typing import ISIN, Ticker
 
