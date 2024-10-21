@@ -16,7 +16,7 @@ from investir.exceptions import (
     OrderDateError,
     TransactionTypeError,
 )
-from investir.parser import ParsingResult
+from investir.parser.types import ParsingResult
 from investir.transaction import (
     Acquisition,
     Disposal,

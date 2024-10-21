@@ -1,29 +1,10 @@
 import logging
 from pathlib import Path
-from typing import ClassVar, NamedTuple, Protocol
+from typing import ClassVar
 
-from investir.transaction import Dividend, Interest, Order, Transfer
+from investir.parser.types import Parser
 
 logger = logging.getLogger(__name__)
-
-
-class ParsingResult(NamedTuple):
-    orders: list[Order]
-    dividends: list[Dividend]
-    transfers: list[Transfer]
-    interest: list[Interest]
-
-
-class Parser(Protocol):
-    @staticmethod
-    def name() -> str:
-        pass
-
-    def can_parse(self) -> bool:
-        pass
-
-    def parse(self) -> ParsingResult:
-        pass
 
 
 class ParserFactory:
