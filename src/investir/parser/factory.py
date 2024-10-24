@@ -15,9 +15,9 @@ class ParserFactory:
         cls._parsers.append(parser)
 
     @classmethod
-    def create_parser(cls, filename: Path) -> Parser | None:
+    def create_parser(cls, csv_file: Path) -> Parser | None:
         for parser_class in cls._parsers:
-            parser = parser_class(filename)  # type: ignore[call-arg]
+            parser = parser_class(csv_file)
             if parser.can_parse():
                 logger.info("Found parser: %s", type(parser).name())
                 return parser

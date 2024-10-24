@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import NamedTuple, Protocol
 
 from investir.transaction import Dividend, Interest, Order, Transfer
@@ -14,6 +15,9 @@ class ParsingResult(NamedTuple):
 
 
 class Parser(Protocol):
+    def __init__(self, csv_file: Path) -> None:
+        pass
+
     @staticmethod
     def name() -> str:
         pass
