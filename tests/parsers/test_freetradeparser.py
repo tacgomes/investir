@@ -134,7 +134,6 @@ def test_parser_happy_path(create_parser):
         ]
     )
 
-    assert type(parser).name() == "Freetrade"
     assert parser.can_parse()
 
     parser_result = parser.parse()

@@ -18,6 +18,7 @@ from investir.exceptions import (
     ParseError,
     TransactionTypeError,
 )
+from investir.parser.factory import ParserFactory
 from investir.parser.types import ParsingResult
 from investir.transaction import (
     Acquisition,
@@ -33,6 +34,7 @@ from investir.utils import dict2str, raise_or_warn, read_decimal
 logger = logging.getLogger(__name__)
 
 
+@ParserFactory.register("Trading212")
 class Trading212Parser:
     INITIAL_FIELDS: Final = (
         "Action",
@@ -74,10 +76,6 @@ class Trading212Parser:
         self._dividends: list[Dividend] = []
         self._transfers: list[Transfer] = []
         self._interest: list[Interest] = []
-
-    @staticmethod
-    def name() -> str:
-        return "Trading212"
 
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:

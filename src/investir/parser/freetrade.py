@@ -16,6 +16,7 @@ from investir.exceptions import (
     OrderDateError,
     TransactionTypeError,
 )
+from investir.parser.factory import ParserFactory
 from investir.parser.types import ParsingResult
 from investir.transaction import (
     Acquisition,
@@ -31,6 +32,7 @@ from investir.utils import dict2str, raise_or_warn, read_decimal
 logger = logging.getLogger(__name__)
 
 
+@ParserFactory.register("Freetrade")
 class FreetradeParser:
     FIELDS: Final = (
         "Title",
@@ -70,10 +72,6 @@ class FreetradeParser:
         self._dividends: list[Dividend] = []
         self._transfers: list[Transfer] = []
         self._interest: list[Interest] = []
-
-    @staticmethod
-    def name() -> str:
-        return "Freetrade"
 
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
