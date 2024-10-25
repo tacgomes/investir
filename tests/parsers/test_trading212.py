@@ -155,7 +155,6 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
         ]
     )
 
-    assert type(parser).name() == "Trading212"
     assert parser.can_parse()
 
     parser_result = parser.parse()

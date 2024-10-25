@@ -1,6 +1,5 @@
+import investir.parser.freetrade as _freetrade  # noqa: F401
+import investir.parser.trading212 as _trading212  # noqa: F401
 from investir.parser.factory import ParserFactory
-from investir.parser.freetrade import FreetradeParser
-from investir.parser.trading212 import Trading212Parser
 
-ParserFactory.register_parser(FreetradeParser)
-ParserFactory.register_parser(Trading212Parser)
+__all__ = ["ParserFactory"]
