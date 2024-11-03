@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from investir.securitydata import Split
+from investir.findata import Split
 from investir.transaction import Acquisition, Disposal, Order
 from investir.typing import ISIN, Ticker
 

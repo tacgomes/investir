@@ -6,8 +6,8 @@ import pytest
 
 from investir.config import config
 from investir.exceptions import IncompleteRecordsError
-from investir.securitiesdatacache import SecuritiesDataCache
-from investir.securitiesdataprovider import (
+from investir.findata import (
+    FinancialData,
     SecurityData,
     Split,
     YahooFinanceDataProvider,
@@ -35,8 +35,8 @@ def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
         data_provider = YahooFinanceDataProvider()
         mock = mocker.patch.object(data_provider, "get_security_data")
         mock.return_value = SecurityData(splits=splits)
-        securities_data = SecuritiesDataCache(data_provider, tr_hist, cache_file)
-        return TaxCalculator(tr_hist, securities_data)
+        financial_data = FinancialData(data_provider, tr_hist, cache_file)
+        return TaxCalculator(tr_hist, financial_data)
 
     return _method
 
