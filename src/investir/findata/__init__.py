@@ -1,16 +1,14 @@
 from investir.findata.dataprovider import (
-    NoopDataProvider,
-    SecuritiesDataProvider,
-    YahooFinanceDataProvider,
+    DataProviderError,
+    YahooFinanceSecurityInfoProvider,
 )
 from investir.findata.financialdata import FinancialData
-from investir.findata.types import SecurityData, Split
+from investir.findata.types import SecurityInfo, Split
 
 __all__ = [
+    "DataProviderError",
     "FinancialData",
-    "NoopDataProvider",
-    "SecuritiesDataProvider",
-    "SecurityData",
+    "SecurityInfo",
     "Split",
-    "YahooFinanceDataProvider",
+    "YahooFinanceSecurityInfoProvider",
 ]
