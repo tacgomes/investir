@@ -4,7 +4,7 @@ from typing import Protocol
 
 import yfinance
 
-from investir.securitydata import SecurityData, Split
+from investir.findata.types import SecurityData, Split
 from investir.typing import ISIN
 
 logger = logging.getLogger(__name__)

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import yaml
 
-from investir.securitiesdataprovider import SecuritiesDataProvider
-from investir.securitydata import SecurityData
+from investir.findata.dataprovider import SecuritiesDataProvider
+from investir.findata.types import SecurityData
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 VERSION = 1
 
 
-class SecuritiesDataCache:
+class FinancialData:
     def __init__(
         self,
         data_provider: SecuritiesDataProvider,

@@ -8,12 +8,13 @@ from typing import Any
 import pytest
 import yaml
 
-from investir.securitiesdatacache import VERSION, SecuritiesDataCache
-from investir.securitiesdataprovider import (
+from investir.findata import (
+    FinancialData,
     SecurityData,
     Split,
     YahooFinanceDataProvider,
 )
+from investir.findata.financialdata import VERSION
 from investir.transaction import Acquisition, Disposal
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
@@ -82,27 +83,25 @@ NFLX_SPLITS = [
 ]
 
 
-@pytest.fixture(name="create_securities_data_cache")
-def _create_securities_data_cache(mocker) -> Callable:
+@pytest.fixture(name="make_financial_data")
+def _make_financial_data(mocker) -> Callable:
     def _method(
         tr_hist: TrHistory, cache_file: Path, data: Sequence[SecurityData]
-    ) -> tuple[SecuritiesDataCache, Any]:
+    ) -> tuple[FinancialData, Any]:
         data_provider = YahooFinanceDataProvider()
         mock = mocker.patch.object(data_provider, "get_security_data")
         mock.side_effect = data
-        return SecuritiesDataCache(data_provider, tr_hist, cache_file), mock
+        return FinancialData(data_provider, tr_hist, cache_file), mock
 
     return _method
 
 
-def test_securities_data_initialisation_without_cache(
-    create_securities_data_cache, tmp_path
-):
+def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path):
     cache_file = tmp_path / "cache.yaml"
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
-    data_cache, data_provider_mock = create_securities_data_cache(
+    findata, data_provider_mock = make_financial_data(
         tr_hist,
         cache_file,
         [
@@ -111,12 +110,12 @@ def test_securities_data_initialisation_without_cache(
             None,
         ],
     )
-    assert data_cache[ISIN("AMZN-ISIN")].name == "Amazon"
-    assert data_cache[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
-    assert data_cache[ISIN("NFLX-ISIN")].name == "Netflix"
-    assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert data_cache[ISIN("NOTF-ISIN")].name == "Not Found"
-    assert data_cache[ISIN("NOTF-ISIN")].splits == []
+    assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
+    assert findata[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
+    assert findata[ISIN("NFLX-ISIN")].name == "Netflix"
+    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
+    assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
+    assert findata[ISIN("NOTF-ISIN")].splits == []
     assert data_provider_mock.call_count == 3
 
     assert cache_file.exists()
@@ -130,19 +129,17 @@ def test_securities_data_initialisation_without_cache(
     assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
     assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
 
-    data_cache, data_provider_mock = create_securities_data_cache(
-        tr_hist, cache_file, None
-    )
-    assert data_cache[ISIN("AMZN-ISIN")].name == "Amazon"
-    assert data_cache[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
-    assert data_cache[ISIN("NFLX-ISIN")].name == "Netflix"
-    assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert data_cache[ISIN("NOTF-ISIN")].name == "Not Found"
-    assert data_cache[ISIN("NOTF-ISIN")].splits == []
+    findata, data_provider_mock = make_financial_data(tr_hist, cache_file, None)
+    assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
+    assert findata[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
+    assert findata[ISIN("NFLX-ISIN")].name == "Netflix"
+    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
+    assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
+    assert findata[ISIN("NOTF-ISIN")].splits == []
     assert data_provider_mock.call_count == 0
 
 
-def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path):
+def test_cache_is_updated(make_financial_data, tmp_path):
     cache_file = tmp_path / "cache.yaml"
     cache_file.write_text(
         """
@@ -168,7 +165,7 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5, ORDER6])
 
-    data_cache, data_provider_mock = create_securities_data_cache(
+    findata, data_provider_mock = make_financial_data(
         tr_hist,
         cache_file,
         [
@@ -179,9 +176,9 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
         ],
     )
 
-    assert data_cache[ISIN("AMZN-ISIN")].splits == amazn_splits
-    assert data_cache[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert not data_cache[ISIN("MSFT-ISIN")].splits
+    assert findata[ISIN("AMZN-ISIN")].splits == amazn_splits
+    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
+    assert not findata[ISIN("MSFT-ISIN")].splits
     assert data_provider_mock.call_count == 4
 
     with cache_file.open("r") as file:
@@ -204,8 +201,8 @@ def test_securities_data_cache_is_updated(create_securities_data_cache, tmp_path
     assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
 
 
-def test_empty_data_cache_does_not_raise_exception(create_securities_data_cache):
-    create_securities_data_cache(
+def test_empty_cache_does_not_raise_exception(make_financial_data):
+    make_financial_data(
         TrHistory(),
         Path(os.devnull),
         [],

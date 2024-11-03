@@ -8,7 +8,7 @@ from decimal import Decimal
 from functools import reduce
 from typing import ClassVar, TypeVar
 
-from investir.securitydata import Split
+from investir.findata.types import Split
 from investir.typing import ISIN, Ticker, Year
 from investir.utils import date_to_tax_year
 

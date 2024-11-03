@@ -7,8 +7,8 @@ from decimal import Decimal
 from typing import TypeAlias
 
 from investir.exceptions import AmbiguousTickerError, IncompleteRecordsError
+from investir.findata import FinancialData
 from investir.prettytable import PrettyTable
-from investir.securitiesdatacache import SecuritiesDataCache
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker, Year
@@ -79,11 +79,9 @@ class Section104Holding:
 
 
 class TaxCalculator:
-    def __init__(
-        self, tr_hist: TrHistory, securities_data: SecuritiesDataCache
-    ) -> None:
+    def __init__(self, tr_hist: TrHistory, findata: FinancialData) -> None:
         self._tr_hist = tr_hist
-        self._securities_data = securities_data
+        self._findata = findata
         self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
         self._holdings: dict[ISIN, Section104Holding] = {}
@@ -282,7 +280,7 @@ class TaxCalculator:
             )
 
     def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
-        return [o.adjust_quantity(self._securities_data[o.isin].splits) for o in orders]
+        return [o.adjust_quantity(self._findata[o.isin].splits) for o in orders]
 
     def _group_same_day(self, orders: Sequence[Order]) -> GroupDict:
         same_day = defaultdict(list)

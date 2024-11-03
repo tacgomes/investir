@@ -11,14 +11,14 @@ import typer
 
 from investir.config import config
 from investir.exceptions import InvestirError
-from investir.logging import configure_logger
-from investir.parser import ParserFactory
-from investir.securitiesdatacache import SecuritiesDataCache
-from investir.securitiesdataprovider import (
+from investir.findata import (
+    FinancialData,
     NoopDataProvider,
     SecuritiesDataProvider,
     YahooFinanceDataProvider,
 )
+from investir.logging import configure_logger
+from investir.parser import ParserFactory
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
 from investir.trhistory import TrHistory
@@ -124,8 +124,8 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     else:
         data_provider = NoopDataProvider()
 
-    securities_data = SecuritiesDataCache(data_provider, tr_hist, config.cache_file)
-    tax_calculator = TaxCalculator(tr_hist, securities_data)
+    financial_data = FinancialData(data_provider, tr_hist, config.cache_file)
+    tax_calculator = TaxCalculator(tr_hist, financial_data)
 
     return tr_hist, tax_calculator
 

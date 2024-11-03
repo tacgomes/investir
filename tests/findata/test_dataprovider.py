@@ -7,8 +7,11 @@ import pandas as pd
 import pytest
 import yfinance
 
-from investir.securitiesdataprovider import NoopDataProvider, YahooFinanceDataProvider
-from investir.securitydata import Split
+from investir.findata import (
+    NoopDataProvider,
+    Split,
+    YahooFinanceDataProvider,
+)
 from investir.typing import ISIN
 
 AMZN_PSERIES = pd.Series(
