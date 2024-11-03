@@ -9,12 +9,12 @@ import pytest
 import yaml
 
 from investir.findata import (
+    DataProviderError,
     FinancialData,
-    SecurityData,
+    SecurityInfo,
     Split,
-    YahooFinanceDataProvider,
+    YahooFinanceSecurityInfoProvider,
 )
-from investir.findata.financialdata import VERSION
 from investir.transaction import Acquisition, Disposal
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
@@ -86,12 +86,12 @@ NFLX_SPLITS = [
 @pytest.fixture(name="make_financial_data")
 def _make_financial_data(mocker) -> Callable:
     def _method(
-        tr_hist: TrHistory, cache_file: Path, data: Sequence[SecurityData]
+        tr_hist: TrHistory, cache_file: Path, data: Sequence[SecurityInfo]
     ) -> tuple[FinancialData, Any]:
-        data_provider = YahooFinanceDataProvider()
-        mock = mocker.patch.object(data_provider, "get_security_data")
+        security_info_provider = YahooFinanceSecurityInfoProvider()
+        mock = mocker.patch.object(security_info_provider, "fech_info")
         mock.side_effect = data
-        return FinancialData(data_provider, tr_hist, cache_file), mock
+        return FinancialData(security_info_provider, tr_hist, cache_file), mock
 
     return _method
 
@@ -101,13 +101,13 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
-    findata, data_provider_mock = make_financial_data(
+    findata, security_info_provider_mock = make_financial_data(
         tr_hist,
         cache_file,
         [
-            SecurityData(name="Amazon", splits=AMZN_SPLITS),
-            SecurityData(name="Netflix", splits=NFLX_SPLITS),
-            None,
+            SecurityInfo(name="Amazon", splits=AMZN_SPLITS),
+            SecurityInfo(name="Netflix", splits=NFLX_SPLITS),
+            DataProviderError,
         ],
     )
     assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
@@ -116,12 +116,12 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
     assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
     assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
     assert findata[ISIN("NOTF-ISIN")].splits == []
-    assert data_provider_mock.call_count == 3
+    assert security_info_provider_mock.call_count == 3
 
     assert cache_file.exists()
     with cache_file.open("r") as file:
         data = yaml.load(file, Loader=yaml.FullLoader)
-    assert data["version"] == VERSION
+    assert data["version"] == FinancialData.VERSION
     assert data["securities"].get(ISIN("AMZN-ISIN")).name == "Amazon"
     assert data["securities"].get(ISIN("AMZN-ISIN")).splits == AMZN_SPLITS
     assert data["securities"].get(ISIN("NFLX-ISIN")).name == "Netflix"
@@ -129,14 +129,16 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
     assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
     assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
 
-    findata, data_provider_mock = make_financial_data(tr_hist, cache_file, None)
+    findata, security_info_provider_mock = make_financial_data(
+        tr_hist, cache_file, None
+    )
     assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
     assert findata[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
     assert findata[ISIN("NFLX-ISIN")].name == "Netflix"
     assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
     assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
     assert findata[ISIN("NOTF-ISIN")].splits == []
-    assert data_provider_mock.call_count == 0
+    assert security_info_provider_mock.call_count == 0
 
 
 def test_cache_is_updated(make_financial_data, tmp_path):
@@ -165,21 +167,21 @@ def test_cache_is_updated(make_financial_data, tmp_path):
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5, ORDER6])
 
-    findata, data_provider_mock = make_financial_data(
+    findata, security_info_provider_mock = make_financial_data(
         tr_hist,
         cache_file,
         [
-            SecurityData(name="Amazon", splits=amazn_splits),
-            SecurityData(name="Microsoft", splits=[]),
-            SecurityData(name="Netflix", splits=NFLX_SPLITS),
-            None,
+            SecurityInfo(name="Amazon", splits=amazn_splits),
+            SecurityInfo(name="Microsoft", splits=[]),
+            SecurityInfo(name="Netflix", splits=NFLX_SPLITS),
+            DataProviderError,
         ],
     )
 
     assert findata[ISIN("AMZN-ISIN")].splits == amazn_splits
     assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
     assert not findata[ISIN("MSFT-ISIN")].splits
-    assert data_provider_mock.call_count == 4
+    assert security_info_provider_mock.call_count == 4
 
     with cache_file.open("r") as file:
         data = yaml.load(file, yaml.FullLoader)

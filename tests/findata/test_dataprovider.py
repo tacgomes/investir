@@ -8,9 +8,9 @@ import pytest
 import yfinance
 
 from investir.findata import (
-    NoopDataProvider,
+    DataProviderError,
     Split,
-    YahooFinanceDataProvider,
+    YahooFinanceSecurityInfoProvider,
 )
 from investir.typing import ISIN
 
@@ -64,29 +64,21 @@ def _yf_ticker_mocker(mocker) -> Callable:
     return _method
 
 
-def test_noop_dataprovider():
-    data_provider = NoopDataProvider()
-
-    security_data = data_provider.get_security_data(ISIN("SOME-ISIN"))
-    assert security_data.name == ""
-    assert security_data.splits == []
-
-
 def test_yfinance_dataprovider(yf_ticker_mocker):
     info_prop_mock, splits_prop_mock = yf_ticker_mocker(
         [{"shortName": "Amazon"}, {"shortName": "Netflix"}],
         [AMZN_PSERIES, NFLX_PSERIES],
     )
 
-    data_provider = YahooFinanceDataProvider()
+    security_info_provider = YahooFinanceSecurityInfoProvider()
 
-    security_data = data_provider.get_security_data(ISIN("AMZN-ISIN"))
-    assert security_data.name == "Amazon"
-    assert security_data.splits == AMZN_SPLITS
+    security_info = security_info_provider.fech_info(ISIN("AMZN-ISIN"))
+    assert security_info.name == "Amazon"
+    assert security_info.splits == AMZN_SPLITS
 
-    security_data = data_provider.get_security_data(ISIN("NFLX-ISIN"))
-    assert security_data.name == "Netflix"
-    assert security_data.splits == NFLX_SPLITS
+    security_info = security_info_provider.fech_info(ISIN("NFLX-ISIN"))
+    assert security_info.name == "Netflix"
+    assert security_info.splits == NFLX_SPLITS
 
     assert info_prop_mock.call_count == 2
     assert splits_prop_mock.call_count == 2
@@ -94,5 +86,6 @@ def test_yfinance_dataprovider(yf_ticker_mocker):
 
 def test_yfinance_dataprovider_security_not_found(yf_ticker_mocker):
     yf_ticker_mocker(yfinance.exceptions.YFException, [])
-    data_provider = YahooFinanceDataProvider()
-    assert data_provider.get_security_data(ISIN("NOT-FOUND")) is None
+    security_info_provider = YahooFinanceSecurityInfoProvider()
+    with pytest.raises(DataProviderError):
+        security_info_provider.fech_info(ISIN("NOT-FOUND"))

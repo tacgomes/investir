@@ -8,9 +8,9 @@ from investir.config import config
 from investir.exceptions import IncompleteRecordsError
 from investir.findata import (
     FinancialData,
-    SecurityData,
+    SecurityInfo,
     Split,
-    YahooFinanceDataProvider,
+    YahooFinanceSecurityInfoProvider,
 )
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Order
@@ -32,10 +32,10 @@ def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
 
         config.reset()
         cache_file = tmp_path / "cache.yaml"
-        data_provider = YahooFinanceDataProvider()
-        mock = mocker.patch.object(data_provider, "get_security_data")
-        mock.return_value = SecurityData(splits=splits)
-        financial_data = FinancialData(data_provider, tr_hist, cache_file)
+        security_info_provider = YahooFinanceSecurityInfoProvider()
+        mock = mocker.patch.object(security_info_provider, "fech_info")
+        mock.return_value = SecurityInfo(splits=splits)
+        financial_data = FinancialData(security_info_provider, tr_hist, cache_file)
         return TaxCalculator(tr_hist, financial_data)
 
     return _method

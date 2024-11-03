@@ -13,9 +13,7 @@ from investir.config import config
 from investir.exceptions import InvestirError
 from investir.findata import (
     FinancialData,
-    NoopDataProvider,
-    SecuritiesDataProvider,
-    YahooFinanceDataProvider,
+    YahooFinanceSecurityInfoProvider,
 )
 from investir.logging import configure_logger
 from investir.parser import ParserFactory
@@ -118,13 +116,11 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
         len(tr_hist.interest),
     )
 
-    data_provider: SecuritiesDataProvider
+    security_info_provider = None
     if not config.offline:
-        data_provider = YahooFinanceDataProvider()
-    else:
-        data_provider = NoopDataProvider()
+        security_info_provider = YahooFinanceSecurityInfoProvider()
 
-    financial_data = FinancialData(data_provider, tr_hist, config.cache_file)
+    financial_data = FinancialData(security_info_provider, tr_hist, config.cache_file)
     tax_calculator = TaxCalculator(tr_hist, financial_data)
 
     return tr_hist, tax_calculator
