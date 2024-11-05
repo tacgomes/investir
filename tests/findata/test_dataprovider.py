@@ -1,15 +1,18 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import Mock, PropertyMock
+from typing import Any
 
 import pandas as pd
 import pytest
 import yfinance
+from iso4217 import Currency
 
 from investir.findata import (
     DataProviderError,
+    Price,
     Split,
+    YahooFinanceExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.typing import ISIN
@@ -22,13 +25,6 @@ AMZN_PSERIES = pd.Series(
     ],
 )
 
-NFLX_PSERIES = pd.Series(
-    data=[5.0],
-    index=[
-        pd.Timestamp(2023, 1, 1, tzinfo=timezone.utc),
-    ],
-)
-
 AMZN_SPLITS = [
     Split(
         date_effective=datetime(2019, 1, 1, tzinfo=timezone.utc), ratio=Decimal("10.0")
@@ -38,54 +34,89 @@ AMZN_SPLITS = [
     ),
 ]
 
-NFLX_SPLITS = [
-    Split(
-        date_effective=datetime(2023, 1, 1, tzinfo=timezone.utc), ratio=Decimal("5.0")
-    ),
-]
 
-
-@pytest.fixture(name="yf_ticker_mocker")
-def _yf_ticker_mocker(mocker) -> Callable:
+@pytest.fixture(name="ticker_mocker")
+def _ticker_mocker(mocker) -> Callable:
     def _method(
-        info_se: Sequence[str] | Exception, splits_se: Sequence[pd.Series]
-    ) -> tuple[PropertyMock, PropertyMock]:
-        ticker_mock = Mock()
-
-        splits_prop_mock = PropertyMock(side_effect=splits_se)
-        type(ticker_mock).splits = splits_prop_mock
-
-        info_prop_mock = PropertyMock(side_effect=info_se)
-        type(ticker_mock).info = info_prop_mock
-
-        mocker.patch("yfinance.Ticker", return_value=ticker_mock)
-        return info_prop_mock, splits_prop_mock
+        info: Mapping[str, Any] | Exception, splits: pd.Series | None = None
+    ) -> None:
+        mocker.patch(
+            "yfinance.Ticker.info",
+            return_value=info,
+            new_callable=mocker.PropertyMock,
+        )
+        mocker.patch(
+            "yfinance.Ticker.splits",
+            return_value=splits,
+            new_callable=mocker.PropertyMock,
+        )
 
     return _method
 
 
-def test_yfinance_dataprovider(yf_ticker_mocker):
-    info_prop_mock, splits_prop_mock = yf_ticker_mocker(
-        [{"shortName": "Amazon"}, {"shortName": "Netflix"}],
-        [AMZN_PSERIES, NFLX_PSERIES],
+def test_yfinance_security_info_provider(ticker_mocker):
+    ticker_mocker(
+        {"shortName": "Amazon", "currentPrice": 199.46, "currency": "USD"},
+        AMZN_PSERIES,
     )
-
-    security_info_provider = YahooFinanceSecurityInfoProvider()
-
-    security_info = security_info_provider.fech_info(ISIN("AMZN-ISIN"))
+    provider = YahooFinanceSecurityInfoProvider()
+    security_info = provider.fech_info(ISIN("AMZN-ISIN"))
     assert security_info.name == "Amazon"
     assert security_info.splits == AMZN_SPLITS
-
-    security_info = security_info_provider.fech_info(ISIN("NFLX-ISIN"))
-    assert security_info.name == "Netflix"
-    assert security_info.splits == NFLX_SPLITS
-
-    assert info_prop_mock.call_count == 2
-    assert splits_prop_mock.call_count == 2
+    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Price(
+        Decimal(199.46), Currency.USD
+    )
 
 
-def test_yfinance_dataprovider_security_not_found(yf_ticker_mocker):
-    yf_ticker_mocker(yfinance.exceptions.YFException, [])
+def test_yfinance_security_info_provider_security_not_found(ticker_mocker):
+    ticker_mocker(yfinance.exceptions.YFException, [])
     security_info_provider = YahooFinanceSecurityInfoProvider()
     with pytest.raises(DataProviderError):
         security_info_provider.fech_info(ISIN("NOT-FOUND"))
+
+
+def test_yfinance_security_info_provider_price_in_GBp(ticker_mocker):
+    ticker_mocker(
+        {"currentPrice": 1550, "currency": "GBp"},
+    )
+    provider = YahooFinanceSecurityInfoProvider()
+    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Price(
+        Decimal("15.50"), Currency.GBP
+    )
+
+
+def test_yfinance_security_info_provider_exception_raised(ticker_mocker):
+    ticker_mocker(yfinance.exceptions.YFException)
+    provider = YahooFinanceSecurityInfoProvider()
+    with pytest.raises(DataProviderError):
+        provider.fech_info(ISIN("AMZN-ISIN"))
+    with pytest.raises(DataProviderError):
+        provider.fetch_price(ISIN("AMZN-ISIN"))
+
+
+def test_yfinance_security_info_provider_missing_field(ticker_mocker):
+    ticker_mocker({})
+    provider = YahooFinanceSecurityInfoProvider()
+    with pytest.raises(DataProviderError):
+        provider.fech_info(ISIN("AMZN-ISIN"))
+
+
+def test_yfinance_exchange_rate_provider(ticker_mocker):
+    ticker_mocker({"bid": 0.775420})
+    provider = YahooFinanceExchangeRateProvider()
+    fx_rate = provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
+    assert fx_rate == Decimal(0.775420)
+
+
+def test_yfinance_exchange_rate_provider_exception_raised(ticker_mocker):
+    ticker_mocker(yfinance.exceptions.YFException)
+    provider = YahooFinanceExchangeRateProvider()
+    with pytest.raises(DataProviderError):
+        provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
+
+
+def test_yfinance_exchange_rate_provider_missing_field(ticker_mocker):
+    ticker_mocker({})
+    provider = YahooFinanceExchangeRateProvider()
+    with pytest.raises(DataProviderError):
+        provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
