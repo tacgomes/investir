@@ -2,13 +2,20 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import NamedTuple
 
 import yaml
 from dateutil.parser import parse as parse_timestamp
+from iso4217 import Currency
 
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+class Price(NamedTuple):
+    amount: Decimal
+    currency: Currency
 
 
 @dataclass
