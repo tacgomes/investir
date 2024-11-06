@@ -110,12 +110,13 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
             DataProviderError,
         ],
     )
-    assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
-    assert findata[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
-    assert findata[ISIN("NFLX-ISIN")].name == "Netflix"
-    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
-    assert findata[ISIN("NOTF-ISIN")].splits == []
+
+    assert findata.get_security_info(ISIN("AMZN-ISIN")).name == "Amazon"
+    assert findata.get_security_info(ISIN("AMZN-ISIN")).splits == AMZN_SPLITS
+    assert findata.get_security_info(ISIN("NFLX-ISIN")).name == "Netflix"
+    assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
+    assert findata.get_security_info(ISIN("NOTF-ISIN")).name == "Not Found"
+    assert findata.get_security_info(ISIN("NOTF-ISIN")).splits == []
     assert security_info_provider_mock.call_count == 3
 
     assert cache_file.exists()
@@ -132,12 +133,12 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
     findata, security_info_provider_mock = make_financial_data(
         tr_hist, cache_file, None
     )
-    assert findata[ISIN("AMZN-ISIN")].name == "Amazon"
-    assert findata[ISIN("AMZN-ISIN")].splits == AMZN_SPLITS
-    assert findata[ISIN("NFLX-ISIN")].name == "Netflix"
-    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert findata[ISIN("NOTF-ISIN")].name == "Not Found"
-    assert findata[ISIN("NOTF-ISIN")].splits == []
+    assert findata.get_security_info(ISIN("AMZN-ISIN")).name == "Amazon"
+    assert findata.get_security_info(ISIN("AMZN-ISIN")).splits == AMZN_SPLITS
+    assert findata.get_security_info(ISIN("NFLX-ISIN")).name == "Netflix"
+    assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
+    assert findata.get_security_info(ISIN("NOTF-ISIN")).name == "Not Found"
+    assert findata.get_security_info(ISIN("NOTF-ISIN")).splits == []
     assert security_info_provider_mock.call_count == 0
 
 
@@ -178,9 +179,9 @@ def test_cache_is_updated(make_financial_data, tmp_path):
         ],
     )
 
-    assert findata[ISIN("AMZN-ISIN")].splits == amazn_splits
-    assert findata[ISIN("NFLX-ISIN")].splits == NFLX_SPLITS
-    assert not findata[ISIN("MSFT-ISIN")].splits
+    assert findata.get_security_info(ISIN("AMZN-ISIN")).splits == amazn_splits
+    assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
+    assert not findata.get_security_info(ISIN("MSFT-ISIN")).splits
     assert security_info_provider_mock.call_count == 4
 
     with cache_file.open("r") as file:
