@@ -28,6 +28,9 @@ class FinancialData:
 
         self._initialise()
 
+    def get_security_info(self, isin: ISIN) -> SecurityInfo:
+        return self._security_info[isin]
+
     def _initialise(self) -> None:
         self._load_cache()
 
@@ -79,6 +82,3 @@ class FinancialData:
 
         with self._cache_file.open("w") as file:
             yaml.dump(data, file, sort_keys=False)
-
-    def __getitem__(self, isin: ISIN) -> SecurityInfo:
-        return self._security_info[isin]

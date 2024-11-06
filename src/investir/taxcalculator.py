@@ -280,7 +280,10 @@ class TaxCalculator:
             )
 
     def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
-        return [o.adjust_quantity(self._findata[o.isin].splits) for o in orders]
+        return [
+            o.adjust_quantity(self._findata.get_security_info(o.isin).splits)
+            for o in orders
+        ]
 
     def _group_same_day(self, orders: Sequence[Order]) -> GroupDict:
         same_day = defaultdict(list)
