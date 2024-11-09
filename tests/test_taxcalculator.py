@@ -10,6 +10,7 @@ from investir.findata import (
     FinancialData,
     SecurityInfo,
     Split,
+    YahooFinanceExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.taxcalculator import TaxCalculator
@@ -33,9 +34,13 @@ def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
         config.reset()
         cache_file = tmp_path / "cache.yaml"
         security_info_provider = YahooFinanceSecurityInfoProvider()
+        exchange_rate_provider = YahooFinanceExchangeRateProvider()
         mock = mocker.patch.object(security_info_provider, "fech_info")
         mock.return_value = SecurityInfo(splits=splits)
-        financial_data = FinancialData(security_info_provider, tr_hist, cache_file)
+        financial_data = FinancialData(
+            security_info_provider, exchange_rate_provider, tr_hist, cache_file
+        )
+
         return TaxCalculator(tr_hist, financial_data)
 
     return _method

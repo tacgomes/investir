@@ -3,16 +3,20 @@ from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
+from unittest.mock import Mock
 
 import pytest
 import yaml
+from iso4217 import Currency
 
 from investir.findata import (
     DataProviderError,
     FinancialData,
+    Price,
     SecurityInfo,
     Split,
+    YahooFinanceExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.transaction import Acquisition, Disposal
@@ -83,15 +87,44 @@ NFLX_SPLITS = [
 ]
 
 
+class DataProviderMocks(NamedTuple):
+    fech_info: Mock
+    fetch_price: Mock
+    fetch_exchange_rate: Mock
+
+
 @pytest.fixture(name="make_financial_data")
 def _make_financial_data(mocker) -> Callable:
     def _method(
-        tr_hist: TrHistory, cache_file: Path, data: Sequence[SecurityInfo]
+        tr_hist: TrHistory | None = None,
+        cache_file: Path = Path(os.devnull),
+        security_info: Sequence[SecurityInfo | Exception] | None = None,
+        price: Price | Exception | None = None,
+        fx_rate: Decimal | Exception | None = None,
     ) -> tuple[FinancialData, Any]:
         security_info_provider = YahooFinanceSecurityInfoProvider()
-        mock = mocker.patch.object(security_info_provider, "fech_info")
-        mock.side_effect = data
-        return FinancialData(security_info_provider, tr_hist, cache_file), mock
+        exchange_rate_provider = YahooFinanceExchangeRateProvider()
+
+        mocks = DataProviderMocks(
+            mocker.patch.object(
+                security_info_provider, "fech_info", side_effect=security_info
+            ),
+            mocker.patch.object(
+                security_info_provider, "fetch_price", side_effect=[price]
+            ),
+            mocker.patch.object(
+                exchange_rate_provider, "fetch_exchange_rate", side_effect=[fx_rate]
+            ),
+        )
+
+        if tr_hist is None:
+            tr_hist = TrHistory()
+
+        findata = FinancialData(
+            security_info_provider, exchange_rate_provider, tr_hist, cache_file
+        )
+
+        return findata, mocks
 
     return _method
 
@@ -101,7 +134,7 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5])
 
-    findata, security_info_provider_mock = make_financial_data(
+    findata, mocks = make_financial_data(
         tr_hist,
         cache_file,
         [
@@ -117,7 +150,7 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
     assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
     assert findata.get_security_info(ISIN("NOTF-ISIN")).name == "Not Found"
     assert findata.get_security_info(ISIN("NOTF-ISIN")).splits == []
-    assert security_info_provider_mock.call_count == 3
+    assert mocks.fech_info.call_count == 3
 
     assert cache_file.exists()
     with cache_file.open("r") as file:
@@ -130,16 +163,14 @@ def test_initialisation_without_pre_existing_cache(make_financial_data, tmp_path
     assert data["securities"].get(ISIN("NOTF-ISIN")).name == "Not Found"
     assert data["securities"].get(ISIN("NOTF-ISIN")).splits == []
 
-    findata, security_info_provider_mock = make_financial_data(
-        tr_hist, cache_file, None
-    )
+    findata, mocks = make_financial_data(tr_hist, cache_file, None)
     assert findata.get_security_info(ISIN("AMZN-ISIN")).name == "Amazon"
     assert findata.get_security_info(ISIN("AMZN-ISIN")).splits == AMZN_SPLITS
     assert findata.get_security_info(ISIN("NFLX-ISIN")).name == "Netflix"
     assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
     assert findata.get_security_info(ISIN("NOTF-ISIN")).name == "Not Found"
     assert findata.get_security_info(ISIN("NOTF-ISIN")).splits == []
-    assert security_info_provider_mock.call_count == 0
+    assert mocks.fech_info.call_count == 0
 
 
 def test_cache_is_updated(make_financial_data, tmp_path):
@@ -168,7 +199,7 @@ def test_cache_is_updated(make_financial_data, tmp_path):
 
     tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4, ORDER5, ORDER6])
 
-    findata, security_info_provider_mock = make_financial_data(
+    findata, mocks = make_financial_data(
         tr_hist,
         cache_file,
         [
@@ -182,7 +213,7 @@ def test_cache_is_updated(make_financial_data, tmp_path):
     assert findata.get_security_info(ISIN("AMZN-ISIN")).splits == amazn_splits
     assert findata.get_security_info(ISIN("NFLX-ISIN")).splits == NFLX_SPLITS
     assert not findata.get_security_info(ISIN("MSFT-ISIN")).splits
-    assert security_info_provider_mock.call_count == 4
+    assert mocks.fech_info.call_count == 4
 
     with cache_file.open("r") as file:
         data = yaml.load(file, yaml.FullLoader)
@@ -205,8 +236,58 @@ def test_cache_is_updated(make_financial_data, tmp_path):
 
 
 def test_empty_cache_does_not_raise_exception(make_financial_data):
-    make_financial_data(
-        TrHistory(),
-        Path(os.devnull),
-        [],
-    )
+    make_financial_data()
+
+
+def test_get_security_price(make_financial_data):
+    findata, mocks = make_financial_data(price=Price(Decimal("199.46"), Currency.USD))
+    for _ in range(2):
+        assert findata.get_security_price(ISIN("AMZN-ISIN")) == Price(
+            Decimal("199.46"), Currency.USD
+        )
+    assert mocks.fetch_price.call_count == 1
+
+
+def test_get_security_price_exception_raised(make_financial_data):
+    findata, _ = make_financial_data(price=DataProviderError)
+    assert findata.get_security_price(ISIN("AMZN-ISIN")) is None
+
+
+def test_get_foreign_exchange_rate(make_financial_data):
+    findata, mocks = make_financial_data(fx_rate=Decimal("1.3042"))
+    for _ in range(2):
+        assert findata.get_foreign_exchange_rate(Currency.GBP, Currency.USD) == Decimal(
+            "1.3042"
+        )
+        assert findata.get_foreign_exchange_rate(Currency.USD, Currency.GBP) == Decimal(
+            "1.0"
+        ) / Decimal("1.3042")
+    assert mocks.fetch_exchange_rate.call_count == 1
+
+
+def test_get_foreign_exchange_rate_exception_raised(make_financial_data):
+    findata, _ = make_financial_data(fx_rate=DataProviderError)
+    assert findata.get_foreign_exchange_rate(Currency.GBP, Currency.USD) is None
+
+
+def test_convert_currency(make_financial_data):
+    findata, mocks = make_financial_data(fx_rate=Decimal("1.3042"))
+    assert findata.convert_currency(
+        Decimal("10.0"), Currency.GBP, Currency.USD
+    ) == Decimal("13.042")
+    assert mocks.fetch_exchange_rate.call_count == 1
+
+
+def test_convert_currency_same_currencies(make_financial_data):
+    findata, mocks = make_financial_data(fx_rate=Decimal("1.3042"))
+    assert findata.convert_currency(
+        Decimal("10.0"), Currency.GBP, Currency.GBP
+    ) == Decimal("10.0")
+    assert mocks.fetch_exchange_rate.call_count == 0
+
+
+def test_api_without_data_providers_set():
+    findata = FinancialData(None, None, TrHistory(), Path(os.devnull))
+    assert findata.get_security_price(ISIN("AMZN-ISIN")) is None
+    assert findata.get_foreign_exchange_rate(Currency.GBP, Currency.USD) is None
+    assert findata.convert_currency(Decimal("10.0"), Currency.GBP, Currency.USD) is None
