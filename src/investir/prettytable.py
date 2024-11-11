@@ -11,7 +11,12 @@ class PrettyTable(prettytable.PrettyTable):
 
         def decimal_fmt(precision: int) -> Callable[[str, Any], str]:
             def _fmt(_field, val) -> str:
-                return f"{val:.{precision}f}" if isinstance(val, Decimal) else ""
+                if val is None:
+                    return ""
+                elif isinstance(val, Decimal):
+                    return f"{val:.{precision}f}"
+                else:
+                    return f"{val}"
 
             return _fmt
 
