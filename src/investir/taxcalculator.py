@@ -185,7 +185,19 @@ class TaxCalculator:
                     f"{gbp(total_cost):>10}\n"
                 )
 
-    def show_holdings(self, ticker_filter: Ticker | None):
+    def _calculate_unrealised_gain_loss(
+        self, isin: ISIN, holding: Section104Holding
+    ) -> Decimal | None:
+        if (price := self._findata.get_security_price(isin)) and (
+            price_gbp := self._findata.convert_currency(price.amount, price.currency)
+        ):
+            return holding.quantity * price_gbp - holding.cost
+
+        return None
+
+    def show_holdings(
+        self, ticker_filter: Ticker | None = None, show_gain_loss: bool = False
+    ):
         self._calculate_capital_gains()
 
         table = PrettyTable(
@@ -196,8 +208,13 @@ class TaxCalculator:
                 "Allocation (%)",
                 "Quantity",
                 "Average Cost (£)",
+                "Unrealised Gain/Loss (£)",
             ]
         )
+
+        if not show_gain_loss:
+            table.fields = table.field_names[:]
+            table.fields.remove("Unrealised Gain/Loss (£)")
 
         holdings = []
 
@@ -215,9 +232,15 @@ class TaxCalculator:
                     holdings = [(isin, self._holdings[isin])]
 
         total_cost = sum(round(holding.cost, 2) for _, holding in holdings)
+        total_gain_loss = Decimal("0.0")
         last_idx = len(holdings) - 1
 
         for idx, (isin, holding) in enumerate(holdings):
+            if show_gain_loss and (
+                gain_loss := self._calculate_unrealised_gain_loss(isin, holding)
+            ):
+                total_gain_loss += gain_loss
+
             table.add_row(
                 [
                     isin,
@@ -226,11 +249,14 @@ class TaxCalculator:
                     holding.cost / total_cost * 100,
                     holding.quantity,
                     holding.cost / holding.quantity,
+                    gain_loss
+                    if show_gain_loss and gain_loss is not None
+                    else "Not available",
                 ],
                 divider=idx == last_idx,
             )
 
-        table.add_row(["", "", total_cost, Decimal("100.0"), "", ""])
+        table.add_row(["", "", total_cost, Decimal("100.0"), "", "", total_gain_loss])
 
         if holdings:
             printtable(table)
