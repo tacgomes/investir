@@ -3,11 +3,14 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
+from iso4217 import Currency
 
 from investir.config import config
 from investir.exceptions import IncompleteRecordsError
 from investir.findata import (
+    DataProviderError,
     FinancialData,
+    Price,
     SecurityInfo,
     Split,
     YahooFinanceExchangeRateProvider,
@@ -22,21 +25,37 @@ from investir.typing import ISIN, Ticker
 @pytest.fixture(name="make_tax_calculator")
 def _make_tax_calculator(mocker, tmp_path) -> Callable:
     def _method(
-        orders: Sequence[Order], splits: Sequence[Split] | None = None
+        orders: Sequence[Order],
+        splits: Sequence[Split] | None = None,
+        price: Price | Exception | None = None,
+        fx_rate: Decimal | Exception | None = None,
     ) -> TaxCalculator:
-        tr_hist = TrHistory(orders=orders)
+        config.reset()
 
         if splits is None:
             splits = []
         else:
             assert all(orders[0].isin == o.isin for o in orders)
 
-        config.reset()
-        cache_file = tmp_path / "cache.yaml"
         security_info_provider = YahooFinanceSecurityInfoProvider()
         exchange_rate_provider = YahooFinanceExchangeRateProvider()
-        mock = mocker.patch.object(security_info_provider, "fech_info")
-        mock.return_value = SecurityInfo(splits=splits)
+        mocker.patch.object(
+            security_info_provider,
+            "fech_info",
+            return_value=SecurityInfo(splits=splits),
+        )
+        mocker.patch.object(
+            security_info_provider,
+            "fetch_price",
+            side_effect=[price],
+        )
+        mocker.patch.object(
+            exchange_rate_provider, "fetch_exchange_rate", side_effect=[fx_rate]
+        )
+
+        tr_hist = TrHistory(orders=orders)
+        cache_file = tmp_path / "cache.yaml"
+
         financial_data = FinancialData(
             security_info_provider, exchange_rate_provider, tr_hist, cache_file
         )
@@ -1270,6 +1289,78 @@ def test_hmrc_example_crypto22256(make_tax_calculator):
     holding = tax_calculator.holding(ISIN("TOKEN-F"))
     assert holding.quantity == Decimal("10000.0")
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
+
+
+def test_show_holdings_with_gain_loss(make_tax_calculator, capsys):
+    order = Acquisition(
+        datetime(2019, 1, 18, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        ticker="TICKER",
+        quantity=Decimal("10.0"),
+        amount=Decimal("100.0"),
+    )
+
+    tax_calculator = make_tax_calculator(
+        [order], price=Price(Decimal("15.0"), Currency.GBP)
+    )
+    tax_calculator.show_holdings(show_gain_loss=True)
+
+    captured = capsys.readouterr()
+    assert "Unrealised Gain/Loss (£)" in captured.out
+    assert "50.00" in captured.out
+
+
+def test_show_holdings_with_gain_loss_and_currency_conversion(
+    make_tax_calculator, capsys
+):
+    order = Acquisition(
+        datetime(2019, 1, 18, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        ticker="TICKER",
+        quantity=Decimal("10.0"),
+        amount=Decimal("100.0"),
+    )
+
+    tax_calculator = make_tax_calculator(
+        [order],
+        price=Price(Decimal("15.0"), Currency.USD),
+        fx_rate=Decimal("0.75"),
+    )
+    tax_calculator.show_holdings(show_gain_loss=True)
+
+    captured = capsys.readouterr()
+    assert "Unrealised Gain/Loss (£)" in captured.out
+    assert "12.50" in captured.out
+
+
+def test_show_holdings_with_gain_loss_when_price_or_fx_rate_not_available(
+    make_tax_calculator, capsys
+):
+    order = Acquisition(
+        datetime(2019, 1, 18, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        ticker="TICKER",
+        quantity=Decimal("10.0"),
+        amount=Decimal("100.0"),
+    )
+
+    tax_calculator = make_tax_calculator([order], price=DataProviderError)
+    tax_calculator.show_holdings(show_gain_loss=True)
+
+    captured = capsys.readouterr()
+    assert "Unrealised Gain/Loss (£)" in captured.out
+    assert "Not available" in captured.out
+
+    tax_calculator = make_tax_calculator(
+        [order],
+        price=Price(Decimal("15.0"), Currency.USD),
+        fx_rate=DataProviderError,
+    )
+
+    tax_calculator.show_holdings(show_gain_loss=True)
+    captured = capsys.readouterr()
+    assert "Unrealised Gain/Loss (£)" in captured.out
+    assert "Not available" in captured.out
 
 
 def test_show_holdings_ambiguous_ticker(make_tax_calculator, capsys):
