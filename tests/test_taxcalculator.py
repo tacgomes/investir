@@ -19,8 +19,8 @@ from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
 
 
-@pytest.fixture(name="create_tax_calculator")
-def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
+@pytest.fixture(name="make_tax_calculator")
+def _make_tax_calculator(mocker, tmp_path) -> Callable:
     def _method(
         orders: Sequence[Order], splits: Sequence[Split] | None = None
     ) -> TaxCalculator:
@@ -46,7 +46,7 @@ def fixture_create_tax_calculator(mocker, tmp_path) -> Callable:
     return _method
 
 
-def test_section_104_disposal(create_tax_calculator):
+def test_section_104_disposal(make_tax_calculator):
     """
     Test Section 104 disposals using HMRC example:
       https://assets.publishing.service.gov.uk/media/65f993439316f5001164c2d7/HS284_Example_3_2024.pdf
@@ -83,7 +83,7 @@ def test_section_104_disposal(create_tax_calculator):
         fees=Decimal("105.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3, order4])
+    tax_calculator = make_tax_calculator([order1, order2, order3, order4])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
     assert capital_gains == tax_calculator.capital_gains(2023)
@@ -109,7 +109,7 @@ def test_section_104_disposal(create_tax_calculator):
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("1674.67")
 
 
-def test_section_104_with_no_disposal_made(create_tax_calculator):
+def test_section_104_with_no_disposal_made(make_tax_calculator):
     order1 = Acquisition(
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -126,13 +126,13 @@ def test_section_104_with_no_disposal_made(create_tax_calculator):
         fees=Decimal("50.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2])
+    tax_calculator = make_tax_calculator([order1, order2])
     holding = tax_calculator.holding(Ticker("X"))
     assert holding.quantity == Decimal("1500.0")
     assert holding.cost == Decimal("6200.0")
 
 
-def test_same_day_rule(create_tax_calculator):
+def test_same_day_rule(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -175,7 +175,7 @@ def test_same_day_rule(create_tax_calculator):
         amount=Decimal("55.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -193,7 +193,7 @@ def test_same_day_rule(create_tax_calculator):
 
 
 @pytest.mark.parametrize("days_elapsed", range(1, 31))
-def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
+def test_bed_and_breakfast_rule(days_elapsed, make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -215,7 +215,7 @@ def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
         amount=Decimal("120.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3])
+    tax_calculator = make_tax_calculator([order1, order2, order3])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
@@ -234,7 +234,7 @@ def test_bed_and_breakfast_rule(days_elapsed, create_tax_calculator):
 
 
 def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
-    create_tax_calculator,
+    make_tax_calculator,
 ):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
@@ -257,7 +257,7 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
         amount=Decimal("120.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3])
+    tax_calculator = make_tax_calculator([order1, order2, order3])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
@@ -271,7 +271,7 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
     assert holding.cost == Decimal("170.0")
 
 
-def test_acquisitions_are_not_matched_before_disposal_date(create_tax_calculator):
+def test_acquisitions_are_not_matched_before_disposal_date(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -293,7 +293,7 @@ def test_acquisitions_are_not_matched_before_disposal_date(create_tax_calculator
         amount=Decimal("150.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3])
+    tax_calculator = make_tax_calculator([order1, order2, order3])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
@@ -307,7 +307,7 @@ def test_acquisitions_are_not_matched_before_disposal_date(create_tax_calculator
     assert holding.cost == Decimal("200.0")
 
 
-def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(create_tax_calculator):
+def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(make_tax_calculator):
     """
     Verify that the same day rule has priority over the
     bed and breakfast rule. Note that in the list of
@@ -349,7 +349,7 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(create_tax_calcula
         amount=Decimal("300.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3, order4, order5])
+    tax_calculator = make_tax_calculator([order1, order2, order3, order4, order5])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
@@ -368,7 +368,7 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(create_tax_calcula
     assert holding.cost == Decimal("100.0")
 
 
-def test_matching_disposals_with_larger_acquisition(create_tax_calculator):
+def test_matching_disposals_with_larger_acquisition(make_tax_calculator):
     """
     Test splitting an acquisition in two to match the first disposal,
     and then using the remaining part to match the second disposal.
@@ -401,7 +401,7 @@ def test_matching_disposals_with_larger_acquisition(create_tax_calculator):
         amount=Decimal("70.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3, order4])
+    tax_calculator = make_tax_calculator([order1, order2, order3, order4])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
@@ -420,7 +420,7 @@ def test_matching_disposals_with_larger_acquisition(create_tax_calculator):
     assert holding.cost == Decimal("110.0")
 
 
-def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calculator):
+def test_matching_disposal_with_multiple_smaller_acquisitions(make_tax_calculator):
     """
     Test multiple tax events derived from a single disposal
        - 1 share matched due same day rule
@@ -474,7 +474,7 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calcula
         amount=Decimal("7.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -510,7 +510,7 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(create_tax_calcula
     assert holding.cost == Decimal("24.0")
 
 
-def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
+def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -543,7 +543,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
         fees=Decimal("0.8"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3, order4])
+    tax_calculator = make_tax_calculator([order1, order2, order3, order4])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
@@ -569,7 +569,7 @@ def test_capital_gains_on_orders_with_fees_included(create_tax_calculator):
     assert holding.cost == Decimal("15.75")
 
 
-def test_disposals_on_different_tickers(create_tax_calculator):
+def test_disposals_on_different_tickers(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -612,7 +612,7 @@ def test_disposals_on_different_tickers(create_tax_calculator):
         amount=Decimal("6.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -639,7 +639,7 @@ def test_disposals_on_different_tickers(create_tax_calculator):
     assert holding.cost == Decimal("200.0")
 
 
-def test_integrity_disposal_without_acquisition(create_tax_calculator):
+def test_integrity_disposal_without_acquisition(make_tax_calculator):
     order = Disposal(
         datetime(2019, 1, 17, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -647,16 +647,16 @@ def test_integrity_disposal_without_acquisition(create_tax_calculator):
         amount=Decimal("120.0"),
     )
 
-    tax_calculator = create_tax_calculator([order])
+    tax_calculator = make_tax_calculator([order])
     with pytest.raises(IncompleteRecordsError):
         tax_calculator.capital_gains()
 
-    tax_calculator = create_tax_calculator([order])
+    tax_calculator = make_tax_calculator([order])
     config.strict = False
     tax_calculator.capital_gains()
 
 
-def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
+def test_integrity_disposing_more_than_quantity_acquired(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -671,16 +671,16 @@ def test_integrity_disposing_more_than_quantity_acquired(create_tax_calculator):
         amount=Decimal("120.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2])
+    tax_calculator = make_tax_calculator([order1, order2])
     with pytest.raises(IncompleteRecordsError):
         tax_calculator.capital_gains()
 
-    tax_calculator = create_tax_calculator([order1, order2])
+    tax_calculator = make_tax_calculator([order1, order2])
     config.strict = False
     tax_calculator.capital_gains()
 
 
-def test_section_104_disposal_with_share_split(create_tax_calculator):
+def test_section_104_disposal_with_share_split(make_tax_calculator):
     order1 = Acquisition(
         datetime(2014, 5, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -709,7 +709,7 @@ def test_section_104_disposal_with_share_split(create_tax_calculator):
         amount=Decimal("1100.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4],
         [Split(datetime(2014, 7, 1, tzinfo=timezone.utc), Decimal("3.0"))],
     )
@@ -735,7 +735,7 @@ def test_section_104_disposal_with_share_split(create_tax_calculator):
     assert holding.cost == Decimal("3500.0")
 
 
-def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
+def test_bed_and_breakfast_rule_with_share_split(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -757,7 +757,7 @@ def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
         amount=Decimal("160.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3],
         [Split(datetime(2019, 1, 25, tzinfo=timezone.utc), Decimal("3.0"))],
     )
@@ -775,7 +775,7 @@ def test_bed_and_breakfast_rule_with_share_split(create_tax_calculator):
     assert holding.cost == Decimal("140.0")
 
 
-def test_rppaccounts_example(create_tax_calculator):
+def test_rppaccounts_example(make_tax_calculator):
     """
     Rawlinson Pryde & Partners Accountants calculation example:
     https://rppaccounts.co.uk/taxation-of-shares/
@@ -850,7 +850,7 @@ def test_rppaccounts_example(create_tax_calculator):
         amount=Decimal("70000.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [
             order1,
             order2,
@@ -901,7 +901,7 @@ def test_rppaccounts_example(create_tax_calculator):
 # a company and not cryptoassets.
 
 
-def test_hmrc_example_crypto22251(create_tax_calculator):
+def test_hmrc_example_crypto22251(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22251
     """
@@ -926,7 +926,7 @@ def test_hmrc_example_crypto22251(create_tax_calculator):
         amount=Decimal("300000.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3])
+    tax_calculator = make_tax_calculator([order1, order2, order3])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
@@ -941,7 +941,7 @@ def test_hmrc_example_crypto22251(create_tax_calculator):
     assert holding.cost == Decimal("84000.0")
 
 
-def test_hmrc_example_crypto22252(create_tax_calculator):
+def test_hmrc_example_crypto22252(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22252
     """
@@ -973,7 +973,7 @@ def test_hmrc_example_crypto22252(create_tax_calculator):
         amount=Decimal("600.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3, order4])
+    tax_calculator = make_tax_calculator([order1, order2, order3, order4])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 1
 
@@ -988,7 +988,7 @@ def test_hmrc_example_crypto22252(create_tax_calculator):
     assert holding.cost == Decimal("562.5")
 
 
-def test_hmrc_example_crypto22253(create_tax_calculator):
+def test_hmrc_example_crypto22253(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22253
     """
@@ -1034,7 +1034,7 @@ def test_hmrc_example_crypto22253(create_tax_calculator):
         amount=Decimal("150.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -1069,7 +1069,7 @@ def test_hmrc_example_crypto22253(create_tax_calculator):
     assert holding.cost == Decimal("1060.0")
 
 
-def test_hmrc_example_crypto22254(create_tax_calculator):
+def test_hmrc_example_crypto22254(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22254
     """
@@ -1122,7 +1122,7 @@ def test_hmrc_example_crypto22254(create_tax_calculator):
         amount=Decimal("35.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6, order7]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -1145,7 +1145,7 @@ def test_hmrc_example_crypto22254(create_tax_calculator):
     assert holding.cost == Decimal("937.5")
 
 
-def test_hmrc_example_crypto22255(create_tax_calculator):
+def test_hmrc_example_crypto22255(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22255
     """
@@ -1170,7 +1170,7 @@ def test_hmrc_example_crypto22255(create_tax_calculator):
         amount=Decimal("17500.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2, order3])
+    tax_calculator = make_tax_calculator([order1, order2, order3])
     capital_gains = tax_calculator.capital_gains()
     assert len(capital_gains) == 2
 
@@ -1191,7 +1191,7 @@ def test_hmrc_example_crypto22255(create_tax_calculator):
     assert holding.cost == Decimal("150000.0")
 
 
-def test_hmrc_example_crypto22256(create_tax_calculator):
+def test_hmrc_example_crypto22256(make_tax_calculator):
     """
     https://www.gov.uk/hmrc-internal-manuals/cryptoassets-manual/crypto22256
     """
@@ -1237,7 +1237,7 @@ def test_hmrc_example_crypto22256(create_tax_calculator):
         amount=Decimal("150000.0"),
     )
 
-    tax_calculator = create_tax_calculator(
+    tax_calculator = make_tax_calculator(
         [order1, order2, order3, order4, order5, order6]
     )
     capital_gains = tax_calculator.capital_gains()
@@ -1272,7 +1272,7 @@ def test_hmrc_example_crypto22256(create_tax_calculator):
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
 
 
-def test_show_holdings_ambiguous_ticker(create_tax_calculator, capsys):
+def test_show_holdings_ambiguous_ticker(make_tax_calculator, capsys):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1289,7 +1289,7 @@ def test_show_holdings_ambiguous_ticker(create_tax_calculator, capsys):
         amount=Decimal("150.0"),
     )
 
-    tax_calculator = create_tax_calculator([order1, order2])
+    tax_calculator = make_tax_calculator([order1, order2])
     tax_calculator.show_holdings(ticker_filter=Ticker("TICKER"))
 
     captured = capsys.readouterr()
