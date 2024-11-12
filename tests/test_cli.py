@@ -282,6 +282,24 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
     assert result.exit_code == EX_OK
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 13),
+    reason="Skipping test to avoid hitting API limits for Yahoo Finance",
+)
+def test_holdings_with_unrealised_gain_loss_calculated(execute):
+    result = execute(
+        ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE],
+        global_opts=[
+            "--quiet",
+            "--cache-file",
+            os.devnull,
+        ],
+    )
+    assert "Not available" not in result.stdout
+    assert not result.stderr
+    assert result.exit_code == EX_OK
+
+
 def test_parser_not_found_error(execute, tmp_path):
     csv_file = tmp_path / "transactions.csv"
     with csv_file.open("w", encoding="utf-8") as file:
