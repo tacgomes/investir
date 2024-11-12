@@ -230,7 +230,7 @@ class TaxCalculator:
                 divider=idx == last_idx,
             )
 
-        table.add_row(["", "", total_cost, "", "", ""])
+        table.add_row(["", "", total_cost, Decimal("100.0"), "", ""])
 
         if holdings:
             printtable(table)
