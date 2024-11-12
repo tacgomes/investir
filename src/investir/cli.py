@@ -340,13 +340,19 @@ def capital_gains_command(
 
 
 @app.command("holdings")
-def holdings_command(files: FilesArg, ticker: TickerOpt = None) -> None:
+def holdings_command(
+    files: FilesArg,
+    ticker: TickerOpt = None,
+    show_gain_loss: Annotated[
+        bool, typer.Option("--show-gain-loss", help="Show unrealised gain/loss.")
+    ] = False,
+) -> None:
     """
     Show current holdings.
     """
     _, tax_calculator = parse(files)
     ticker = Ticker(ticker) if ticker else None
-    tax_calculator.show_holdings(ticker)
+    tax_calculator.show_holdings(ticker, show_gain_loss)
 
 
 def main() -> None:
