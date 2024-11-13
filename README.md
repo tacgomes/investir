@@ -10,10 +10,10 @@
 share investing platforms. It can provide the information required to
 fill out the Capital Gains SA108 form for the Self Assessment tax
 return. The gain or loss is calculated based on the HMRC [share
-identification rules]. **Investir** also facilitates viewing the cost
-and allocation of open positions, share buying and selling orders
-placed, dividends paid out, interest on cash earned, and cash deposits
-or withdrawals made.
+identification rules]. **Investir** also facilitates viewing the cost,
+allocation weight and unrealised gain/loss for open positions, share
+buying and selling orders placed, dividends paid out, interest on cash
+earned, and cash deposits or withdrawals made.
 
 A CSV file with your account activity is required as input. This file
 can be exported from your investment platform. Presently, only
@@ -90,8 +90,8 @@ Disposal proceeds:                            £6553.93       Losses in the year
 Allowable costs (including purchase price):   £5189.27
 ```
 
-View cost and allocation of open positions, including the unrealised
-gain/loss:
+View cost, allocation weight, and unrealised gain/loss for open
+positions:
 
 ```console
 $ investir holdings --show-gain-loss data/freetrade.csv
