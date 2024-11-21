@@ -85,7 +85,8 @@ class FreetradeParser:
             "TOP_UP": self._parse_transfer,
             "WITHDRAWAL": self._parse_transfer,
             "INTEREST_FROM_CASH": self._parse_interest,
-            "MONTHLY_STATEMENT": lambda _: None,
+            "MONTHLY_STATEMENT": None,
+            "TAX_CERTIFICATE": None,
         }
 
         with self._csv_file.open(encoding="utf-8") as file:
@@ -98,19 +99,19 @@ class FreetradeParser:
 
             for row in rows:
                 tr_type = row["Type"]
+
+                if tr_type not in parse_fn:
+                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
+                    continue
+
                 if fn := parse_fn.get(tr_type):
-                    if (
-                        row["Type"] != "MONTHLY_STATEMENT"
-                        and row["Account Currency"] != "GBP"
-                    ):
+                    if row["Account Currency"] != "GBP":
                         raise CurrencyError(
                             self._csv_file,
                             row,
                             row["Account Currency"],
                         )
                     fn(row)
-                else:
-                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
