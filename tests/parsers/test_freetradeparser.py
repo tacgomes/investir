@@ -66,6 +66,7 @@ DIVIDEND: Final = {
 
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path) -> Callable:
+    config.reset()
     config.include_fx_fees = True
 
     def _create_parser(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
@@ -120,7 +121,8 @@ def test_parser_happy_path(create_parser):
         "Total Amount": "4.65",
     }
 
-    statement = {"Type": "MONTHLY_STATEMENT"}
+    monthly_statement = {"Type": "MONTHLY_STATEMENT"}
+    tax_certificate = {"Type": "TAX_CERTIFICATE"}
 
     parser = create_parser(
         [
@@ -130,7 +132,8 @@ def test_parser_happy_path(create_parser):
             deposit,
             withdrawal,
             interest,
-            statement,
+            monthly_statement,
+            tax_certificate,
         ]
     )
 
@@ -259,6 +262,9 @@ def test_parser_invalid_transaction_type(create_parser):
     assert parser.can_parse()
     with pytest.raises(TransactionTypeError):
         parser.parse()
+
+    config.strict = False
+    parser.parse()
 
 
 def test_parser_invalid_buy_sell(create_parser):
