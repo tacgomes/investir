@@ -182,7 +182,9 @@ class TaxCalculator:
                 )
                 print(
                     f"{'Allowable costs (including purchase price):':44}"
-                    f"{gbp(total_cost):>10}\n"
+                    f"{gbp(total_cost):>10}       "
+                    f"{'Net gain or loss:':44}"
+                    f"{gbp(total_gains - total_losses):>10}\n"
                 )
 
     def _calculate_unrealised_gain_loss(

@@ -74,7 +74,7 @@ $ investir capital-gains data/freetrade.csv
 --------------------------------------------------------------------------------------------------------------------
 Number of disposals:                                 7       Gains in the year, before losses:             £1715.67
 Disposal proceeds:                            £8166.14       Losses in the year:                             £13.95
-Allowable costs (including purchase price):   £6464.42
+Allowable costs (including purchase price):   £6464.42       Net gain or loss:                             £1701.72
 
                                                  Tax year 2022-2023
 --------------------------------------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ Allowable costs (including purchase price):   £6464.42
 --------------------------------------------------------------------------------------------------------------------
 Number of disposals:                                 4       Gains in the year, before losses:             £1484.16
 Disposal proceeds:                            £6553.93       Losses in the year:                            £119.50
-Allowable costs (including purchase price):   £5189.27
+Allowable costs (including purchase price):   £5189.27       Net gain or loss:                             £1364.66
 ```
 
 View cost, allocation weight, and unrealised gain/loss for open
