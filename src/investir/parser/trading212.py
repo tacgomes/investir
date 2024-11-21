@@ -112,12 +112,17 @@ class Trading212Parser:
             "Deposit": self._parse_transfer,
             "Withdrawal": self._parse_transfer,
             "Interest on cash": self._parse_interest,
-            "Currency conversion": lambda _: None,
+            "Currency conversion": None,
         }
 
         with self._csv_file.open(encoding="utf-8") as file:
             for row in csv.DictReader(file):
                 tr_type = row["Action"]
+
+                if tr_type not in parse_fn:
+                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
+                    continue
+
                 if fn := parse_fn.get(tr_type):
                     currency_total = row["Currency (Total)"]
                     if currency_total != "GBP":
@@ -125,8 +130,6 @@ class Trading212Parser:
                             CurrencyError(self._csv_file, row, currency_total)
                         )
                     fn(row)
-                else:
-                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest

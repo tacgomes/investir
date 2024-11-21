@@ -74,6 +74,7 @@ DIVIDEND: Final = {
 
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path) -> Callable:
+    config.reset()
     config.include_fx_fees = True
 
     def _create_parser(rows: Sequence[Mapping[str, str]]) -> Trading212Parser:
@@ -300,6 +301,9 @@ def test_parser_invalid_transaction_type(create_parser):
     assert parser.can_parse()
     with pytest.raises(TransactionTypeError):
         parser.parse()
+
+    config.strict = False
+    parser.parse()
 
 
 def test_parser_invalid_account_currency(create_parser):
