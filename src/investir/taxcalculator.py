@@ -170,7 +170,8 @@ class TaxCalculator:
                 )
 
                 def gbp(amount):
-                    return "£" + f"{amount:.2f}"
+                    sign = "" if amount >= 0.0 else "-"
+                    return f"{sign}£{abs(amount):.2f}"
 
                 print(
                     f"{'Number of disposals:':44}{num_disposals:>10}       "
