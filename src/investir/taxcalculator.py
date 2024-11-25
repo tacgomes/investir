@@ -188,16 +188,6 @@ class TaxCalculator:
                     f"{gbp(total_gains - total_losses):>10}\n"
                 )
 
-    def _calculate_unrealised_gain_loss(
-        self, isin: ISIN, holding: Section104Holding
-    ) -> Decimal | None:
-        if (price := self._findata.get_security_price(isin)) and (
-            price_gbp := self._findata.convert_currency(price.amount, price.currency)
-        ):
-            return holding.quantity * price_gbp - holding.cost
-
-        return None
-
     def show_holdings(
         self, ticker_filter: Ticker | None = None, show_gain_loss: bool = False
     ):
@@ -428,3 +418,13 @@ class TaxCalculator:
                     )
                     logger.warning("Not calculating holding for %s", isin)
                     break
+
+    def _calculate_unrealised_gain_loss(
+        self, isin: ISIN, holding: Section104Holding
+    ) -> Decimal | None:
+        if (price := self._findata.get_security_price(isin)) and (
+            price_gbp := self._findata.convert_currency(price.amount, price.currency)
+        ):
+            return holding.quantity * price_gbp - holding.cost
+
+        return None
