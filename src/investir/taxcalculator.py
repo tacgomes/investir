@@ -12,7 +12,7 @@ from investir.prettytable import PrettyTable
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker, Year
-from investir.utils import printtable, raise_or_warn
+from investir.utils import raise_or_warn
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,11 @@ def same_day_match(ord1: Acquisition, ord2: Disposal) -> bool:
 def thirty_days_match(ord1: Acquisition, ord2: Disposal) -> bool:
     assert ord1.isin == ord2.isin
     return ord2.date < ord1.date <= ord2.date + timedelta(days=30)
+
+
+def gbp(amount):
+    sign = "" if amount >= 0.0 else "-"
+    return f"{sign}£{abs(amount):.2f}"
 
 
 @dataclass
@@ -57,6 +62,31 @@ class CapitalGain:
             f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
             f"gain: £{self.gain_loss:.2f} "
             f'({self.acquisition_date or "Section 104"})'
+        )
+
+
+@dataclass
+class CapitalGainsSummary:
+    num_disposals: int
+    disposal_proceeds: Decimal
+    total_cost: Decimal
+    total_gains: Decimal
+    total_losses: Decimal
+
+    @property
+    def net_gains(self) -> Decimal:
+        return self.total_gains - self.total_losses
+
+    def __str__(self) -> str:
+        return (
+            f"{'Number of disposals:':44}{self.num_disposals:>10}       "
+            f"{'Gains in the year, before losses:':44}{gbp(self.total_gains):>10}\n"
+            f"{'Disposal proceeds:':44}{gbp(self.disposal_proceeds):>10}       "
+            f"{'Losses in the year:':44}{gbp(self.total_losses):>10}\n"
+            f"{'Allowable costs (including purchase price):':44}"
+            f"{gbp(self.total_cost):>10}       "
+            f"{'Net gain or loss:':44}"
+            f"{gbp(self.net_gains):>10}\n"
         )
 
 
@@ -99,98 +129,74 @@ class TaxCalculator:
         self._calculate_capital_gains()
         return self._holdings.get(isin)
 
-    def show_capital_gains(
+    def get_capital_gains_table(
         self,
-        tax_year_filter: Year | None,
+        tax_year: Year,
         ticker_filter: Ticker | None,
         gains_only: bool,
         losses_only: bool,
-    ):
+    ) -> tuple[PrettyTable, CapitalGainsSummary]:
         assert not (gains_only and losses_only)
 
         self._calculate_capital_gains()
 
-        if tax_year_filter is not None:
-            tax_years = [tax_year_filter]
-        else:
-            tax_years = sorted(self._capital_gains.keys())
+        table = PrettyTable(
+            title=f"Tax year {tax_year}-{tax_year + 1}",
+            field_names=(
+                "Date Disposed",
+                "Date Acquired",
+                "ISIN",
+                "Name",
+                "Quantity",
+                "Cost (£)",
+                "Proceeds (£)",
+                "Gain/loss (£)",
+            ),
+        )
 
-        for tax_year_idx, tax_year in enumerate(tax_years, 1):
-            table = PrettyTable(
-                title=f"Tax year {tax_year}-{tax_year + 1}",
-                field_names=(
-                    "Date Disposed",
-                    "Date Acquired",
-                    "ISIN",
-                    "Name",
-                    "Quantity",
-                    "Cost (£)",
-                    "Proceeds (£)",
-                    "Gain/loss (£)",
-                ),
+        num_disposals = 0
+        disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
+
+        for cg in self.capital_gains(tax_year):
+            if ticker_filter is not None and cg.disposal.ticker != ticker_filter:
+                continue
+
+            if gains_only and cg.gain_loss < 0.0:
+                continue
+
+            if losses_only and cg.gain_loss > 0.0:
+                continue
+
+            table.add_row(
+                [
+                    cg.disposal.date,
+                    cg.acquisition_date or "Section 104",
+                    cg.disposal.isin,
+                    cg.disposal.name,
+                    cg.quantity,
+                    cg.cost,
+                    cg.disposal.amount,
+                    cg.gain_loss,
+                ]
             )
 
-            num_disposals = 0
-            disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
+            num_disposals += 1
+            disposal_proceeds += round(cg.disposal.amount, 2)
+            total_cost += round(cg.cost, 2)
+            if cg.gain_loss > 0.0:
+                total_gains += cg.gain_loss
+            else:
+                total_losses += abs(cg.gain_loss)
 
-            for cg in self.capital_gains(tax_year):
-                if ticker_filter is not None and cg.disposal.ticker != ticker_filter:
-                    continue
+        summary = CapitalGainsSummary(
+            num_disposals, disposal_proceeds, total_cost, total_gains, total_losses
+        )
 
-                if gains_only and cg.gain_loss < 0.0:
-                    continue
+        return table, summary
 
-                if losses_only and cg.gain_loss > 0.0:
-                    continue
-
-                table.add_row(
-                    [
-                        cg.disposal.date,
-                        cg.acquisition_date or "Section 104",
-                        cg.disposal.isin,
-                        cg.disposal.name,
-                        cg.quantity,
-                        cg.cost,
-                        cg.disposal.amount,
-                        cg.gain_loss,
-                    ]
-                )
-
-                num_disposals += 1
-                disposal_proceeds += round(cg.disposal.amount, 2)
-                total_cost += round(cg.cost, 2)
-                if cg.gain_loss > 0.0:
-                    total_gains += cg.gain_loss
-                else:
-                    total_losses += abs(cg.gain_loss)
-
-            if table.rows:
-                printtable(
-                    table, leading_newline=tax_year_idx == 1, trailing_newline=False
-                )
-
-                def gbp(amount):
-                    sign = "" if amount >= 0.0 else "-"
-                    return f"{sign}£{abs(amount):.2f}"
-
-                print(
-                    f"{'Number of disposals:':44}{num_disposals:>10}       "
-                    f"{'Gains in the year, before losses:':44}{gbp(total_gains):>10}"
-                )
-                print(
-                    f"{'Disposal proceeds:':44}{gbp(disposal_proceeds):>10}       "
-                    f"{'Losses in the year:':44}{gbp(total_losses):>10}"
-                )
-                print(
-                    f"{'Allowable costs (including purchase price):':44}"
-                    f"{gbp(total_cost):>10}       "
-                    f"{'Net gain or loss:':44}"
-                    f"{gbp(total_gains - total_losses):>10}\n"
-                )
-
-    def show_holdings(
+    def get_holdings_table(
         self, ticker_filter: Ticker | None = None, show_gain_loss: bool = False
-    ):
+    ) -> PrettyTable:
         self._calculate_capital_gains()
 
         table = PrettyTable(
@@ -249,10 +255,16 @@ class TaxCalculator:
                 divider=idx == last_idx,
             )
 
-        table.add_row(["", "", total_cost, Decimal("100.0"), "", "", total_gain_loss])
+        if table.rows:
+            table.add_row(
+                ["", "", total_cost, Decimal("100.0"), "", "", total_gain_loss]
+            )
 
-        if holdings:
-            printtable(table)
+        return table
+
+    def disposal_years(self) -> Sequence[Year]:
+        self._calculate_capital_gains()
+        return list(self._capital_gains.keys())
 
     def _calculate_capital_gains(self) -> None:
         if self._capital_gains or self._holdings:

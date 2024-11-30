@@ -13,7 +13,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import multifilter, printtable
+from investir.utils import multifilter
 
 T = TypeVar("T", bound=Transaction)
 
@@ -78,7 +78,9 @@ class TrHistory:
             case _:
                 raise AmbiguousTickerError(ticker)
 
-    def show_orders(self, filters: Sequence[Callable] | None = None) -> None:
+    def get_orders_table(
+        self, filters: Sequence[Callable] | None = None
+    ) -> PrettyTable:
         table = PrettyTable(
             field_names=(
                 "Date",
@@ -128,24 +130,26 @@ class TrHistory:
 
             total_fees += tr.fees
 
-        table.add_row(
-            [
-                "",
-                "",
-                "",
-                "",
-                total_total_cost,
-                total_net_proceeds,
-                "",
-                "",
-                total_fees,
-            ]
-        )
+        if table.rows:
+            table.add_row(
+                [
+                    "",
+                    "",
+                    "",
+                    "",
+                    total_total_cost,
+                    total_net_proceeds,
+                    "",
+                    "",
+                    total_fees,
+                ]
+            )
 
-        if transactions:
-            printtable(table)
+        return table
 
-    def show_dividends(self, filters: Sequence[Callable] | None = None) -> None:
+    def get_dividends_table(
+        self, filters: Sequence[Callable] | None = None
+    ) -> PrettyTable:
         table = PrettyTable(
             field_names=(
                 "Date",
@@ -176,12 +180,14 @@ class TrHistory:
 
             total_paid += tr.amount
 
-        table.add_row(["", "", "", "", total_paid, total_withheld])
+        if table.rows:
+            table.add_row(["", "", "", "", total_paid, total_withheld])
 
-        if transactions:
-            printtable(table)
+        return table
 
-    def show_transfers(self, filters: Sequence[Callable] | None = None) -> None:
+    def get_transfers_table(
+        self, filters: Sequence[Callable] | None = None
+    ) -> PrettyTable:
         table = PrettyTable(field_names=("Date", "Deposited (£)", "Withdrew (£)"))
 
         transactions = list(multifilter(filters, self._transfers))
@@ -204,12 +210,14 @@ class TrHistory:
 
             table.add_row([tr.date, deposited, widthdrew], divider=divider)
 
-        table.add_row(["", total_deposited, total_withdrew])
+        if table.rows:
+            table.add_row(["", total_deposited, total_withdrew])
 
-        if transactions:
-            printtable(table)
+        return table
 
-    def show_interest(self, filters: Sequence[Callable] | None = None) -> None:
+    def get_interest_table(
+        self, filters: Sequence[Callable] | None = None
+    ) -> PrettyTable:
         table = PrettyTable(field_names=("Date", "Amount (£)"))
 
         transactions = list(multifilter(filters, self._interest))
@@ -225,10 +233,10 @@ class TrHistory:
 
             total_interest += tr.amount
 
-        table.add_row(["", total_interest])
+        if table.rows:
+            table.add_row(["", total_interest])
 
-        if transactions:
-            printtable(table)
+        return table
 
     def _securities_map(self) -> Mapping[ISIN, Security]:
         if not self._securities:

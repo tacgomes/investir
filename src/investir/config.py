@@ -14,6 +14,10 @@ class Config:
     log_level: int = logging.INFO
     use_colour: bool = True
 
+    @property
+    def logging_enabled(self) -> bool:
+        return self.log_level != logging.CRITICAL
+
     def reset(self) -> None:
         Config.__init__(self)
 

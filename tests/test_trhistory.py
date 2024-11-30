@@ -181,33 +181,29 @@ def test_get_ticker_isin_when_ticker_ambigous():
         tr_hist.get_ticker_isin(Ticker("ASML"))
 
 
-def test_trhistory_show_orders(capsys):
+def test_trhistory_get_orders_table():
     tr_hist = TrHistory(orders=[ORDER1, ORDER2])
-    tr_hist.show_orders()
-    captured = capsys.readouterr()
-    assert ORDER1.name in captured.out
-    assert ORDER2.name in captured.out
+    table = tr_hist.get_orders_table()
+    assert ORDER1.name in str(table)
+    assert ORDER2.name in str(table)
 
 
-def test_trhistory_show_dividends(capsys):
+def test_trhistory_get_dividends_table():
     tr_hist = TrHistory(dividends=[DIVIDEND1, DIVIDEND2])
-    tr_hist.show_dividends()
-    captured = capsys.readouterr()
-    assert DIVIDEND1.name in captured.out
-    assert DIVIDEND2.name in captured.out
+    table = tr_hist.get_dividends_table()
+    assert DIVIDEND1.name in str(table)
+    assert DIVIDEND2.name in str(table)
 
 
-def test_trhistory_show_transfers(capsys):
+def test_trhistory_get_transfers_table():
     tr_hist = TrHistory(transfers=[TRANSFER1, TRANSFER2])
-    tr_hist.show_transfers()
-    captured = capsys.readouterr()
-    assert str(TRANSFER1.amount) in captured.out
-    assert str(abs(TRANSFER2.amount)) in captured.out
+    table = tr_hist.get_transfers_table()
+    assert str(TRANSFER1.amount) in str(table)
+    assert str(abs(TRANSFER2.amount)) in str(table)
 
 
-def test_trhistory_show_interest(capsys):
+def test_trhistory_get_interest_table():
     tr_hist = TrHistory(interest=[INTEREST1, INTEREST2])
-    tr_hist.show_interest()
-    captured = capsys.readouterr()
-    assert str(INTEREST1.amount) in captured.out
-    assert str(INTEREST2.amount) in captured.out
+    table = tr_hist.get_interest_table()
+    assert str(INTEREST1.amount) in str(table)
+    assert str(INTEREST2.amount) in str(table)

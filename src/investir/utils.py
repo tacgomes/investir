@@ -4,8 +4,6 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from decimal import Decimal
 from typing import Final
 
-from prettytable import PrettyTable
-
 from investir.config import config
 from investir.typing import Year
 
@@ -47,17 +45,3 @@ def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
 
 def dict2str(d: Mapping[str, str]) -> str:
     return str({k: v for k, v in d.items() if v.strip()})
-
-
-def printtable(
-    table: PrettyTable, leading_newline: bool = True, trailing_newline: bool = True
-) -> None:
-    preamble = epilog = ""
-
-    if leading_newline and config.log_level != logging.CRITICAL:
-        preamble = "\n"
-
-    if trailing_newline:
-        epilog = "\n"
-
-    print(preamble, table, epilog, sep="")
