@@ -39,3 +39,10 @@ class PrettyTable(prettytable.PrettyTable):
                     self.align[f] = "l"
 
         self.vrules = prettytable.NONE
+
+    def to_string(self, leading_nl: bool = True) -> str:
+        nl = "\n" if leading_nl else ""
+        return f"{nl}{self.get_string()}\n"
+
+    def __bool__(self) -> bool:
+        return len(self.rows) > 0

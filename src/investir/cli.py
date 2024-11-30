@@ -255,7 +255,8 @@ def orders_command(
         tr_type = Disposal
 
     filters = create_filters(tax_year=tax_year, ticker=ticker, tr_type=tr_type)
-    tr_hist.show_orders(filters)
+    if table := tr_hist.get_orders_table(filters):
+        print(table.to_string(leading_nl=config.logging_enabled))
 
 
 @app.command("dividends")
@@ -269,7 +270,8 @@ def dividends_command(
     """
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year, ticker=ticker)
-    tr_hist.show_dividends(filters)
+    if table := tr_hist.get_dividends_table(filters):
+        print(table.to_string(leading_nl=config.logging_enabled))
 
 
 @app.command("transfers")
@@ -299,7 +301,8 @@ def transfers_command(
         amount_op = None
 
     filters = create_filters(tax_year=tax_year, amount_op=amount_op)
-    tr_hist.show_transfers(filters)
+    if table := tr_hist.get_transfers_table(filters):
+        print(table.to_string(leading_nl=config.logging_enabled))
 
 
 @app.command("interest")
@@ -309,7 +312,8 @@ def interest_command(files: FilesArg, tax_year: TaxYearOpt = None) -> None:
     """
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year)
-    tr_hist.show_interest(filters)
+    if table := tr_hist.get_interest_table(filters):
+        print(table.to_string(leading_nl=config.logging_enabled))
 
 
 @app.command("capital-gains")
@@ -333,10 +337,24 @@ def capital_gains_command(
     _, tax_calculator = parse(files)
     tax_year = Year(tax_year) if tax_year else None
     ticker = Ticker(ticker) if ticker else None
+
     try:
-        tax_calculator.show_capital_gains(tax_year, ticker, gains_only, losses_only)
+        tax_years = sorted(tax_calculator.disposal_years())
     except InvestirError as ex:
         abort((str(ex)))
+
+    if tax_year is not None:
+        tax_years = [tax_year]
+
+    for tax_year_idx, tax_year in enumerate(tax_years):
+        table, summary = tax_calculator.get_capital_gains_table(
+            tax_year, ticker, gains_only, losses_only
+        )
+
+        if table:
+            leading_nl = tax_year_idx == 0 and config.logging_enabled
+            print(table.to_string(leading_nl=leading_nl).rstrip())
+            print(summary)
 
 
 @app.command("holdings")
@@ -352,7 +370,8 @@ def holdings_command(
     """
     _, tax_calculator = parse(files)
     ticker = Ticker(ticker) if ticker else None
-    tax_calculator.show_holdings(ticker, show_gain_loss)
+    if table := tax_calculator.get_holdings_table(ticker, show_gain_loss):
+        print(table.to_string(leading_nl=config.logging_enabled))
 
 
 def main() -> None:

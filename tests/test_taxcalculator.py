@@ -1291,7 +1291,7 @@ def test_hmrc_example_crypto22256(make_tax_calculator):
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
 
 
-def test_show_holdings_with_gain_loss(make_tax_calculator, capsys):
+def test_get_holdings_table_with_gain_loss(make_tax_calculator):
     order = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1303,16 +1303,13 @@ def test_show_holdings_with_gain_loss(make_tax_calculator, capsys):
     tax_calculator = make_tax_calculator(
         [order], price=Price(Decimal("15.0"), Currency.GBP)
     )
-    tax_calculator.show_holdings(show_gain_loss=True)
+    table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    captured = capsys.readouterr()
-    assert "Unrealised Gain/Loss (£)" in captured.out
-    assert "50.00" in captured.out
+    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "50.00" in str(table)
 
 
-def test_show_holdings_with_gain_loss_and_currency_conversion(
-    make_tax_calculator, capsys
-):
+def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calculator):
     order = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1326,15 +1323,14 @@ def test_show_holdings_with_gain_loss_and_currency_conversion(
         price=Price(Decimal("15.0"), Currency.USD),
         fx_rate=Decimal("0.75"),
     )
-    tax_calculator.show_holdings(show_gain_loss=True)
+    table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    captured = capsys.readouterr()
-    assert "Unrealised Gain/Loss (£)" in captured.out
-    assert "12.50" in captured.out
+    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "12.50" in str(table)
 
 
-def test_show_holdings_with_gain_loss_when_price_or_fx_rate_not_available(
-    make_tax_calculator, capsys
+def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
+    make_tax_calculator,
 ):
     order = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
@@ -1345,11 +1341,10 @@ def test_show_holdings_with_gain_loss_when_price_or_fx_rate_not_available(
     )
 
     tax_calculator = make_tax_calculator([order], price=DataProviderError)
-    tax_calculator.show_holdings(show_gain_loss=True)
+    table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    captured = capsys.readouterr()
-    assert "Unrealised Gain/Loss (£)" in captured.out
-    assert "Not available" in captured.out
+    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "Not available" in str(table)
 
     tax_calculator = make_tax_calculator(
         [order],
@@ -1357,13 +1352,12 @@ def test_show_holdings_with_gain_loss_when_price_or_fx_rate_not_available(
         fx_rate=DataProviderError,
     )
 
-    tax_calculator.show_holdings(show_gain_loss=True)
-    captured = capsys.readouterr()
-    assert "Unrealised Gain/Loss (£)" in captured.out
-    assert "Not available" in captured.out
+    table = tax_calculator.get_holdings_table(show_gain_loss=True)
+    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "Not available" in str(table)
 
 
-def test_show_holdings_ambiguous_ticker(make_tax_calculator, capsys):
+def test_get_holdings_table_ambiguous_ticker(make_tax_calculator, capsys):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1381,7 +1375,7 @@ def test_show_holdings_ambiguous_ticker(make_tax_calculator, capsys):
     )
 
     tax_calculator = make_tax_calculator([order1, order2])
-    tax_calculator.show_holdings(ticker_filter=Ticker("TICKER"))
+    tax_calculator.get_holdings_table(ticker_filter=Ticker("TICKER"))
 
     captured = capsys.readouterr()
     assert not captured.out
