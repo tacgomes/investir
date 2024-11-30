@@ -109,7 +109,7 @@ def test_section_104_disposal(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2023, 5, 1)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost.quantize(Decimal("0.00")) == Decimal("3030.67")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("329.33")
     assert str(cg) == (
@@ -119,7 +119,7 @@ def test_section_104_disposal(make_tax_calculator):
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2024, 2, 1)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost.quantize(Decimal("0.00")) == Decimal("1779.67")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("300.33")
 
@@ -201,7 +201,7 @@ def test_same_day_rule(make_tax_calculator):
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
-    assert cg.date_acquired == date(2019, 1, 20)
+    assert cg.acquisition_date == date(2019, 1, 20)
     assert cg.disposal.amount == order2.amount + order5.amount
     assert cg.cost == order3.amount + order4.amount + order6.amount
     assert cg.gain_loss == Decimal("170.00")
@@ -239,12 +239,12 @@ def test_bed_and_breakfast_rule(days_elapsed, make_tax_calculator):
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
-    assert cg.date_acquired == order2.date + timedelta(days=days_elapsed)
+    assert cg.acquisition_date == order2.date + timedelta(days=days_elapsed)
     assert cg.cost == Decimal("120.0")
     assert cg.gain_loss == Decimal("30.0")
     assert str(cg) == (
         f"2019-01-20 X    quantity: 5.0, cost: £120.00"
-        f", proceeds: £150.0, gain: £30.00 ({cg.date_acquired})"
+        f", proceeds: £150.0, gain: £30.00 ({cg.acquisition_date})"
     )
 
     holding = tax_calculator.holding(Ticker("X"))
@@ -281,7 +281,7 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("50.0")
     assert cg.gain_loss == Decimal("100.0")
 
@@ -317,7 +317,7 @@ def test_acquisitions_are_not_matched_before_disposal_date(make_tax_calculator):
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("100.00")
     assert cg.gain_loss == Decimal("50.0")
 
@@ -373,12 +373,12 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(make_tax_calculato
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]  # Bed and breakfast disposal event
-    assert cg.date_acquired == date(2019, 1, 27)
+    assert cg.acquisition_date == date(2019, 1, 27)
     assert cg.cost == Decimal("300.0")
     assert cg.gain_loss == Decimal("-150.0")
 
     cg = capital_gains[1]  # Same day disposal event
-    assert cg.date_acquired == date(2019, 1, 25)
+    assert cg.acquisition_date == date(2019, 1, 25)
     assert cg.cost == Decimal("150.0")
     assert cg.gain_loss == Decimal("20.0")
 
@@ -425,12 +425,12 @@ def test_matching_disposals_with_larger_acquisition(make_tax_calculator):
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]
-    assert cg.date_acquired == date(2019, 1, 22)
+    assert cg.acquisition_date == date(2019, 1, 22)
     assert cg.cost == Decimal("50.0")
     assert cg.gain_loss == Decimal("10.0")
 
     cg = capital_gains[1]
-    assert cg.date_acquired == date(2019, 1, 22)
+    assert cg.acquisition_date == date(2019, 1, 22)
     assert cg.cost == Decimal("10.0")
     assert cg.gain_loss == Decimal("1.0")
 
@@ -500,27 +500,27 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(make_tax_calculato
     assert len(capital_gains) == 5
 
     cg = capital_gains[0]  # Same day
-    assert cg.date_acquired == date(2019, 1, 20)
+    assert cg.acquisition_date == date(2019, 1, 20)
     assert cg.cost == Decimal("9.0")
     assert cg.gain_loss == Decimal("1.0")
 
     cg = capital_gains[1]  # First bed and breakfast match
-    assert cg.date_acquired == date(2019, 1, 25)
+    assert cg.acquisition_date == date(2019, 1, 25)
     assert cg.cost == Decimal("16.0")
     assert cg.gain_loss == Decimal("4.0")
 
     cg = capital_gains[2]  # Second bed and breakfast match
-    assert cg.date_acquired == date(2019, 1, 27)
+    assert cg.acquisition_date == date(2019, 1, 27)
     assert cg.cost == Decimal("5.0")
     assert cg.gain_loss == Decimal("5.0")
 
     cg = capital_gains[3]  # Section 104 pool
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("3.0")
     assert cg.gain_loss == Decimal("7.0")
 
     cg = capital_gains[4]  # Section 104 pool
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("3.0")
     assert cg.gain_loss == Decimal("4.0")
 
@@ -570,7 +570,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
     # Gain/Loss        = 50.0 - 40.9 = 33.45 = 9.1
     cg = capital_gains[1]
     cg = capital_gains[0]
-    assert cg.date_acquired == date(2019, 1, 20)
+    assert cg.acquisition_date == date(2019, 1, 20)
     assert cg.cost == Decimal("40.9")
     assert cg.gain_loss == Decimal("9.1")
 
@@ -578,7 +578,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
     # Acquisition cost = 31.5 * (5.0/10.0) + 0.8 = 16.55
     # Gain/Loss        = 50.0 - 16.55 = 33.45
     cg = capital_gains[1]
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("16.55")
     assert cg.gain_loss == Decimal("33.45")
 
@@ -638,13 +638,13 @@ def test_disposals_on_different_tickers(make_tax_calculator):
     assert len(capital_gains) == 2
 
     cg = capital_gains[0]
-    assert cg.date_acquired == date(2019, 1, 21)
+    assert cg.acquisition_date == date(2019, 1, 21)
     assert cg.disposal.isin == ISIN("X")
     assert cg.cost == Decimal("4.0")
     assert cg.gain_loss == Decimal("7.0")
 
     cg = capital_gains[1]
-    assert cg.date_acquired == date(2019, 1, 22)
+    assert cg.acquisition_date == date(2019, 1, 22)
     assert cg.disposal.isin == ISIN("Y")
     assert cg.cost == Decimal("6.0")
     assert cg.gain_loss == Decimal("16.0")
@@ -737,14 +737,14 @@ def test_section_104_disposal_with_share_split(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2014, 6, 1)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("300.0")
     assert cg.quantity == Decimal("1.0")
     assert cg.gain_loss == Decimal("200.0")
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2014, 9, 1)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("500.0")
     assert cg.quantity == Decimal("5.0")
     assert cg.gain_loss == Decimal("600.0")
@@ -784,7 +784,7 @@ def test_bed_and_breakfast_rule_with_share_split(make_tax_calculator):
     assert len(capital_gains) == 1
 
     cg = capital_gains[0]
-    assert cg.date_acquired == order3.date
+    assert cg.acquisition_date == order3.date
     assert cg.cost == Decimal("120.0")
     assert cg.quantity == Decimal("5.0")
     assert cg.gain_loss == Decimal("30.0")
@@ -887,27 +887,27 @@ def test_rppaccounts_example(make_tax_calculator):
     assert len(capital_gains) == 5
 
     cg = capital_gains[0]
-    assert cg.date_acquired == date(2019, 1, 18)
+    assert cg.acquisition_date == date(2019, 1, 18)
     assert cg.cost == Decimal("9018.75")
     assert cg.gain_loss == Decimal("81.25")
 
     cg = capital_gains[1]
-    assert cg.date_acquired == date(2019, 1, 22)
+    assert cg.acquisition_date == date(2019, 1, 22)
     assert cg.cost == Decimal("2000.00")
     assert cg.gain_loss == Decimal("3000.0")
 
     cg = capital_gains[2]
-    assert cg.date_acquired == date(2019, 1, 26)
+    assert cg.acquisition_date == date(2019, 1, 26)
     assert cg.cost == Decimal("8500.00")
     assert cg.gain_loss == Decimal("-500.0")
 
     cg = capital_gains[3]
-    assert cg.date_acquired == date(2019, 1, 25)
+    assert cg.acquisition_date == date(2019, 1, 25)
     assert cg.cost == Decimal("3300.0")
     assert cg.gain_loss == Decimal("200.0")
 
     cg = capital_gains[4]
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("26506.25")
     assert cg.gain_loss == Decimal("43493.75")
 
@@ -951,7 +951,7 @@ def test_hmrc_example_crypto22251(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 12, 1)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("42000.0")
     assert cg.gain_loss == Decimal("258000.0")
 
@@ -998,7 +998,7 @@ def test_hmrc_example_crypto22252(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 6, 23)
-    assert cg.date_acquired == date(2020, 6, 23)
+    assert cg.acquisition_date == date(2020, 6, 23)
     assert cg.cost == Decimal("937.5")
     assert cg.gain_loss == Decimal("462.5")
 
@@ -1061,25 +1061,25 @@ def test_hmrc_example_crypto22253(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 3, 31)
-    assert cg.date_acquired == date(2020, 4, 21)
+    assert cg.acquisition_date == date(2020, 4, 21)
     assert cg.cost == Decimal("175.0")
     assert cg.gain_loss == Decimal("105.0")
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2020, 3, 31)
-    assert cg.date_acquired == date(2020, 4, 28)
+    assert cg.acquisition_date == date(2020, 4, 28)
     assert cg.cost == Decimal("60.0")
     assert cg.gain_loss == Decimal("60.0")
 
     cg = capital_gains[2]
     assert cg.disposal.date == date(2020, 4, 20)
-    assert cg.date_acquired == date(2020, 4, 28)
+    assert cg.acquisition_date == date(2020, 4, 28)
     assert cg.cost == Decimal("40.0")
     assert cg.gain_loss == Decimal("20.0")
 
     cg = capital_gains[3]
     assert cg.disposal.date == date(2020, 4, 20)
-    assert cg.date_acquired == date(2020, 5, 1)
+    assert cg.acquisition_date == date(2020, 5, 1)
     assert cg.cost == Decimal("90.0")
     assert cg.gain_loss == Decimal("0.0")
 
@@ -1149,13 +1149,13 @@ def test_hmrc_example_crypto22254(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 1, 31)
-    assert cg.date_acquired == date(2020, 1, 31)
+    assert cg.acquisition_date == date(2020, 1, 31)
     assert cg.cost == Decimal("500.0")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("96.14")
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2020, 1, 31)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("62.5")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("-16.64")
 
@@ -1195,13 +1195,13 @@ def test_hmrc_example_crypto22255(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 8, 30)
-    assert cg.date_acquired == date(2020, 9, 11)
+    assert cg.acquisition_date == date(2020, 9, 11)
     assert cg.cost == Decimal("17500.0")
     assert cg.gain_loss == Decimal("2500.0")
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2020, 8, 30)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost == Decimal("50000.0")
     assert cg.gain_loss == Decimal("90000.0")
 
@@ -1264,25 +1264,25 @@ def test_hmrc_example_crypto22256(make_tax_calculator):
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2020, 7, 31)
-    assert cg.date_acquired == date(2020, 7, 31)
+    assert cg.acquisition_date == date(2020, 7, 31)
     assert cg.cost == Decimal("45000.0")
     assert cg.gain_loss == Decimal("5000.0")
 
     cg = capital_gains[1]
     assert cg.disposal.date == date(2020, 7, 31)
-    assert cg.date_acquired == date(2020, 8, 6)
+    assert cg.acquisition_date == date(2020, 8, 6)
     assert cg.cost == Decimal("90000.0")
     assert cg.gain_loss == Decimal("10000.0")
 
     cg = capital_gains[2]
     assert cg.disposal.date == date(2020, 8, 5)
-    assert cg.date_acquired == date(2020, 8, 6)
+    assert cg.acquisition_date == date(2020, 8, 6)
     assert cg.cost == Decimal("90000.0")
     assert cg.gain_loss == Decimal("10000.0")
 
     cg = capital_gains[3]
     assert cg.disposal.date == date(2020, 8, 7)
-    assert cg.date_acquired is None
+    assert cg.acquisition_date is None
     assert cg.cost.quantize(Decimal("0.00")) == Decimal("313636.36")
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("-163636.36")
 

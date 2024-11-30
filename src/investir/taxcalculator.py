@@ -35,7 +35,7 @@ def thirty_days_match(ord1: Acquisition, ord2: Disposal) -> bool:
 class CapitalGain:
     disposal: Disposal
     cost: Decimal
-    date_acquired: date | None = None
+    acquisition_date: date | None = None
 
     @property
     def gain_loss(self) -> Decimal:
@@ -56,7 +56,7 @@ class CapitalGain:
             f"quantity: {self.quantity}, "
             f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
             f"gain: £{self.gain_loss:.2f} "
-            f'({self.date_acquired or "Section 104"})'
+            f'({self.acquisition_date or "Section 104"})'
         )
 
 
@@ -146,7 +146,7 @@ class TaxCalculator:
                 table.add_row(
                     [
                         cg.disposal.date,
-                        cg.date_acquired or "Section 104",
+                        cg.acquisition_date or "Section 104",
                         cg.disposal.isin,
                         cg.disposal.name,
                         cg.quantity,
