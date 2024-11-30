@@ -27,6 +27,14 @@ def date_to_tax_year(date: datetime.date) -> Year:
     return Year(tax_year_start.year - 1)
 
 
+def tax_year_short_date(tax_year: Year) -> str:
+    return f"{tax_year}/{(tax_year + 1) % 100}"
+
+
+def tax_year_full_date(tax_year: Year) -> str:
+    return f"6th April {tax_year} to 5th April {tax_year + 1}"
+
+
 def multifilter(filters: Sequence[Callable] | None, iterable: Iterable) -> Iterable:
     if not filters:
         return iterable
