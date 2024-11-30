@@ -22,6 +22,7 @@ from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
 from investir.trhistory import TrHistory
 from investir.typing import Ticker, Year
+from investir.utils import boldify, tax_year_full_date, tax_year_short_date
 
 logger = logging.getLogger(__name__)
 
@@ -352,8 +353,10 @@ def capital_gains_command(
         )
 
         if table:
-            leading_nl = tax_year_idx == 0 and config.logging_enabled
-            print(table.to_string(leading_nl=leading_nl).rstrip())
+            print(end="\n" if tax_year_idx == 0 and config.logging_enabled else "")
+            print(boldify(f"Capital Gains Tax Report {tax_year_short_date(tax_year)}"))
+            print(tax_year_full_date(tax_year))
+            print(table.to_string(leading_nl=True))
             print(summary)
 
 

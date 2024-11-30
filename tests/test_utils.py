@@ -5,6 +5,7 @@ import pytest
 
 from investir.config import config
 from investir.exceptions import InvestirError
+from investir.typing import Year
 from investir.utils import (
     boldify,
     date_to_tax_year,
@@ -12,7 +13,9 @@ from investir.utils import (
     multifilter,
     raise_or_warn,
     read_decimal,
+    tax_year_full_date,
     tax_year_period,
+    tax_year_short_date,
     unboldify,
 )
 
@@ -28,6 +31,14 @@ def test_date_to_tax_year():
     assert date_to_tax_year(datetime.date(2023, 4, 6)) == 2023
     assert date_to_tax_year(datetime.date(2024, 4, 5)) == 2023
     assert date_to_tax_year(datetime.date(2024, 4, 6)) == 2024
+
+
+def test_tax_year_short_date():
+    assert tax_year_short_date(Year(2023)) == "2023/24"
+
+
+def test_tax_year_full_date():
+    assert tax_year_full_date(Year(2023)) == "6th April 2023 to 5th April 2024"
 
 
 def test_multifilter():

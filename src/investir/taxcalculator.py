@@ -89,14 +89,13 @@ class CapitalGainsSummary:
 
     def __str__(self) -> str:
         return (
-            f"{'Number of disposals:':44}{self.num_disposals:>10}       "
-            f"{'Gains in the year, before losses:':44}{gbp(self.total_gains):>10}\n"
-            f"{'Disposal proceeds:':44}{gbp(self.disposal_proceeds):>10}       "
-            f"{'Losses in the year:':44}{gbp(self.total_losses):>10}\n"
-            f"{'Allowable costs (including purchase price):':44}"
-            f"{gbp(self.total_cost):>10}       "
-            f"{'Net gain or loss:':44}"
-            f"{gbp(self.net_gains):>10}\n"
+            f"{'Number of disposals:':40}{self.num_disposals:>10}      "
+            f"{'Gains in the year, before losses:':34}{gbp(self.total_gains):>10}\n"
+            f"{'Disposal proceeds:':40}{gbp(self.disposal_proceeds):>10}      "
+            f"{'Losses in the year:':34}{gbp(self.total_losses):>10}\n"
+            f"{'Allowable costs (incl. purchase price):':40}"
+            f"{gbp(self.total_cost):>10}      "
+            f"{'Net gain or loss:':34}{gbp(self.net_gains):>10}\n"
         )
 
 
@@ -151,7 +150,6 @@ class TaxCalculator:
         self._calculate_capital_gains()
 
         table = PrettyTable(
-            title=f"Tax year {tax_year}-{tax_year + 1}",
             field_names=(
                 "Date Disposed",
                 "Identification",
