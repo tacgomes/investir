@@ -212,8 +212,7 @@ class TaxCalculator:
         )
 
         if not show_gain_loss:
-            table.fields = table.field_names[:]
-            table.fields.remove("Unrealised Gain/Loss (£)")
+            table.hide_field("Unrealised Gain/Loss (£)")
 
         holdings = []
 

@@ -45,3 +45,13 @@ def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
 
 def dict2str(d: Mapping[str, str]) -> str:
     return str({k: v for k, v in d.items() if v.strip()})
+
+
+def boldify(text: str) -> str:
+    return f"\033[1m{text}\033[0m"
+
+
+def unboldify(text: str) -> str:
+    text = text.replace("\033[1m", "")
+    text = text.replace("\033[0m", "")
+    return text

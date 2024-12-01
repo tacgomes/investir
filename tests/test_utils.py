@@ -6,12 +6,14 @@ import pytest
 from investir.config import config
 from investir.exceptions import InvestirError
 from investir.utils import (
+    boldify,
     date_to_tax_year,
     dict2str,
     multifilter,
     raise_or_warn,
     read_decimal,
     tax_year_period,
+    unboldify,
 )
 
 
@@ -61,3 +63,9 @@ def test_read_decimal():
 def test_dict2str():
     d = {"a": "A", "b": "", "c": "C", "d": " "}
     assert dict2str(d) == "{'a': 'A', 'c': 'C'}"
+
+
+def test_boldify_and_unboldify():
+    bold_foo = boldify("foo")
+    assert bold_foo == "\x1b[1mfoo\x1b[0m"
+    assert unboldify(bold_foo) == "foo"

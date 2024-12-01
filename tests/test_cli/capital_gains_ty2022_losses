@@ -1,10 +1,8 @@
                                                  Tax year 2022-2023                                                
+  [1mDate Disposed[0m   [1mDate Acquired[0m   [1mISIN[0m           [1mName[0m          [1mQuantity[0m   [1mCost (£)[0m   [1mProceeds (£)[0m   [1mGain/loss (£)[0m  
 -------------------------------------------------------------------------------------------------------------------
-  Date Disposed   Date Acquired   ISIN           Name          Quantity   Cost (£)   Proceeds (£)   Gain/loss (£)  
--------------------------------------------------------------------------------------------------------------------
-  2022-10-14      Section 104     US5949181045   Microsoft   1.32642000     324.79         319.76           -5.03  
-  2022-12-16      Section 104     US83088M1027   Skyworks    8.30000000    1094.16         979.69         -114.47  
--------------------------------------------------------------------------------------------------------------------
+  14/10/2022      Section 104     US5949181045   Microsoft   1.32642000     324.79         319.76           -5.03  
+  16/12/2022      Section 104     US83088M1027   Skyworks    8.30000000    1094.16         979.69         -114.47
 Number of disposals:                                 2       Gains in the year, before losses:                £0.00
 Disposal proceeds:                            £1299.45       Losses in the year:                            £119.50
 Allowable costs (including purchase price):   £1418.95       Net gain or loss:                             -£119.50
