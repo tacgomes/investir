@@ -84,8 +84,8 @@ class TrHistory:
         table = PrettyTable(
             field_names=(
                 "Date",
+                "Security Name",
                 "ISIN",
-                "Name",
                 "Ticker",
                 "Total Cost (£)",
                 "Net Proceeds (£)",
@@ -116,8 +116,8 @@ class TrHistory:
             table.add_row(
                 [
                     tr.date,
-                    tr.isin,
                     tr.name,
+                    tr.isin,
                     tr.ticker,
                     total_cost,
                     net_proceeds,
@@ -153,11 +153,11 @@ class TrHistory:
         table = PrettyTable(
             field_names=(
                 "Date",
+                "Security Name",
                 "ISIN",
-                "Name",
                 "Ticker",
-                "Amount (£)",
-                "Tax widhheld (£)",
+                "Net Amount (£)",
+                "Widthheld Amount (£)",
             )
         )
 
@@ -174,7 +174,7 @@ class TrHistory:
             )
 
             table.add_row(
-                [tr.date, tr.isin, tr.name, tr.ticker, tr.amount, tr.withheld],
+                [tr.date, tr.name, tr.isin, tr.ticker, tr.amount, tr.withheld or "n/a"],
                 divider=divider,
             )
 
@@ -188,7 +188,7 @@ class TrHistory:
     def get_transfers_table(
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
-        table = PrettyTable(field_names=("Date", "Deposited (£)", "Withdrew (£)"))
+        table = PrettyTable(field_names=("Date", "Deposit (£)", "Withdrawal (£)"))
 
         transactions = list(multifilter(filters, self._transfers))
         last_idx = len(transactions) - 1
