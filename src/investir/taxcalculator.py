@@ -212,15 +212,17 @@ class TaxCalculator:
                 "Security Name",
                 "ISIN",
                 "Cost (£)",
-                "Allocation (%)",
                 "Quantity",
-                "Average Cost (£)",
-                "Unrealised Gain/Loss (£)",
+                "Current Value (£)",
+                "Gain/Loss (£)",
+                "Weight (%)",
             ]
         )
 
         if not show_gain_loss:
-            table.hide_field("Unrealised Gain/Loss (£)")
+            table.hide_field("Current Value (£)")
+            table.hide_field("Gain/Loss (£)")
+            table.hide_field("Weight (%)")
 
         holdings = []
 
@@ -237,14 +239,27 @@ class TaxCalculator:
                 if isin in self._holdings:
                     holdings = [(isin, self._holdings[isin])]
 
-        total_cost = sum(round(holding.cost, 2) for _, holding in holdings)
+        holding2value = (
+            {
+                isin: value
+                for isin, holding in holdings
+                if (value := self._get_holding_value(isin, holding)) is not None
+            }
+            if show_gain_loss
+            else {}
+        )
+
+        portfolio_value = sum(val for val in holding2value.values())
         total_gain_loss = Decimal("0.0")
         last_idx = len(holdings) - 1
 
         for idx, (isin, holding) in enumerate(holdings):
-            if show_gain_loss and (
-                gain_loss := self._calculate_unrealised_gain_loss(isin, holding)
-            ):
+            gain_loss: Decimal | None = None
+            weight: Decimal | None = None
+
+            if holding_value := holding2value.get(isin):
+                gain_loss = holding.cost - holding_value
+                weight = holding_value / portfolio_value * 100
                 total_gain_loss += gain_loss
 
             table.add_row(
@@ -252,19 +267,17 @@ class TaxCalculator:
                     self._tr_hist.get_security_name(isin),
                     isin,
                     holding.cost,
-                    holding.cost / total_cost * 100,
                     holding.quantity,
-                    holding.cost / holding.quantity,
-                    gain_loss
-                    if show_gain_loss and gain_loss is not None
-                    else "Not available",
+                    holding_value,
+                    gain_loss or "n/a",
+                    weight or "n/a",
                 ],
                 divider=idx == last_idx,
             )
 
-        if table.rows:
+        if table.rows and show_gain_loss:
             table.add_row(
-                ["", "", total_cost, Decimal("100.0"), "", "", total_gain_loss]
+                ["", "", "", "", portfolio_value, total_gain_loss, Decimal("100.0")]
             )
 
         return table
@@ -438,12 +451,12 @@ class TaxCalculator:
                     logger.warning("Not calculating holding for %s", isin)
                     break
 
-    def _calculate_unrealised_gain_loss(
+    def _get_holding_value(
         self, isin: ISIN, holding: Section104Holding
     ) -> Decimal | None:
         if (price := self._findata.get_security_price(isin)) and (
             price_gbp := self._findata.convert_currency(price.amount, price.currency)
         ):
-            return holding.quantity * price_gbp - holding.cost
+            return holding.quantity * price_gbp
 
         return None
