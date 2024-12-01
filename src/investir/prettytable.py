@@ -39,7 +39,7 @@ class PrettyTable(prettytable.PrettyTable):
             plain_f = unboldify(f)
 
             match plain_f.split()[0].strip(), plain_f.split()[-1]:
-                case ("Date", _):
+                case ("Date", _) | (_, "Date"):
                     self.custom_format[f] = date_format("%d/%m/%Y")
                     self.align[f] = "l"
                 case ("Quantity", _):

@@ -143,10 +143,10 @@ class TaxCalculator:
         table = PrettyTable(
             title=f"Tax year {tax_year}-{tax_year + 1}",
             field_names=(
-                "Date Disposed",
+                "Disposal Date",
                 "Date Acquired",
+                "Security Name",
                 "ISIN",
-                "Name",
                 "Quantity",
                 "Cost (£)",
                 "Proceeds (£)",
@@ -171,8 +171,8 @@ class TaxCalculator:
                 [
                     cg.disposal.date,
                     cg.acquisition_date or "Section 104",
-                    cg.disposal.isin,
                     cg.disposal.name,
+                    cg.disposal.isin,
                     cg.quantity,
                     cg.cost,
                     cg.disposal.amount,
@@ -201,8 +201,8 @@ class TaxCalculator:
 
         table = PrettyTable(
             field_names=[
+                "Security Name",
                 "ISIN",
-                "Name",
                 "Cost (£)",
                 "Allocation (%)",
                 "Quantity",
@@ -241,8 +241,8 @@ class TaxCalculator:
 
             table.add_row(
                 [
-                    isin,
                     self._tr_hist.get_security_name(isin),
+                    isin,
                     holding.cost,
                     holding.cost / total_cost * 100,
                     holding.quantity,
