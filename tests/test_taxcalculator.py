@@ -1307,7 +1307,7 @@ def test_get_holdings_table_with_gain_loss(make_tax_calculator):
     )
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "Gain/Loss (£)" in str(table)
     assert "50.00" in str(table)
 
 
@@ -1327,7 +1327,7 @@ def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calc
     )
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    assert "Unrealised Gain/Loss (£)" in str(table)
+    assert "Gain/Loss (£)" in str(table)
     assert "12.50" in str(table)
 
 
@@ -1345,8 +1345,8 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
     tax_calculator = make_tax_calculator([order], price=DataProviderError)
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
-    assert "Unrealised Gain/Loss (£)" in str(table)
-    assert "Not available" in str(table)
+    assert "Gain/Loss (£)" in str(table)
+    assert "n/a" in str(table)
 
     tax_calculator = make_tax_calculator(
         [order],
@@ -1355,8 +1355,8 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
     )
 
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
-    assert "Unrealised Gain/Loss (£)" in str(table)
-    assert "Not available" in str(table)
+    assert "Gain/Loss (£)" in str(table)
+    assert "n/a" in str(table)
 
 
 def test_get_holdings_table_ambiguous_ticker(make_tax_calculator, capsys):
