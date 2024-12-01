@@ -114,7 +114,8 @@ def test_section_104_disposal(make_tax_calculator):
     assert cg.gain_loss.quantize(Decimal("0.00")) == Decimal("329.33")
     assert str(cg) == (
         "2023-05-01 LOBS quantity: 700.0, cost: £3030.67"
-        ", proceeds: £3360.0, gain: £329.33 (Section 104)"
+        ", proceeds: £3360.0, gain: £329.33"
+        ", identification: Section 104"
     )
 
     cg = capital_gains[1]
@@ -244,7 +245,8 @@ def test_bed_and_breakfast_rule(days_elapsed, make_tax_calculator):
     assert cg.gain_loss == Decimal("30.0")
     assert str(cg) == (
         f"2019-01-20 X    quantity: 5.0, cost: £120.00"
-        f", proceeds: £150.0, gain: £30.00 ({cg.acquisition_date})"
+        f", proceeds: £150.0, gain: £30.00"
+        f", identification: Bed & B. ({cg.acquisition_date})"
     )
 
     holding = tax_calculator.holding(Ticker("X"))
