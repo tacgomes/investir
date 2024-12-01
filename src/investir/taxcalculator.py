@@ -54,14 +54,24 @@ class CapitalGain:
             return self.disposal.original_quantity
         return self.disposal.quantity
 
+    @property
+    def identification(self) -> str:
+        match self.acquisition_date:
+            case None:
+                return "Section 104"
+            case self.disposal.date:
+                return "Same day"
+            case _:
+                return f"Bed & B. ({self.acquisition_date})"
+
     def __str__(self) -> str:
         return (
             f"{self.disposal.date} "
             f"{self.disposal.isin:<4} "
             f"quantity: {self.quantity}, "
             f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
-            f"gain: £{self.gain_loss:.2f} "
-            f'({self.acquisition_date or "Section 104"})'
+            f"gain: £{self.gain_loss:.2f}, "
+            f"identification: {self.identification}"
         )
 
 
@@ -143,8 +153,8 @@ class TaxCalculator:
         table = PrettyTable(
             title=f"Tax year {tax_year}-{tax_year + 1}",
             field_names=(
-                "Disposal Date",
-                "Date Acquired",
+                "Date Disposed",
+                "Identification",
                 "Security Name",
                 "ISIN",
                 "Quantity",
@@ -170,7 +180,7 @@ class TaxCalculator:
             table.add_row(
                 [
                     cg.disposal.date,
-                    cg.acquisition_date or "Section 104",
+                    cg.identification,
                     cg.disposal.name,
                     cg.disposal.isin,
                     cg.quantity,
