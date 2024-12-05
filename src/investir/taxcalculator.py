@@ -151,7 +151,7 @@ class TaxCalculator:
 
         table = PrettyTable(
             field_names=(
-                "Date Disposed",
+                "Disposal Date",
                 "Identification",
                 "Security Name",
                 "ISIN",
