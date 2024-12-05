@@ -65,28 +65,27 @@ Capital Gains Tax Report 2021/22
 
   Disposal Date   Identification          Security Name   ISIN              Quantity   Cost (£)   Proceeds (£)   Gain/loss (£)  
 --------------------------------------------------------------------------------------------------------------------------------
-  2021-08-25      Section 104             Microsoft       US5949181045   13.00246544    2366.57        2952.48          585.91  
-  2021-09-01      Section 104             Skyworks        US83088M1027    1.24584888     167.16         153.21          -13.95  
-  2021-09-13      Same day                SMT             GB00BLDYK618   34.00000000     443.65         474.83           31.18  
-  2021-09-13      Bed & B. (2021-09-26)   SMT             GB00BLDYK618   40.00000000     482.67         558.62           75.95  
-  2021-09-13      Section 104             SMT             GB00BLDYK618   14.00000000     189.85         195.52            5.67  
-  2021-11-02      Section 104             Apple           US0378331005   26.22913238    2647.31        3653.35         1006.04  
-  2022-01-27      Section 104             Skyworks        US83088M1027    1.24584888     167.21         178.13           10.92  
+  25/08/2021      Section 104             Microsoft       US5949181045   13.00246544    2366.57        2952.48          585.91  
+  01/09/2021      Section 104             Skyworks        US83088M1027    1.24584888     167.16         153.21          -13.95  
+  13/09/2021      Same day                SMT             GB00BLDYK618   34.00000000     443.65         474.83           31.18  
+  13/09/2021      Bed & B. (2021-09-26)   SMT             GB00BLDYK618   40.00000000     482.67         558.62           75.95  
+  13/09/2021      Section 104             SMT             GB00BLDYK618   14.00000000     189.85         195.52            5.67  
+  02/11/2021      Section 104             Apple           US0378331005   26.22913238    2647.31        3653.35         1006.04  
+  27/01/2022      Section 104             Skyworks        US83088M1027    1.24584888     167.21         178.13           10.92  
 
 Number of disposals:                             7      Gains in the year, before losses:   £1715.67
 Disposal proceeds:                        £8166.14      Losses in the year:                   £13.95
 Allowable costs (incl. purchase price):   £6464.42      Net gain or loss:                   £1701.72
-
 
 Capital Gains Tax Report 2022/23
 6th April 2022 to 5th April 2023
 
   Disposal Date   Identification   Security Name   ISIN              Quantity   Cost (£)   Proceeds (£)   Gain/loss (£)  
 -------------------------------------------------------------------------------------------------------------------------
-  2022-09-20      Section 104      Amazon          US0231351067   48.31896981    3493.12        4941.53         1448.41  
-  2022-10-14      Section 104      Microsoft       US5949181045    1.32642000     324.79         319.76           -5.03  
-  2022-12-16      Section 104      Skyworks        US83088M1027    8.30000000    1094.16         979.69         -114.47  
-  2023-03-03      Section 104      Skyworks        US83088M1027    2.10000000     277.20         312.95           35.75  
+  20/09/2022      Section 104      Amazon          US0231351067   48.31896981    3493.12        4941.53         1448.41  
+  14/10/2022      Section 104      Microsoft       US5949181045    1.32642000     324.79         319.76           -5.03  
+  16/12/2022      Section 104      Skyworks        US83088M1027    8.30000000    1094.16         979.69         -114.47  
+  03/03/2023      Section 104      Skyworks        US83088M1027    2.10000000     277.20         312.95           35.75  
 
 Number of disposals:                             4      Gains in the year, before losses:   £1484.16
 Disposal proceeds:                        £6553.93      Losses in the year:                  £119.50
