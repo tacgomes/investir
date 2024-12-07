@@ -208,7 +208,7 @@ class TaxCalculator:
         self._calculate_capital_gains()
 
         table = PrettyTable(
-            field_names=[
+            field_names=(
                 "Security Name",
                 "ISIN",
                 "Cost (£)",
@@ -216,13 +216,15 @@ class TaxCalculator:
                 "Current Value (£)",
                 "Gain/Loss (£)",
                 "Weight (%)",
-            ]
+            ),
+            hidden_fields=(
+                "Current Value (£)",
+                "Gain/Loss (£)",
+                "Weight (%)",
+            )
+            if not show_gain_loss
+            else (),
         )
-
-        if not show_gain_loss:
-            table.hide_field("Current Value (£)")
-            table.hide_field("Gain/Loss (£)")
-            table.hide_field("Weight (%)")
 
         holdings = []
 
