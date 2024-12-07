@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence, Set
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -30,10 +30,14 @@ def decimal_format(precision: int) -> Callable[[str, Any], str]:
 
 
 class PrettyTable(prettytable.PrettyTable):
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs["field_names"] = list(map(lambda f: boldify(f), kwargs["field_names"]))
-
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        field_names: Sequence[str],
+        hidden_fields: Sequence[str] | None = None,
+        **kwargs,
+    ) -> None:
+        field_names = list(map(lambda f: boldify(f), field_names))
+        super().__init__(field_names, **kwargs)
 
         for f in self.field_names:
             plain_f = unboldify(f)
@@ -55,19 +59,16 @@ class PrettyTable(prettytable.PrettyTable):
 
         self.hrules = prettytable.HEADER
         self.vrules = prettytable.NONE
-        self.invisible_fields: set[str] = set()
+        self._hidden_fields: Set[str] = frozenset(hidden_fields or [])
 
     def __bool__(self) -> bool:
         return len(self.rows) > 0
-
-    def hide_field(self, field_name: str) -> None:
-        self.invisible_fields.add(field_name)
 
     def to_string(self, leading_nl: bool = True) -> str:
         nl = "\n" if leading_nl else ""
 
         fields = [
-            f for f in self.field_names if unboldify(f) not in self.invisible_fields
+            f for f in self.field_names if unboldify(f) not in self._hidden_fields
         ]
 
         return f"{nl}{self.get_string(fields=fields)}\n"
