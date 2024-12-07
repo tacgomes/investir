@@ -124,7 +124,10 @@ def test_cli_output(request, execute, cmd, expected):
         assert result.exit_code == EX_OK
 
         assert expected_output.exists()
-        assert result.stdout == expected_output.read_text(encoding="utf-8")
+        assert (
+            result.stdout.splitlines()
+            == expected_output.read_text(encoding="utf-8").splitlines()
+        )
 
 
 def test_capital_gains_multiple_input_files(execute):
