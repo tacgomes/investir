@@ -262,6 +262,7 @@ def test_default_verbosity(execute):
     assert result.exit_code == EX_OK
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
@@ -282,6 +283,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
     assert result.exit_code == EX_OK
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",

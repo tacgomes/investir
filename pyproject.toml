@@ -96,3 +96,7 @@ exclude_also = [
 minversion = "6.0"
 testpaths = ["tests"]
 addopts = "--cov --no-header"
+markers = [
+    """network: mark a test that requires an Internet \
+    connection (deselect with '-m "not network"')"""
+]
