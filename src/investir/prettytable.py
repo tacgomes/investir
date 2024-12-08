@@ -57,6 +57,9 @@ class PrettyTable(prettytable.PrettyTable):
         self.vrules = prettytable.NONE
         self.invisible_fields: set[str] = set()
 
+    def __bool__(self) -> bool:
+        return len(self.rows) > 0
+
     def hide_field(self, field_name: str) -> None:
         self.invisible_fields.add(field_name)
 
@@ -68,6 +71,3 @@ class PrettyTable(prettytable.PrettyTable):
         ]
 
         return f"{nl}{self.get_string(fields=fields)}\n"
-
-    def __bool__(self) -> bool:
-        return len(self.rows) > 0
