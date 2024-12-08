@@ -1,5 +1,4 @@
 from collections.abc import Callable, Mapping, Sequence, ValuesView
-from decimal import Decimal
 from typing import NamedTuple, TypeVar
 
 from investir.exceptions import AmbiguousTickerError
@@ -92,22 +91,24 @@ class TrHistory:
                 "Quantity",
                 "Price (£)",
                 "Fees (£)",
-            )
+            ),
+            show_total_fields=(
+                "Total Cost (£)",
+                "Net Proceeds (£)",
+                "Fees (£)",
+            ),
         )
 
         transactions = list(multifilter(filters, self._orders))
         last_idx = len(transactions) - 1
-        total_total_cost = total_net_proceeds = total_fees = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
             net_proceeds = None
             total_cost = None
             if isinstance(tr, Acquisition):
                 total_cost = tr.total_cost
-                total_total_cost += round(tr.total_cost, 2)
             else:
                 net_proceeds = tr.net_proceeds
-                total_net_proceeds += round(tr.net_proceeds, 2)
 
             divider = (
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
@@ -128,23 +129,6 @@ class TrHistory:
                 divider=divider,
             )
 
-            total_fees += tr.fees
-
-        if table.rows:
-            table.add_row(
-                [
-                    "",
-                    "",
-                    "",
-                    "",
-                    total_total_cost,
-                    total_net_proceeds,
-                    "",
-                    "",
-                    total_fees,
-                ]
-            )
-
         return table
 
     def get_dividends_table(
@@ -158,17 +142,17 @@ class TrHistory:
                 "Ticker",
                 "Net Amount (£)",
                 "Widthheld Amount (£)",
-            )
+            ),
+            show_total_fields=(
+                "Net Amount (£)",
+                "Widthheld Amount (£)",
+            ),
         )
 
         transactions = list(multifilter(filters, self._dividends))
         last_idx = len(transactions) - 1
-        total_paid = total_withheld = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
-            if tr.withheld is not None:
-                total_withheld += round(tr.withheld, 2)
-
             divider = (
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
             )
@@ -178,31 +162,26 @@ class TrHistory:
                 divider=divider,
             )
 
-            total_paid += tr.amount
-
-        if table.rows:
-            table.add_row(["", "", "", "", total_paid, total_withheld])
-
         return table
 
     def get_transfers_table(
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
-        table = PrettyTable(field_names=("Date", "Deposit (£)", "Withdrawal (£)"))
+        table = PrettyTable(
+            field_names=("Date", "Deposit (£)", "Withdrawal (£)"),
+            show_total_fields=("Deposit (£)", "Withdrawal (£)"),
+        )
 
         transactions = list(multifilter(filters, self._transfers))
         last_idx = len(transactions) - 1
-        total_deposited = total_withdrew = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
             if tr.amount > 0:
                 deposited = tr.amount
                 widthdrew = ""
-                total_deposited += tr.amount
             else:
                 deposited = ""
                 widthdrew = abs(tr.amount)
-                total_withdrew += abs(tr.amount)
 
             divider = (
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
@@ -210,19 +189,17 @@ class TrHistory:
 
             table.add_row([tr.date, deposited, widthdrew], divider=divider)
 
-        if table.rows:
-            table.add_row(["", total_deposited, total_withdrew])
-
         return table
 
     def get_interest_table(
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
-        table = PrettyTable(field_names=("Date", "Amount (£)"))
+        table = PrettyTable(
+            field_names=("Date", "Amount (£)"), show_total_fields=("Amount (£)",)
+        )
 
         transactions = list(multifilter(filters, self._interest))
         last_idx = len(transactions) - 1
-        total_interest = Decimal("0.0")
 
         for idx, tr in enumerate(transactions):
             divider = (
@@ -230,11 +207,6 @@ class TrHistory:
             )
 
             table.add_row([tr.date, tr.amount], divider=divider)
-
-            total_interest += tr.amount
-
-        if table.rows:
-            table.add_row(["", total_interest])
 
         return table
 

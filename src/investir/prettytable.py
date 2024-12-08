@@ -34,6 +34,7 @@ class PrettyTable(prettytable.PrettyTable):
         self,
         field_names: Sequence[str],
         hidden_fields: Sequence[str] | None = None,
+        show_total_fields: Sequence[str] | None = None,
         **kwargs,
     ) -> None:
         field_names = list(map(lambda f: boldify(f), field_names))
@@ -60,6 +61,7 @@ class PrettyTable(prettytable.PrettyTable):
         self.hrules = prettytable.HEADER
         self.vrules = prettytable.NONE
         self._hidden_fields: Set[str] = frozenset(hidden_fields or [])
+        self._show_total_fields: Set[str] = frozenset(show_total_fields or [])
 
     def __bool__(self) -> bool:
         return len(self.rows) > 0
@@ -67,8 +69,30 @@ class PrettyTable(prettytable.PrettyTable):
     def to_string(self, leading_nl: bool = True) -> str:
         nl = "\n" if leading_nl else ""
 
+        if self.rows and self._show_total_fields:
+            self._insert_totals_row()
+
         fields = [
             f for f in self.field_names if unboldify(f) not in self._hidden_fields
         ]
 
         return f"{nl}{self.get_string(fields=fields)}\n"
+
+    def _insert_totals_row(self) -> None:
+        totals_row = []
+
+        for i, f in enumerate(self.field_names):
+            if unboldify(f) in self._show_total_fields:
+                total = sum(
+                    (
+                        round(row[i], 2)
+                        for row in self.rows
+                        if row[i] and row[i] != "n/a"
+                    ),
+                    Decimal("0.0"),
+                )
+                totals_row.append(total)
+            else:
+                totals_row.append("")
+
+        self.add_row(totals_row)
