@@ -224,6 +224,13 @@ class TaxCalculator:
             )
             if not show_gain_loss
             else (),
+            show_total_fields=(
+                "Current Value (£)",
+                "Gain/Loss (£)",
+                "Weight (%)",
+            )
+            if show_gain_loss
+            else (),
         )
 
         holdings = []
@@ -252,7 +259,6 @@ class TaxCalculator:
         )
 
         portfolio_value = sum(val for val in holding2value.values())
-        total_gain_loss = Decimal("0.0")
         last_idx = len(holdings) - 1
 
         for idx, (isin, holding) in enumerate(holdings):
@@ -262,7 +268,6 @@ class TaxCalculator:
             if holding_value := holding2value.get(isin):
                 gain_loss = holding.cost - holding_value
                 weight = holding_value / portfolio_value * 100
-                total_gain_loss += gain_loss
 
             table.add_row(
                 [
@@ -275,11 +280,6 @@ class TaxCalculator:
                     weight or "n/a",
                 ],
                 divider=idx == last_idx,
-            )
-
-        if table.rows and show_gain_loss:
-            table.add_row(
-                ["", "", "", "", portfolio_value, total_gain_loss, Decimal("100.0")]
             )
 
         return table
