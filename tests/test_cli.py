@@ -109,6 +109,31 @@ test_data = [
     # Holdings
     ("holdings", "holdings"),
     ("holdings --ticker SWKS", "holdings_swks"),
+    # Output formats
+    ("orders --output text", "orders"),
+    ("orders --output csv", "orders_csv"),
+    ("orders --output json", "orders_json"),
+    ("orders --output html", "orders_html"),
+    ("dividends --output text", "dividends"),
+    ("dividends --output csv", "dividends_csv"),
+    ("dividends --output json", "dividends_json"),
+    ("dividends --output html", "dividends_html"),
+    ("interest --output text", "interest"),
+    ("interest --output csv", "interest_csv"),
+    ("interest --output json", "interest_json"),
+    ("interest --output html", "interest_html"),
+    ("transfers --output text", "transfers"),
+    ("transfers --output csv", "transfers_csv"),
+    ("transfers --output json", "transfers_json"),
+    ("transfers --output html", "transfers_html"),
+    ("capital-gains --output text", "capital_gains"),
+    ("capital-gains --tax-year 2022 --output csv", "capital_gains_csv"),
+    ("capital-gains --tax-year 2022 --output json", "capital_gains_json"),
+    ("capital-gains --tax-year 2022 --output html", "capital_gains_html"),
+    ("holdings --output text", "holdings"),
+    ("holdings --output csv", "holdings_csv"),
+    ("holdings --output json", "holdings_json"),
+    ("holdings --output html", "holdings_html"),
 ]
 
 
@@ -124,7 +149,10 @@ def test_cli_output(request, execute, cmd, expected):
         assert result.exit_code == EX_OK
 
         assert expected_output.exists()
-        assert result.stdout == expected_output.read_text(encoding="utf-8")
+        assert (
+            result.stdout.splitlines()
+            == expected_output.read_text(encoding="utf-8").splitlines()
+        )
 
 
 def test_capital_gains_multiple_input_files(execute):
@@ -210,6 +238,13 @@ def test_capital_gains_command_mutually_exclusive_filters(execute):
     assert result.exit_code != EX_OK
 
 
+def test_capital_gains_command_tax_year_required(execute):
+    result = execute(["capital-gains", "--output", "json", DATA_FILE])
+    assert not result.stdout
+    assert "Usage:" in result.stderr
+    assert result.exit_code != EX_OK
+
+
 def test_invocation_without_any_argument(execute):
     result = execute([], global_opts=[])
     assert not result.stderr
@@ -262,6 +297,7 @@ def test_default_verbosity(execute):
     assert result.exit_code == EX_OK
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
@@ -282,6 +318,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
     assert result.exit_code == EX_OK
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
