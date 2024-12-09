@@ -1,0 +1,62 @@
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Security Name</th>
+            <th>ISIN</th>
+            <th>Ticker</th>
+            <th>Net Amount (£)</th>
+            <th>Widthheld Amount (£)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>12/02/2022</td>
+            <td>Apple</td>
+            <td>US0378331005</td>
+            <td>AAPL</td>
+            <td>1.37</td>
+            <td>0.24</td>
+        </tr>
+        <tr>
+            <td>09/03/2022</td>
+            <td>Microsoft</td>
+            <td>US5949181045</td>
+            <td>MSFT</td>
+            <td>3.44</td>
+            <td>0.61</td>
+        </tr>
+        <tr>
+            <td>15/03/2022</td>
+            <td>Skyworks</td>
+            <td>US83088M1027</td>
+            <td>SWKS</td>
+            <td>2.50</td>
+            <td>0.44</td>
+        </tr>
+        <tr>
+            <td>13/05/2022</td>
+            <td>Microsoft</td>
+            <td>US5949181045</td>
+            <td>MSFT</td>
+            <td>4.12</td>
+            <td>0.72</td>
+        </tr>
+        <tr>
+            <td>08/06/2022</td>
+            <td>Apple</td>
+            <td>US0378331005</td>
+            <td>AAPL</td>
+            <td>1.64</td>
+            <td>0.28</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>13.07</td>
+            <td>2.29</td>
+        </tr>
+    </tbody>
+</table>

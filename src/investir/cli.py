@@ -18,6 +18,7 @@ from investir.findata import (
 )
 from investir.logging import configure_logger
 from investir.parser import ParserFactory
+from investir.prettytable import OutputFormat
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
 from investir.trhistory import TrHistory
@@ -69,6 +70,12 @@ TaxYearOpt = Annotated[
 TickerOpt = Annotated[
     Optional[str],
     typer.Option(metavar="TICKER", help="Filter by ticker.", show_default=False),
+]
+
+
+OutputFormatOpt = Annotated[
+    OutputFormat,
+    typer.Option("--output", "-o", help="Output format."),
 ]
 
 
@@ -230,7 +237,7 @@ def main_callback(  # noqa: PLR0913
 
 
 @app.command("orders")
-def orders_command(
+def orders_command(  # noqa: PLR0913
     files: FilesArg,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
@@ -240,6 +247,7 @@ def orders_command(
     disposals_only: Annotated[
         bool, typer.Option("--disposals", help="Show only disposals.")
     ] = False,
+    format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show share buy/sell orders.
@@ -257,7 +265,7 @@ def orders_command(
 
     filters = create_filters(tax_year=tax_year, ticker=ticker, tr_type=tr_type)
     if table := tr_hist.get_orders_table(filters):
-        print(table.to_string(leading_nl=config.logging_enabled))
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("dividends")
@@ -265,6 +273,7 @@ def dividends_command(
     files: FilesArg,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
+    format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show share dividends paid out.
@@ -272,7 +281,7 @@ def dividends_command(
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year, ticker=ticker)
     if table := tr_hist.get_dividends_table(filters):
-        print(table.to_string(leading_nl=config.logging_enabled))
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("transfers")
@@ -285,6 +294,7 @@ def transfers_command(
     withdrawals_only: Annotated[
         bool, typer.Option("--withdrawals", help="Show only withdrawals.")
     ] = False,
+    format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show cash deposits and cash withdrawals.
@@ -303,22 +313,26 @@ def transfers_command(
 
     filters = create_filters(tax_year=tax_year, amount_op=amount_op)
     if table := tr_hist.get_transfers_table(filters):
-        print(table.to_string(leading_nl=config.logging_enabled))
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("interest")
-def interest_command(files: FilesArg, tax_year: TaxYearOpt = None) -> None:
+def interest_command(
+    files: FilesArg,
+    tax_year: TaxYearOpt = None,
+    format: OutputFormatOpt = OutputFormat.TEXT,
+) -> None:
     """
     Show interest earned on cash.
     """
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year)
     if table := tr_hist.get_interest_table(filters):
-        print(table.to_string(leading_nl=config.logging_enabled))
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("capital-gains")
-def capital_gains_command(
+def capital_gains_command(  # noqa: PLR0913
     files: FilesArg,
     gains_only: Annotated[
         bool, typer.Option("--gains", help="Show only capital gains.")
@@ -328,12 +342,18 @@ def capital_gains_command(
     ] = False,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
+    format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show capital gains report.
     """
     if gains_only and losses_only:
         raise MutuallyExclusiveOption("--gains", "--losses")
+
+    if format != OutputFormat.TEXT and tax_year is None:
+        raise click.exceptions.UsageError(
+            f"The {format.value} format requires the option --tax-year to be used"
+        )
 
     _, tax_calculator = parse(files)
     tax_year = Year(tax_year) if tax_year else None
@@ -354,10 +374,16 @@ def capital_gains_command(
 
         if table:
             print(end="\n" if tax_year_idx == 0 and config.logging_enabled else "")
-            print(boldify(f"Capital Gains Tax Report {tax_year_short_date(tax_year)}"))
-            print(tax_year_full_date(tax_year))
-            print(table.to_string(leading_nl=True))
-            print(summary)
+
+            if format == OutputFormat.TEXT:
+                print(
+                    boldify(f"Capital Gains Tax Report {tax_year_short_date(tax_year)}")
+                )
+                print(tax_year_full_date(tax_year))
+                print(table.to_string(format))
+                print(summary)
+            else:
+                print(table.to_string(format, leading_nl=False))
 
 
 @app.command("holdings")
@@ -367,6 +393,7 @@ def holdings_command(
     show_gain_loss: Annotated[
         bool, typer.Option("--show-gain-loss", help="Show unrealised gain/loss.")
     ] = False,
+    format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show current holdings.
@@ -374,7 +401,7 @@ def holdings_command(
     _, tax_calculator = parse(files)
     ticker = Ticker(ticker) if ticker else None
     if table := tax_calculator.get_holdings_table(ticker, show_gain_loss):
-        print(table.to_string(leading_nl=config.logging_enabled))
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 def main() -> None:
