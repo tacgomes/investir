@@ -1,0 +1,42 @@
+<table>
+    <thead>
+        <tr>
+            <th>Security Name</th>
+            <th>ISIN</th>
+            <th>Cost (£)</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>SMT</td>
+            <td>GB00BLDYK618</td>
+            <td>2196.81</td>
+            <td>162.00000000</td>
+        </tr>
+        <tr>
+            <td>Microsoft</td>
+            <td>US5949181045</td>
+            <td>882.35</td>
+            <td>3.62439184</td>
+        </tr>
+        <tr>
+            <td>Apple</td>
+            <td>US0378331005</td>
+            <td>301.70</td>
+            <td>3.00000000</td>
+        </tr>
+        <tr>
+            <td>Skyworks</td>
+            <td>US83088M1027</td>
+            <td>301.08</td>
+            <td>2.29594360</td>
+        </tr>
+        <tr>
+            <td>PayPal</td>
+            <td>US70450Y1038</td>
+            <td>249.59</td>
+            <td>4.13171759</td>
+        </tr>
+    </tbody>
+</table>

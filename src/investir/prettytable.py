@@ -1,11 +1,19 @@
 from collections.abc import Callable, Sequence, Set
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 from typing import Any
 
 import prettytable
 
 from investir.utils import boldify, unboldify
+
+
+class OutputFormat(str, Enum):
+    TEXT = "text"
+    CSV = "csv"
+    JSON = "json"
+    HTML = "html"
 
 
 def date_format(format: str) -> Callable[[str, Any], str]:
@@ -37,26 +45,7 @@ class PrettyTable(prettytable.PrettyTable):
         show_total_fields: Sequence[str] | None = None,
         **kwargs,
     ) -> None:
-        field_names = list(map(lambda f: boldify(f), field_names))
         super().__init__(field_names, **kwargs)
-
-        for f in self.field_names:
-            plain_f = unboldify(f)
-
-            match plain_f.split()[0].strip(), plain_f.split()[-1]:
-                case ("Date", _) | (_, "Date"):
-                    self.custom_format[f] = date_format("%d/%m/%Y")
-                    self.align[f] = "l"
-                case ("Quantity", _):
-                    self.custom_format[f] = decimal_format(8)
-                    self.align[f] = "r"
-
-                case (_, "(£)") | (_, "(%)"):
-                    self.custom_format[f] = decimal_format(2)
-                    self.align[f] = "r"
-
-                case _:
-                    self.align[f] = "l"
 
         self.hrules = prettytable.HEADER
         self.vrules = prettytable.NONE
@@ -66,17 +55,33 @@ class PrettyTable(prettytable.PrettyTable):
     def __bool__(self) -> bool:
         return len(self.rows) > 0
 
-    def to_string(self, leading_nl: bool = True) -> str:
-        nl = "\n" if leading_nl else ""
-
-        if self.rows and self._show_total_fields:
+    def to_string(self, format: OutputFormat, leading_nl: bool = True) -> str:
+        if (
+            self.rows
+            and self._show_total_fields
+            and format in (OutputFormat.TEXT, OutputFormat.HTML)
+        ):
             self._insert_totals_row()
+
+        self._apply_formatting(bold_titles=format == OutputFormat.TEXT)
+
+        start_nl = "\n" if leading_nl else ""
+        end_nl = "\n" if format == OutputFormat.TEXT else ""
 
         fields = [
             f for f in self.field_names if unboldify(f) not in self._hidden_fields
         ]
 
-        return f"{nl}{self.get_string(fields=fields)}\n"
+        kwargs: dict[str, Any] = {"fields": fields}
+        if format == OutputFormat.JSON:
+            kwargs["default"] = str
+
+        table_str = self.get_formatted_string(format, **kwargs)
+
+        if format == OutputFormat.CSV:
+            table_str = table_str.rstrip()
+
+        return f"{start_nl}{table_str}{end_nl}"
 
     def _insert_totals_row(self) -> None:
         totals_row = []
@@ -96,3 +101,25 @@ class PrettyTable(prettytable.PrettyTable):
                 totals_row.append("")
 
         self.add_row(totals_row)
+
+    def _apply_formatting(self, bold_titles: bool) -> None:
+        if bold_titles:
+            self.field_names = list(map(lambda f: boldify(f), self.field_names))
+
+        for f in self.field_names:
+            plain_f = unboldify(f) if bold_titles else f
+
+            match plain_f.split()[0].strip(), plain_f.split()[-1]:
+                case ("Date", _) | (_, "Date"):
+                    self.custom_format[f] = date_format("%d/%m/%Y")
+                    self.align[f] = "l"
+                case ("Quantity", _):
+                    self.custom_format[f] = decimal_format(8)
+                    self.align[f] = "r"
+
+                case (_, "(£)") | (_, "(%)"):
+                    self.custom_format[f] = decimal_format(2)
+                    self.align[f] = "r"
+
+                case _:
+                    self.align[f] = "l"

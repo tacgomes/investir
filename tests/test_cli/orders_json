@@ -1,0 +1,233 @@
+[
+    [
+        "Date",
+        "Security Name",
+        "ISIN",
+        "Ticker",
+        "Total Cost (\u00a3)",
+        "Net Proceeds (\u00a3)",
+        "Quantity",
+        "Price (\u00a3)",
+        "Fees (\u00a3)"
+    ],
+    {
+        "Date": "2021-04-07",
+        "Fees (\u00a3)": "4.76",
+        "ISIN": "US0378331005",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "96.15219917767733984300683794",
+        "Quantity": "20.13713692",
+        "Security Name": "Apple",
+        "Ticker": "AAPL",
+        "Total Cost (\u00a3)": "1940.99"
+    },
+    {
+        "Date": "2021-06-05",
+        "Fees (\u00a3)": "4.47",
+        "ISIN": "US0378331005",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "109.3280352341926928326908777",
+        "Quantity": "9.09199546",
+        "Security Name": "Apple",
+        "Ticker": "AAPL",
+        "Total Cost (\u00a3)": "998.48"
+    },
+    {
+        "Date": "2021-06-11",
+        "Fees (\u00a3)": "12.20",
+        "ISIN": "US5949181045",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "180.1863840854146970126264793",
+        "Quantity": "15.00246544",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Total Cost (\u00a3)": "2715.44"
+    },
+    {
+        "Date": "2021-08-12",
+        "Fees (\u00a3)": "6.71",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "132.9793888529135666373389612",
+        "Quantity": "11.21263989",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": "1497.76"
+    },
+    {
+        "Date": "2021-08-25",
+        "Fees (\u00a3)": "13.13",
+        "ISIN": "US5949181045",
+        "Net Proceeds (\u00a3)": "2939.35",
+        "Price (\u00a3)": "227.0707823546424284900848773",
+        "Quantity": "13.00246544",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2021-08-26",
+        "Fees (\u00a3)": "11.90",
+        "ISIN": "GB00BLDYK618",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "13.49295454545454545454545455",
+        "Quantity": "176.00000000",
+        "Security Name": "SMT",
+        "Ticker": "SMT",
+        "Total Cost (\u00a3)": "2386.66"
+    },
+    {
+        "Date": "2021-09-01",
+        "Fees (\u00a3)": "0.74",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": "152.47",
+        "Price (\u00a3)": "122.9763921037751996946255625",
+        "Quantity": "1.245848877",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2021-09-13",
+        "Fees (\u00a3)": "0.00",
+        "ISIN": "GB00BLDYK618",
+        "Net Proceeds (\u00a3)": "1228.97",
+        "Price (\u00a3)": "13.96556818181818181818181818",
+        "Quantity": "88.00000000",
+        "Security Name": "SMT",
+        "Ticker": "SMT",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2021-09-13",
+        "Fees (\u00a3)": "0.78",
+        "ISIN": "GB00BLDYK618",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "13.02558823529411764705882353",
+        "Quantity": "34.00000000",
+        "Security Name": "SMT",
+        "Ticker": "SMT",
+        "Total Cost (\u00a3)": "443.65"
+    },
+    {
+        "Date": "2021-09-26",
+        "Fees (\u00a3)": "0.56",
+        "ISIN": "GB00BLDYK618",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "12.05275",
+        "Quantity": "40.00000000",
+        "Security Name": "SMT",
+        "Ticker": "SMT",
+        "Total Cost (\u00a3)": "482.67"
+    },
+    {
+        "Date": "2021-11-02",
+        "Fees (\u00a3)": "9.54",
+        "ISIN": "US0378331005",
+        "Net Proceeds (\u00a3)": "3643.81",
+        "Price (\u00a3)": "139.2859644410395857706979174",
+        "Quantity": "26.22913238",
+        "Security Name": "Apple",
+        "Ticker": "AAPL",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2022-01-27",
+        "Fees (\u00a3)": "0.79",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": "177.34",
+        "Price (\u00a3)": "142.9788181283563495960032077",
+        "Quantity": "1.245848877",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2022-04-10",
+        "Fees (\u00a3)": "1.46",
+        "ISIN": "US70450Y1038",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "60.05492742305264866856497808",
+        "Quantity": "4.13171759",
+        "Security Name": "PayPal",
+        "Ticker": "PYPL",
+        "Total Cost (\u00a3)": "249.59"
+    },
+    {
+        "Date": "2022-05-12",
+        "Fees (\u00a3)": "4.95",
+        "ISIN": "US5949181045",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "284.0946984949064051471340172",
+        "Quantity": "2.95081184",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Total Cost (\u00a3)": "843.26"
+    },
+    {
+        "Date": "2022-07-09",
+        "Fees (\u00a3)": "20.36",
+        "ISIN": "US0231351067",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "71.26931748630341918293476961",
+        "Quantity": "48.31896981",
+        "Security Name": "Amazon",
+        "Ticker": "AMZN",
+        "Total Cost (\u00a3)": "3464.02"
+    },
+    {
+        "Date": "2022-09-20",
+        "Fees (\u00a3)": "29.10",
+        "ISIN": "US0231351067",
+        "Net Proceeds (\u00a3)": "4912.43",
+        "Price (\u00a3)": "102.2689436349967578085663660",
+        "Quantity": "48.31896981",
+        "Security Name": "Amazon",
+        "Ticker": "AMZN",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2022-09-28",
+        "Fees (\u00a3)": "2.94",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": null,
+        "Price (\u00a3)": "125.0339163397439355909066760",
+        "Quantity": "3.97500146",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": "499.95"
+    },
+    {
+        "Date": "2022-10-14",
+        "Fees (\u00a3)": "1.88",
+        "ISIN": "US5949181045",
+        "Net Proceeds (\u00a3)": "317.88",
+        "Price (\u00a3)": "241.0699476787141327784562959",
+        "Quantity": "1.32642",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2022-12-16",
+        "Fees (\u00a3)": "5.74",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": "973.95",
+        "Price (\u00a3)": "118.0349397590361445783132530",
+        "Quantity": "8.30000000",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": null
+    },
+    {
+        "Date": "2023-03-03",
+        "Fees (\u00a3)": "1.82",
+        "ISIN": "US83088M1027",
+        "Net Proceeds (\u00a3)": "311.13",
+        "Price (\u00a3)": "149.0238095238095238095238095",
+        "Quantity": "2.10000000",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Total Cost (\u00a3)": null
+    }
+]

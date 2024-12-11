@@ -1,0 +1,50 @@
+[
+    [
+        "Date",
+        "Security Name",
+        "ISIN",
+        "Ticker",
+        "Net Amount (\u00a3)",
+        "Widthheld Amount (\u00a3)"
+    ],
+    {
+        "Date": "2022-02-12",
+        "ISIN": "US0378331005",
+        "Net Amount (\u00a3)": "1.37",
+        "Security Name": "Apple",
+        "Ticker": "AAPL",
+        "Widthheld Amount (\u00a3)": "0.2391180000"
+    },
+    {
+        "Date": "2022-03-09",
+        "ISIN": "US5949181045",
+        "Net Amount (\u00a3)": "3.44",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Widthheld Amount (\u00a3)": "0.6073200000"
+    },
+    {
+        "Date": "2022-03-15",
+        "ISIN": "US83088M1027",
+        "Net Amount (\u00a3)": "2.50",
+        "Security Name": "Skyworks",
+        "Ticker": "SWKS",
+        "Widthheld Amount (\u00a3)": "0.4430620000"
+    },
+    {
+        "Date": "2022-05-13",
+        "ISIN": "US5949181045",
+        "Net Amount (\u00a3)": "4.12",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Widthheld Amount (\u00a3)": "0.7230000000"
+    },
+    {
+        "Date": "2022-06-08",
+        "ISIN": "US0378331005",
+        "Net Amount (\u00a3)": "1.64",
+        "Security Name": "Apple",
+        "Ticker": "AAPL",
+        "Widthheld Amount (\u00a3)": "0.2825940000"
+    }
+]
