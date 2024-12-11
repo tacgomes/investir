@@ -1,0 +1,41 @@
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Deposit (£)</th>
+            <th>Withdrawal (£)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>02/03/2021</td>
+            <td>6000.00</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>28/07/2021</td>
+            <td>4000.00</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>24/02/2022</td>
+            <td></td>
+            <td>400.00</td>
+        </tr>
+        <tr>
+            <td>08/04/2022</td>
+            <td></td>
+            <td>100.00</td>
+        </tr>
+        <tr>
+            <td>03/01/2023</td>
+            <td>2000.00</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>12000.00</td>
+            <td>500.00</td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,56 @@
+<table>
+    <thead>
+        <tr>
+            <th>Disposal Date</th>
+            <th>Identification</th>
+            <th>Security Name</th>
+            <th>ISIN</th>
+            <th>Quantity</th>
+            <th>Cost (£)</th>
+            <th>Proceeds (£)</th>
+            <th>Gain/loss (£)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>20/09/2022</td>
+            <td>Section 104</td>
+            <td>Amazon</td>
+            <td>US0231351067</td>
+            <td>48.31896981</td>
+            <td>3493.12</td>
+            <td>4941.53</td>
+            <td>1448.41</td>
+        </tr>
+        <tr>
+            <td>14/10/2022</td>
+            <td>Section 104</td>
+            <td>Microsoft</td>
+            <td>US5949181045</td>
+            <td>1.32642000</td>
+            <td>324.79</td>
+            <td>319.76</td>
+            <td>-5.03</td>
+        </tr>
+        <tr>
+            <td>16/12/2022</td>
+            <td>Section 104</td>
+            <td>Skyworks</td>
+            <td>US83088M1027</td>
+            <td>8.30000000</td>
+            <td>1094.16</td>
+            <td>979.69</td>
+            <td>-114.47</td>
+        </tr>
+        <tr>
+            <td>03/03/2023</td>
+            <td>Section 104</td>
+            <td>Skyworks</td>
+            <td>US83088M1027</td>
+            <td>2.10000000</td>
+            <td>277.20</td>
+            <td>312.95</td>
+            <td>35.75</td>
+        </tr>
+    </tbody>
+</table>
