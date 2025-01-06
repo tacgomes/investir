@@ -266,7 +266,7 @@ class TaxCalculator:
             weight: Decimal | None = None
 
             if holding_value := holding2value.get(isin):
-                gain_loss = holding.cost - holding_value
+                gain_loss = holding_value - holding.cost
                 weight = holding_value / portfolio_value * 100
 
             table.add_row(
