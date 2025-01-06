@@ -39,6 +39,16 @@ class Trading212Parser:
     INITIAL_FIELDS: Final = (
         "Action",
         "Time",
+    )
+
+    MANDATORY_FIELDS: Final = (
+        "Total",
+        "Currency (Total)",
+        "Notes",
+        "ID",
+    )
+
+    OPTIONAL_FIELDS: Final = (
         "ISIN",
         "Ticker",
         "Name",
@@ -46,19 +56,7 @@ class Trading212Parser:
         "Price / share",
         "Currency (Price / share)",
         "Exchange rate",
-    )
-
-    MANDATORY_FIELDS: Final = (
         "Currency (Result)",
-        "Total",
-        "Currency (Total)",
-        "Notes",
-        "ID",
-        "Currency conversion fee",
-        "Currency (Currency conversion fee)",
-    )
-
-    OPTIONAL_FIELDS: Final = (
         "Result",
         "Withholding tax",
         "Currency (Withholding tax)",
@@ -66,6 +64,8 @@ class Trading212Parser:
         "Currency (Currency conversion from amount)",
         "Currency conversion to amount",
         "Currency (Currency conversion to amount)",
+        "Currency conversion fee",
+        "Currency (Currency conversion fee)",
         "Finra fee (GBP)",
         "Stamp duty (GBP)",
     )
