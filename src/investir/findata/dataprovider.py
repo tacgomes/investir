@@ -53,9 +53,7 @@ class YahooFinanceSecurityInfoProvider:
             currency = yf_data.info["currency"]
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
-            raise DataProviderError(
-                f"Failed currency_to fetch last price for {isin}"
-            ) from None
+            raise DataProviderError(f"Failed to fetch last price for {isin}") from None
 
         if currency == "GBp":
             currency = "GBP"
