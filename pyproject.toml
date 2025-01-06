@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "investir"
-version = "1.4"
+version = "1.4.1"
 dependencies = [
   "click ~= 8.1.0",
   "iso4217 ~= 1.12.0",
