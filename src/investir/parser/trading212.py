@@ -247,7 +247,7 @@ class Trading212Parser:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         if action == "Withdrawal":
-            total *= -1
+            total = -abs(total)
 
         self._transfers.append(Transfer(timestamp, tr_id=tr_id, amount=total))
 
