@@ -222,7 +222,7 @@ class FreetradeParser:
         total_amount = Decimal(row["Total Amount"])
 
         if tr_type == "WITHDRAWAL":
-            total_amount *= -1
+            total_amount = -abs(total_amount)
 
         self._transfers.append(Transfer(timestamp, total_amount))
 

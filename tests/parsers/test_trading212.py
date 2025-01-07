@@ -130,7 +130,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     withdrawal = {
         "Action": "Withdrawal",
         "Time": TIMESTAMP,
-        "Total": "500.25",
+        "Total": "-500.25",
         "Currency (Total)": "GBP",
     }
 
