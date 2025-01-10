@@ -68,6 +68,8 @@ class Trading212Parser:
         "Currency (Currency conversion fee)",
         "Finra fee (GBP)",
         "Stamp duty (GBP)",
+        "Merchant name",
+        "Merchant category",
     )
 
     def __init__(self, csv_file: Path) -> None:
