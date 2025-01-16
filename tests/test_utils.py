@@ -16,7 +16,6 @@ from investir.utils import (
     tax_year_full_date,
     tax_year_period,
     tax_year_short_date,
-    unboldify,
 )
 
 
@@ -76,7 +75,5 @@ def test_dict2str():
     assert dict2str(d) == "{'a': 'A', 'c': 'C'}"
 
 
-def test_boldify_and_unboldify():
-    bold_foo = boldify("foo")
-    assert bold_foo == "\x1b[1mfoo\x1b[0m"
-    assert unboldify(bold_foo) == "foo"
+def test_boldify():
+    assert boldify("foo") == "\x1b[1mfoo\x1b[0m"

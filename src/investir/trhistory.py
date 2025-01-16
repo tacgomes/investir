@@ -2,7 +2,7 @@ from collections.abc import Callable, Mapping, Sequence, ValuesView
 from typing import NamedTuple, TypeVar
 
 from investir.exceptions import AmbiguousTickerError
-from investir.prettytable import PrettyTable
+from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import (
     Acquisition,
     Dividend,
@@ -81,22 +81,17 @@ class TrHistory:
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
         table = PrettyTable(
-            field_names=(
-                "Date",
-                "Security Name",
-                "ISIN",
-                "Ticker",
-                "Total Cost (£)",
-                "Net Proceeds (£)",
-                "Quantity",
-                "Price (£)",
-                "Fees (£)",
-            ),
-            show_total_fields=(
-                "Total Cost (£)",
-                "Net Proceeds (£)",
-                "Fees (£)",
-            ),
+            [
+                Field("Date", Format.DATE),
+                Field("Security Name"),
+                Field("ISIN"),
+                Field("Ticker"),
+                Field("Total Cost (£)", Format.DECIMAL, show_sum=True),
+                Field("Net Proceeds (£)", Format.DECIMAL, show_sum=True),
+                Field("Quantity", Format.QUANTITY),
+                Field("Price (£)", Format.DECIMAL),
+                Field("Fees (£)", Format.DECIMAL, show_sum=True),
+            ]
         )
 
         transactions = list(multifilter(filters, self._orders))
@@ -135,18 +130,14 @@ class TrHistory:
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
         table = PrettyTable(
-            field_names=(
-                "Date",
-                "Security Name",
-                "ISIN",
-                "Ticker",
-                "Net Amount (£)",
-                "Widthheld Amount (£)",
-            ),
-            show_total_fields=(
-                "Net Amount (£)",
-                "Widthheld Amount (£)",
-            ),
+            [
+                Field("Date", Format.DATE),
+                Field("Security Name"),
+                Field("ISIN"),
+                Field("Ticker"),
+                Field("Net Amount (£)", Format.DECIMAL, show_sum=True),
+                Field("Widthheld Amount (£)", Format.DECIMAL, show_sum=True),
+            ]
         )
 
         transactions = list(multifilter(filters, self._dividends))
@@ -168,8 +159,11 @@ class TrHistory:
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
         table = PrettyTable(
-            field_names=("Date", "Deposit (£)", "Withdrawal (£)"),
-            show_total_fields=("Deposit (£)", "Withdrawal (£)"),
+            [
+                Field("Date", Format.DATE),
+                Field("Deposit (£)", Format.DECIMAL, show_sum=True),
+                Field("Withdrawal (£)", Format.DECIMAL, show_sum=True),
+            ]
         )
 
         transactions = list(multifilter(filters, self._transfers))
@@ -195,7 +189,10 @@ class TrHistory:
         self, filters: Sequence[Callable] | None = None
     ) -> PrettyTable:
         table = PrettyTable(
-            field_names=("Date", "Amount (£)"), show_total_fields=("Amount (£)",)
+            [
+                Field("Date", Format.DATE),
+                Field("Amount (£)", Format.DECIMAL, show_sum=True),
+            ]
         )
 
         transactions = list(multifilter(filters, self._interest))
