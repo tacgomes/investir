@@ -8,7 +8,7 @@ from typing import TypeAlias
 
 from investir.exceptions import AmbiguousTickerError, IncompleteRecordsError
 from investir.findata import FinancialData
-from investir.prettytable import PrettyTable
+from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker, Year
@@ -150,16 +150,16 @@ class TaxCalculator:
         self._calculate_capital_gains()
 
         table = PrettyTable(
-            field_names=(
-                "Disposal Date",
-                "Identification",
-                "Security Name",
-                "ISIN",
-                "Quantity",
-                "Cost (£)",
-                "Proceeds (£)",
-                "Gain/loss (£)",
-            ),
+            [
+                Field("Disposal Date", Format.DATE),
+                Field("Identification"),
+                Field("Security Name"),
+                Field("ISIN"),
+                Field("Quantity", Format.QUANTITY),
+                Field("Cost (£)", Format.DECIMAL),
+                Field("Proceeds (£)", Format.DECIMAL),
+                Field("Gain/loss (£)", Format.DECIMAL),
+            ]
         )
 
         num_disposals = 0
@@ -208,29 +208,15 @@ class TaxCalculator:
         self._calculate_capital_gains()
 
         table = PrettyTable(
-            field_names=(
-                "Security Name",
-                "ISIN",
-                "Cost (£)",
-                "Quantity",
-                "Current Value (£)",
-                "Gain/Loss (£)",
-                "Weight (%)",
-            ),
-            hidden_fields=(
-                "Current Value (£)",
-                "Gain/Loss (£)",
-                "Weight (%)",
-            )
-            if not show_gain_loss
-            else (),
-            show_total_fields=(
-                "Current Value (£)",
-                "Gain/Loss (£)",
-                "Weight (%)",
-            )
-            if show_gain_loss
-            else (),
+            [
+                Field("Security Name"),
+                Field("ISIN"),
+                Field("Cost (£)", Format.DECIMAL),
+                Field("Quantity", Format.QUANTITY),
+                Field("Current Value (£)", Format.DECIMAL, visible=show_gain_loss),
+                Field("Gain/Loss (£)", Format.DECIMAL, visible=show_gain_loss),
+                Field("Weight (%)", Format.DECIMAL, visible=show_gain_loss),
+            ]
         )
 
         holdings = []
