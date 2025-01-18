@@ -6,11 +6,10 @@ from typing import Any
 import pandas as pd
 import pytest
 import yfinance
-from iso4217 import Currency
+from moneyed import GBP, USD, Money
 
 from investir.findata import (
     DataProviderError,
-    Price,
     Split,
     YahooFinanceExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
@@ -56,16 +55,14 @@ def _ticker_mocker(mocker) -> Callable:
 
 def test_yfinance_security_info_provider(ticker_mocker):
     ticker_mocker(
-        {"shortName": "Amazon", "currentPrice": 199.46, "currency": "USD"},
+        {"shortName": "Amazon", "currentPrice": "199.46", "currency": "USD"},
         AMZN_PSERIES,
     )
     provider = YahooFinanceSecurityInfoProvider()
     security_info = provider.fech_info(ISIN("AMZN-ISIN"))
     assert security_info.name == "Amazon"
     assert security_info.splits == AMZN_SPLITS
-    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Price(
-        Decimal(199.46), Currency.USD
-    )
+    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
 
 
 def test_yfinance_security_info_provider_security_not_found(ticker_mocker):
@@ -80,9 +77,7 @@ def test_yfinance_security_info_provider_price_in_GBp(ticker_mocker):
         {"currentPrice": 1550, "currency": "GBp"},
     )
     provider = YahooFinanceSecurityInfoProvider()
-    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Price(
-        Decimal("15.50"), Currency.GBP
-    )
+    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
 
 
 def test_yfinance_security_info_provider_exception_raised(ticker_mocker):
@@ -104,7 +99,7 @@ def test_yfinance_security_info_provider_missing_field(ticker_mocker):
 def test_yfinance_exchange_rate_provider(ticker_mocker):
     ticker_mocker({"bid": 0.775420})
     provider = YahooFinanceExchangeRateProvider()
-    fx_rate = provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
+    fx_rate = provider.fetch_exchange_rate(USD, GBP)
     assert fx_rate == Decimal(0.775420)
 
 
@@ -112,11 +107,11 @@ def test_yfinance_exchange_rate_provider_exception_raised(ticker_mocker):
     ticker_mocker(yfinance.exceptions.YFException)
     provider = YahooFinanceExchangeRateProvider()
     with pytest.raises(DataProviderError):
-        provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
+        provider.fetch_exchange_rate(USD, GBP)
 
 
 def test_yfinance_exchange_rate_provider_missing_field(ticker_mocker):
     ticker_mocker({})
     provider = YahooFinanceExchangeRateProvider()
     with pytest.raises(DataProviderError):
-        provider.fetch_exchange_rate(Currency.USD, Currency.GBP)
+        provider.fetch_exchange_rate(USD, GBP)

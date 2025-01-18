@@ -4,12 +4,11 @@ from investir.findata.dataprovider import (
     YahooFinanceSecurityInfoProvider,
 )
 from investir.findata.financialdata import FinancialData
-from investir.findata.types import Price, SecurityInfo, Split
+from investir.findata.types import SecurityInfo, Split
 
 __all__ = [
     "DataProviderError",
     "FinancialData",
-    "Price",
     "SecurityInfo",
     "Split",
     "YahooFinanceExchangeRateProvider",

@@ -3,9 +3,9 @@ from decimal import Decimal
 from typing import Protocol
 
 import yfinance
-from iso4217 import Currency
+from moneyed import Currency, Money
 
-from investir.findata.types import Price, SecurityInfo, Split
+from investir.findata.types import SecurityInfo, Split
 from investir.typing import ISIN
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class SecurityInfoProvider(Protocol):
     def fech_info(self, isin: ISIN) -> SecurityInfo:
         pass
 
-    def fetch_price(self, isin: ISIN) -> Price:
+    def fetch_price(self, isin: ISIN) -> Money:
         pass
 
 
@@ -46,7 +46,7 @@ class YahooFinanceSecurityInfoProvider:
 
         return SecurityInfo(name, splits)
 
-    def fetch_price(self, isin: ISIN) -> Price:
+    def fetch_price(self, isin: ISIN) -> Money:
         try:
             yf_data = yfinance.Ticker(isin)
             price = Decimal(yf_data.info["currentPrice"])
@@ -59,7 +59,7 @@ class YahooFinanceSecurityInfoProvider:
             currency = "GBP"
             price *= Decimal("0.01")
 
-        return Price(price, Currency(currency))
+        return Money(price, currency)
 
 
 class YahooFinanceExchangeRateProvider(ExchangeRateProvider):
@@ -73,8 +73,8 @@ class YahooFinanceExchangeRateProvider(ExchangeRateProvider):
             logger.debug("Exception from yfinance: %s", repr(e))
             raise DataProviderError(
                 f"Failed to fetch exchange rate for "
-                f"{currency_from.currency_name} ({currency_from.code}) to "
-                f"{currency_to.currency_name} ({currency_to.code})"
+                f"{currency_from.name} ({currency_from.code}) to "
+                f"{currency_to.name} ({currency_to.code})"
             ) from None
 
         return fx_rate

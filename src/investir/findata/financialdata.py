@@ -4,14 +4,14 @@ from pathlib import Path
 from typing import Final
 
 import yaml
-from iso4217 import Currency
+from moneyed import GBP, Currency, Money
 
 from investir.findata.dataprovider import (
     DataProviderError,
     ExchangeRateProvider,
     SecurityInfoProvider,
 )
-from investir.findata.types import Price, SecurityInfo
+from investir.findata.types import SecurityInfo
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
 
@@ -33,7 +33,7 @@ class FinancialData:
         self._tr_hist = tr_hist
         self._cache_file = cache_file
         self._security_info: dict[ISIN, SecurityInfo] = {}
-        self._security_price: dict[ISIN, Price] = {}
+        self._security_price: dict[ISIN, Money] = {}
         self._exchange_rates: dict[tuple[Currency, Currency], Decimal] = {}
 
         self._initialise()
@@ -41,7 +41,7 @@ class FinancialData:
     def get_security_info(self, isin: ISIN) -> SecurityInfo:
         return self._security_info[isin]
 
-    def get_security_price(self, isin) -> Price | None:
+    def get_security_price(self, isin) -> Money | None:
         if price := self._security_price.get(isin):
             return price
 
@@ -75,9 +75,9 @@ class FinancialData:
                 logger.debug(
                     "Using %s exchange rate for %s (%s) to %s (%s) (inverse rate: %s)",
                     round(fx_rate, 5),
-                    currency_from.currency_name,
+                    currency_from.name,
                     currency_from.code,
-                    currency_to.currency_name,
+                    currency_to.name,
                     currency_to.code,
                     round(inverse_fx_rate, 5),
                 )
@@ -89,10 +89,7 @@ class FinancialData:
         return fx_rate
 
     def convert_currency(
-        self,
-        amount: Decimal,
-        currency_from: Currency,
-        currency_to: Currency = Currency.GBP,  # type: ignore[attr-defined]
+        self, amount: Decimal, currency_from: Currency, currency_to: Currency = GBP
     ) -> Decimal | None:
         if currency_from == currency_to:
             return amount

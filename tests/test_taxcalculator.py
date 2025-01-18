@@ -3,14 +3,13 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
-from iso4217 import Currency
+from moneyed import GBP, USD, Money
 
 from investir.config import config
 from investir.exceptions import IncompleteRecordsError
 from investir.findata import (
     DataProviderError,
     FinancialData,
-    Price,
     SecurityInfo,
     Split,
     YahooFinanceExchangeRateProvider,
@@ -27,7 +26,7 @@ def _make_tax_calculator(mocker, tmp_path) -> Callable:
     def _method(
         orders: Sequence[Order],
         splits: Sequence[Split] | None = None,
-        price: Price | Exception | None = None,
+        price: Money | Exception | None = None,
         fx_rate: Decimal | Exception | None = None,
     ) -> TaxCalculator:
         config.reset()
@@ -1302,9 +1301,7 @@ def test_get_holdings_table_with_gain_loss(make_tax_calculator):
         amount=Decimal("100.0"),
     )
 
-    tax_calculator = make_tax_calculator(
-        [order], price=Price(Decimal("15.0"), Currency.GBP)
-    )
+    tax_calculator = make_tax_calculator([order], price=Money("15.0", GBP))
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
     assert "Gain/Loss (£)" in str(table)
@@ -1322,7 +1319,7 @@ def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calc
 
     tax_calculator = make_tax_calculator(
         [order],
-        price=Price(Decimal("15.0"), Currency.USD),
+        price=Money("15.0", USD),
         fx_rate=Decimal("0.75"),
     )
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
@@ -1350,7 +1347,7 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
 
     tax_calculator = make_tax_calculator(
         [order],
-        price=Price(Decimal("15.0"), Currency.USD),
+        price=Money("15.0", USD),
         fx_rate=DataProviderError,
     )
 
