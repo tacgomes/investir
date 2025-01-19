@@ -172,7 +172,7 @@ def version_callback(value: bool) -> None:
 
 
 @app.callback()
-def main_callback(  # noqa: PLR0913
+def main_callback(
     strict: Annotated[
         bool, typer.Option(help="Abort if data integrity issues are found.")
     ] = config.strict,
@@ -237,7 +237,7 @@ def main_callback(  # noqa: PLR0913
 
 
 @app.command("orders")
-def orders_command(  # noqa: PLR0913
+def orders_command(
     files: FilesArg,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
@@ -332,7 +332,7 @@ def interest_command(
 
 
 @app.command("capital-gains")
-def capital_gains_command(  # noqa: PLR0913
+def capital_gains_command(
     files: FilesArg,
     gains_only: Annotated[
         bool, typer.Option("--gains", help="Show only capital gains.")
