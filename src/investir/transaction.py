@@ -21,7 +21,7 @@ else:
 @dataclass(frozen=True)
 class Transaction(ABC):
     timestamp: datetime
-    amount: Decimal
+    total: Decimal
     tr_id: str | None = None
     notes: str | None = None
 
@@ -51,22 +51,22 @@ class Order(Transaction, ABC):
 
     @property
     def price(self) -> Decimal:
-        return self.amount / self.quantity
+        return self.total / self.quantity
 
     def split(self: Self, split_quantity: Decimal) -> tuple[Self, Self]:
         assert self.quantity >= split_quantity
 
-        match_amount = self.price * split_quantity
+        match_total = self.price * split_quantity
         match_quantity = split_quantity
         match_fees = self.fees / self.quantity * split_quantity
 
-        remainder_amount = self.amount - match_amount
+        remainder_total = self.total - match_total
         remainder_quantity = self.quantity - match_quantity
         remainder_fees = self.fees - match_fees
 
         match = replace(
             self,
-            amount=match_amount,
+            total=match_total,
             quantity=match_quantity,
             fees=match_fees,
             notes=f"Splitted from order {self.number}",
@@ -74,7 +74,7 @@ class Order(Transaction, ABC):
 
         remainder = replace(
             self,
-            amount=remainder_amount,
+            total=remainder_total,
             quantity=remainder_quantity,
             fees=remainder_fees,
             notes=f"Splitted from order {self.number}",
@@ -93,7 +93,7 @@ class Order(Transaction, ABC):
             hour=0, minute=0, second=0, microsecond=0
         )
 
-        amount = Decimal(sum(order.amount for order in orders))
+        total = Decimal(sum(order.total for order in orders))
         quantity = Decimal(sum(order.quantity for order in orders))
         fees = Decimal(sum(order.fees for order in orders))
 
@@ -103,7 +103,7 @@ class Order(Transaction, ABC):
         return replace(
             orders[0],
             timestamp=timestamp,
-            amount=amount,
+            total=total,
             quantity=quantity,
             fees=fees,
             notes=notes,
@@ -133,14 +133,14 @@ class Order(Transaction, ABC):
 class Acquisition(Order):
     @property
     def total_cost(self) -> Decimal:
-        return self.amount + self.fees
+        return self.total + self.fees
 
 
 @dataclass(frozen=True)
 class Disposal(Order):
     @property
     def net_proceeds(self) -> Decimal:
-        return self.amount - self.fees
+        return self.total - self.fees
 
 
 @dataclass(kw_only=True, frozen=True)

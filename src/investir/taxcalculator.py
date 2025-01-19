@@ -46,7 +46,7 @@ class CapitalGain:
     def gain_loss(self) -> Decimal:
         # Disposal fees have been added to the `cost` so the gross
         # proceeds are used.
-        return self.disposal.amount - self.cost
+        return self.disposal.total - self.cost
 
     @property
     def quantity(self) -> Decimal:
@@ -69,7 +69,7 @@ class CapitalGain:
             f"{self.disposal.date} "
             f"{self.disposal.isin:<4} "
             f"quantity: {self.quantity}, "
-            f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.amount}, "
+            f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.total}, "
             f"gain: £{self.gain_loss:.2f}, "
             f"identification: {self.identification}"
         )
@@ -183,13 +183,13 @@ class TaxCalculator:
                     cg.disposal.isin,
                     cg.quantity,
                     cg.cost,
-                    cg.disposal.amount,
+                    cg.disposal.total,
                     cg.gain_loss,
                 ]
             )
 
             num_disposals += 1
-            disposal_proceeds += round(cg.disposal.amount, 2)
+            disposal_proceeds += round(cg.disposal.total, 2)
             total_cost += round(cg.cost, 2)
             if cg.gain_loss > 0.0:
                 total_gains += cg.gain_loss

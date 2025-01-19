@@ -149,7 +149,7 @@ class TrHistory:
             )
 
             table.add_row(
-                [tr.date, tr.name, tr.isin, tr.ticker, tr.amount, tr.withheld or "n/a"],
+                [tr.date, tr.name, tr.isin, tr.ticker, tr.total, tr.withheld or "n/a"],
                 divider=divider,
             )
 
@@ -170,12 +170,12 @@ class TrHistory:
         last_idx = len(transactions) - 1
 
         for idx, tr in enumerate(transactions):
-            if tr.amount > 0:
-                deposited = tr.amount
+            if tr.total > 0:
+                deposited = tr.total
                 widthdrew = ""
             else:
                 deposited = ""
-                widthdrew = abs(tr.amount)
+                widthdrew = abs(tr.total)
 
             divider = (
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
@@ -203,7 +203,7 @@ class TrHistory:
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
             )
 
-            table.add_row([tr.date, tr.amount], divider=divider)
+            table.add_row([tr.date, tr.total], divider=divider)
 
         return table
 
