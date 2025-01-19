@@ -1,7 +1,7 @@
 import csv
 import logging
 from collections.abc import Mapping
-from datetime import timezone
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Final
@@ -131,23 +131,33 @@ class Trading212Parser:
                         raise_or_warn(
                             CurrencyError(self._csv_file, row, currency_total)
                         )
-                    fn(row)
+
+                    timestamp = parse_timestamp(row["Time"])
+                    tr_id = row["ID"]
+                    total_amount = Decimal(row["Total"])
+                    total_currency = row["Currency (Total)"]
+
+                    fn(row, tr_type, timestamp, tr_id, total_amount, total_currency)
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
         )
 
-    def _parse_order(self, row: Mapping[str, str]) -> None:
-        action = row["Action"]
-        timestamp = parse_timestamp(row["Time"])
+    def _parse_order(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        tr_id: str,
+        total_amount: Decimal,
+        total_currency: str,
+    ) -> None:
         isin = row["ISIN"]
         ticker = row["Ticker"]
         name = row["Name"]
         num_shares = Decimal(row["No. of shares"])
         price_share = Decimal(row["Price / share"])
         exchange_rate = Decimal(row["Exchange rate"])
-        total = Decimal(row["Total"])
-        tr_id = row["ID"]
         fx_conversion_fee = read_decimal(row["Currency conversion fee"])
         currency_fx_conversion_fee = row["Currency (Currency conversion fee)"]
         stamp_duty = read_decimal(row.get("Stamp duty (GBP)", ""))
@@ -168,7 +178,7 @@ class Trading212Parser:
         order_class: type[Order] = Acquisition
         fees = stamp_duty + finra_fee + fx_conversion_fee
 
-        if action in ("Market sell", "Limit sell"):
+        if tr_type in ("Market sell", "Limit sell"):
             order_class = Disposal
             fees *= -1
 
@@ -176,9 +186,11 @@ class Trading212Parser:
             (round(price_share * num_shares, 2) / exchange_rate) + fees, 2
         )
 
-        if abs(calculated_amount - total) > Decimal("0.01"):
+        if abs(calculated_amount - total_amount) > Decimal("0.01"):
             raise_or_warn(
-                CalculatedAmountError(self._csv_file, row, total, calculated_amount)
+                CalculatedAmountError(
+                    self._csv_file, row, total_amount, calculated_amount
+                )
             )
 
         if config.include_fx_fees:
@@ -192,7 +204,7 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                total=total - fees,
+                total=total_amount - fees,
                 quantity=num_shares,
                 fees=allowable_fees,
                 tr_id=tr_id,
@@ -201,15 +213,20 @@ class Trading212Parser:
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
-    def _parse_dividend(self, row: Mapping[str, str]):
-        timestamp = parse_timestamp(row["Time"])
+    def _parse_dividend(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        tr_id: str,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         isin = row["ISIN"]
         ticker = row["Ticker"]
         name = row["Name"]
         currency_price_share = row["Currency (Price / share)"]
-        total = Decimal(row["Total"])
         currency_withholding_tax = row["Currency (Withholding tax)"]
-        tr_id = row["ID"]
         fx_conversion_fee = row["Currency conversion fee"]
 
         if timestamp.tzinfo is None:
@@ -231,7 +248,7 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                total=total,
+                total=total_amount,
                 withheld=None,
                 tr_id=tr_id,
             )
@@ -239,30 +256,37 @@ class Trading212Parser:
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
-    def _parse_transfer(self, row: Mapping[str, str]):
-        action = row["Action"]
-        timestamp = parse_timestamp(row["Time"])
-        total = Decimal(row["Total"])
-        tr_id = row["ID"]
-
+    def _parse_transfer(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        tr_id: str,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-        if action == "Withdrawal":
-            total = -abs(total)
+        if tr_type == "Withdrawal":
+            total_amount = -abs(total_amount)
 
-        self._transfers.append(Transfer(timestamp, tr_id=tr_id, total=total))
+        self._transfers.append(Transfer(timestamp, tr_id=tr_id, total=total_amount))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
-    def _parse_interest(self, row: Mapping[str, str]):
-        timestamp = parse_timestamp(row["Time"])
-        total = Decimal(row["Total"])
-        tr_id = row["ID"]
-
+    def _parse_interest(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        tr_id: str,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-        self._interest.append(Interest(timestamp, tr_id=tr_id, total=total))
+        self._interest.append(Interest(timestamp, tr_id=tr_id, total=total_amount))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])

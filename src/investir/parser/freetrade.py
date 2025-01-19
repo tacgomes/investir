@@ -1,6 +1,7 @@
 import csv
 import logging
 from collections.abc import Mapping
+from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Final
@@ -111,16 +112,26 @@ class FreetradeParser:
                             row,
                             row["Account Currency"],
                         )
-                    fn(row)
+
+                    timestamp = parse_timestamp(row["Timestamp"])
+                    total_amount = Decimal(row["Total Amount"])
+                    total_currency = row["Account Currency"]
+
+                    fn(row, tr_type, timestamp, total_amount, total_currency)
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
         )
 
-    def _parse_order(self, row: Mapping[str, str]) -> None:
+    def _parse_order(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total_amount: Decimal,
+        total_currency: str,
+    ) -> None:
         title = row["Title"]
-        timestamp = parse_timestamp(row["Timestamp"])
-        total_amount = Decimal(row["Total Amount"])
         action = row["Buy / Sell"]
         ticker = row["Ticker"]
         isin = row["ISIN"]
@@ -174,10 +185,15 @@ class FreetradeParser:
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
-    def _parse_dividend(self, row: Mapping[str, str]):
+    def _parse_dividend(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         title = row["Title"]
-        timestamp = parse_timestamp(row["Timestamp"])
-        total_amount = Decimal(row["Total Amount"])
         ticker = row["Ticker"]
         isin = row["ISIN"]
         base_fx_rate = read_decimal(row["Base FX Rate"], Decimal("1.0"))
@@ -216,11 +232,14 @@ class FreetradeParser:
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
-    def _parse_transfer(self, row: Mapping[str, str]):
-        timestamp = parse_timestamp(row["Timestamp"])
-        tr_type = row["Type"]
-        total_amount = Decimal(row["Total Amount"])
-
+    def _parse_transfer(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         if tr_type == "WITHDRAWAL":
             total_amount = -abs(total_amount)
 
@@ -228,10 +247,14 @@ class FreetradeParser:
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
-    def _parse_interest(self, row: Mapping[str, str]):
-        timestamp = parse_timestamp(row["Timestamp"])
-        total_amount = Decimal(row["Total Amount"])
-
+    def _parse_interest(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total_amount: Decimal,
+        total_currency: str,
+    ):
         self._interest.append(Interest(timestamp, total_amount))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
