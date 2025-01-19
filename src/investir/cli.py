@@ -146,7 +146,7 @@ def create_filters(
     tax_year: int | None = None,
     ticker: str | None = None,
     tr_type: type[Transaction] | None = None,
-    amount_op: Callable | None = None,
+    total_op: Callable | None = None,
 ) -> Sequence[Callable[[Transaction], bool]]:
     filters = []
 
@@ -159,8 +159,8 @@ def create_filters(
     if tr_type is not None:
         filters.append(lambda tr: isinstance(tr, tr_type))
 
-    if amount_op is not None:
-        filters.append(lambda tr: amount_op(tr.amount, 0.0))
+    if total_op is not None:
+        filters.append(lambda tr: total_op(tr.total, 0.0))
 
     return filters
 
@@ -305,13 +305,13 @@ def transfers_command(
     tr_hist, _ = parse(files)
 
     if deposits_only:
-        amount_op = operator.gt
+        total_op = operator.gt
     elif withdrawals_only:
-        amount_op = operator.lt
+        total_op = operator.lt
     else:
-        amount_op = None
+        total_op = None
 
-    filters = create_filters(tax_year=tax_year, amount_op=amount_op)
+    filters = create_filters(tax_year=tax_year, total_op=total_op)
     if table := tr_hist.get_transfers_table(filters):
         print(table.to_string(format, leading_nl=config.logging_enabled))
 

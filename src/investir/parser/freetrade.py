@@ -165,7 +165,7 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                amount=total_amount - fees,
+                total=total_amount - fees,
                 quantity=quantity,
                 fees=allowable_fees,
                 tr_id=order_id,
@@ -209,7 +209,7 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                amount=total_amount,
+                total=total_amount,
                 withheld=withheld_tax_amount * base_fx_rate,
             )
         )
