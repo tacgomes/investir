@@ -148,7 +148,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.amount == Decimal("1118.25")
+    assert order.total == Decimal("1118.25")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("6.4")
 
@@ -158,7 +158,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == "Amazon"
-    assert order.amount == Decimal("1325.00")
+    assert order.total == Decimal("1325.00")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("5.2")
 
@@ -169,23 +169,23 @@ def test_parser_happy_path(create_parser):
     assert dividend.isin == ISIN("SWKS-ISIN")
     assert dividend.name == "Skyworks"
     assert dividend.ticker == Ticker("SWKS")
-    assert dividend.amount == Decimal("2.47")
+    assert dividend.total == Decimal("2.47")
     assert dividend.withheld == Decimal("0.4375520000")
 
     assert len(parser_result.transfers) == 2
 
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
-    assert transfer.amount == Decimal("-500.25")
+    assert transfer.total == Decimal("-500.25")
 
     transfer = parser_result.transfers[1]
     assert transfer.timestamp == TIMESTAMP
-    assert transfer.amount == Decimal("1000.00")
+    assert transfer.total == Decimal("1000.00")
 
     assert len(parser_result.interest) == 1
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
-    assert interest.amount == Decimal("4.65")
+    assert interest.total == Decimal("4.65")
 
 
 def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
@@ -225,7 +225,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("MSFT-ISIN")
     assert order.ticker == Ticker("MSFT")
     assert order.name == "Microsoft"
-    assert order.amount == Decimal("1325.00")
+    assert order.total == Decimal("1325.00")
     assert order.quantity == Decimal("10.0")
     assert order.fees == Decimal("1.3")
 
@@ -235,7 +235,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.amount == Decimal("1118.25")
+    assert order.total == Decimal("1118.25")
     assert order.quantity == Decimal("2.1")
     assert order.fees == Decimal("0.0")
 
@@ -245,7 +245,7 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == "Amazon"
-    assert order.amount == Decimal("1325.00")
+    assert order.total == Decimal("1325.00")
     assert order.quantity == Decimal("10")
     assert order.fees == Decimal("0.0")
 

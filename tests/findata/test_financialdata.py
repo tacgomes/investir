@@ -26,7 +26,7 @@ ORDER1 = Acquisition(
     datetime(2018, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    amount=Decimal("10.0"),
+    total=Decimal("10.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -34,7 +34,7 @@ ORDER2 = Acquisition(
     datetime(2020, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    amount=Decimal("10.0"),
+    total=Decimal("10.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -42,7 +42,7 @@ ORDER3 = Disposal(
     datetime(2022, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    amount=Decimal("25.0"),
+    total=Decimal("25.0"),
     quantity=Decimal("2.0"),
 )
 
@@ -50,7 +50,7 @@ ORDER4 = Acquisition(
     datetime(2024, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("NFLX-ISIN"),
     name="Netflix",
-    amount=Decimal("15.0"),
+    total=Decimal("15.0"),
     quantity=Decimal("2.0"),
 )
 
@@ -58,7 +58,7 @@ ORDER5 = Acquisition(
     datetime(2024, 3, 1, tzinfo=timezone.utc),
     isin=ISIN("NOTF-ISIN"),
     name="Not Found",
-    amount=Decimal("5.0"),
+    total=Decimal("5.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -66,7 +66,7 @@ ORDER6 = Acquisition(
     datetime(2024, 6, 1, tzinfo=timezone.utc),
     isin=ISIN("MSFT-ISIN"),
     name="Microsoft",
-    amount=Decimal("15.0"),
+    total=Decimal("15.0"),
     quantity=Decimal("2.0"),
 )
 

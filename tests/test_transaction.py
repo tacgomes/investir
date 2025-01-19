@@ -16,7 +16,7 @@ def test_acquisition_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("100.0"),
+        total=Decimal("100.0"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
         tr_id="ORDER",
@@ -25,8 +25,8 @@ def test_acquisition_order():
     assert order.date == date(2022, 4, 6)
     assert order.tax_year() == 2022
     assert order.number == count + 1
-    assert order.price == order.amount / order.quantity
-    assert order.total_cost == order.amount + order.fees
+    assert order.price == order.total / order.quantity
+    assert order.total_cost == order.total + order.fees
 
 
 def test_disposal_order():
@@ -37,7 +37,7 @@ def test_disposal_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("50.0"),
+        total=Decimal("50.0"),
         quantity=Decimal("10.0"),
         fees=Decimal("1.7"),
         tr_id="ORDER",
@@ -46,8 +46,8 @@ def test_disposal_order():
     assert order.date == date(2023, 4, 6)
     assert order.tax_year() == 2023
     assert order.number == count + 1
-    assert order.price == order.amount / order.quantity
-    assert order.net_proceeds == order.amount - order.fees
+    assert order.price == order.total / order.quantity
+    assert order.net_proceeds == order.total - order.fees
 
 
 def test_order_merge():
@@ -56,7 +56,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("100.0"),
+        total=Decimal("100.0"),
         quantity=Decimal("20.0"),
         fees=Decimal("1.4"),
     )
@@ -66,7 +66,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("50.0"),
+        total=Decimal("50.0"),
         quantity=Decimal("5.0"),
         fees=Decimal("1.5"),
     )
@@ -76,7 +76,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("10.0"),
+        total=Decimal("10.0"),
         quantity=Decimal("4.0"),
         fees=Decimal("0.1"),
     )
@@ -86,7 +86,7 @@ def test_order_merge():
     assert merged_order.isin == ISIN("AMZN-ISIN")
     assert merged_order.ticker == Ticker("AMZN")
     assert merged_order.name == "Amazon"
-    assert merged_order.amount == Decimal("160")
+    assert merged_order.total == Decimal("160")
     assert merged_order.quantity == Decimal("29")
     assert merged_order.fees == Decimal("3.0")
 
@@ -99,7 +99,7 @@ def test_order_split():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        amount=Decimal("120.0"),
+        total=Decimal("120.0"),
         quantity=Decimal("12.0"),
         fees=Decimal("6.0"),
     )
@@ -111,7 +111,7 @@ def test_order_split():
     assert matched.isin == ISIN("AMZN-ISIN")
     assert matched.ticker == Ticker("AMZN")
     assert matched.name == "Amazon"
-    assert matched.amount == Decimal("80.0")
+    assert matched.total == Decimal("80.0")
     assert matched.quantity == Decimal("8.0")
     assert matched.fees == Decimal("4.0")
 
@@ -120,7 +120,7 @@ def test_order_split():
     assert remainder.isin == ISIN("AMZN-ISIN")
     assert remainder.ticker == Ticker("AMZN")
     assert remainder.name == "Amazon"
-    assert remainder.amount == Decimal("40.0")
+    assert remainder.total == Decimal("40.0")
     assert remainder.quantity == Decimal("4.0")
     assert remainder.fees == Decimal("2.0")
 
@@ -133,7 +133,7 @@ def test_order_adjust_quantity():
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("AMZN-ISIN"),
         name="Amazon",
-        amount=Decimal("10.0"),
+        total=Decimal("10.0"),
         quantity=Decimal("1.0"),
     )
 
@@ -141,7 +141,7 @@ def test_order_adjust_quantity():
         datetime(2020, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("AMZN-ISIN"),
         name="Amazon",
-        amount=Decimal("10.0"),
+        total=Decimal("10.0"),
         quantity=Decimal("1.0"),
     )
 
@@ -157,7 +157,7 @@ def test_order_adjust_quantity():
     assert order2_adjusted.isin == order2.isin
     assert order2_adjusted.ticker == order2.ticker
     assert order2_adjusted.name == order2.name
-    assert order2_adjusted.amount == order2.amount
+    assert order2_adjusted.total == order2.total
     assert order2_adjusted.fees == order2.fees
     assert order2_adjusted.quantity == order2.quantity * ratio
     assert order2_adjusted.original_quantity == order2.quantity
@@ -171,7 +171,7 @@ def test_order_adjust_quantity():
     assert order1_adjusted.isin == order1.isin
     assert order1_adjusted.ticker == order1.ticker
     assert order1_adjusted.name == order1.name
-    assert order1_adjusted.amount == order1.amount
+    assert order1_adjusted.total == order1.total
     assert order1_adjusted.fees == order1.fees
     assert order1_adjusted.quantity == order1.quantity * ratio
     assert order1_adjusted.original_quantity == order1.quantity

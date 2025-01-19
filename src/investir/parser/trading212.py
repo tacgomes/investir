@@ -192,7 +192,7 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                amount=total - fees,
+                total=total - fees,
                 quantity=num_shares,
                 fees=allowable_fees,
                 tr_id=tr_id,
@@ -231,7 +231,7 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                amount=total,
+                total=total,
                 withheld=None,
                 tr_id=tr_id,
             )
@@ -251,7 +251,7 @@ class Trading212Parser:
         if action == "Withdrawal":
             total = -abs(total)
 
-        self._transfers.append(Transfer(timestamp, tr_id=tr_id, amount=total))
+        self._transfers.append(Transfer(timestamp, tr_id=tr_id, total=total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
@@ -263,6 +263,6 @@ class Trading212Parser:
         if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-        self._interest.append(Interest(timestamp, tr_id=tr_id, amount=total))
+        self._interest.append(Interest(timestamp, tr_id=tr_id, total=total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
