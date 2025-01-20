@@ -265,15 +265,15 @@ def test_get_foreign_exchange_rate_exception_raised(make_financial_data):
     assert findata.get_foreign_exchange_rate(GBP, USD) is None
 
 
-def test_convert_currency(make_financial_data):
+def test_convert_money(make_financial_data):
     findata, mocks = make_financial_data(fx_rate=Decimal("1.3042"))
-    assert findata.convert_currency(Decimal("10.0"), GBP, USD) == Decimal("13.042")
+    assert findata.convert_money(Money("10.0", GBP), USD) == Money("13.042", USD)
     assert mocks.fetch_exchange_rate.call_count == 1
 
 
-def test_convert_currency_same_currencies(make_financial_data):
+def test_convert_money_to_same_currency(make_financial_data):
     findata, mocks = make_financial_data(fx_rate=Decimal("1.3042"))
-    assert findata.convert_currency(Decimal("10.0"), GBP, GBP) == Decimal("10.0")
+    assert findata.convert_money(Money("10.0", GBP), GBP) == Money("10.0", GBP)
     assert mocks.fetch_exchange_rate.call_count == 0
 
 
@@ -281,4 +281,4 @@ def test_api_without_data_providers_set():
     findata = FinancialData(None, None, TrHistory(), Path(os.devnull))
     assert findata.get_security_price(ISIN("AMZN-ISIN")) is None
     assert findata.get_foreign_exchange_rate(GBP, USD) is None
-    assert findata.convert_currency(Decimal("10.0"), GBP, USD) is None
+    assert findata.convert_money(Money("10.0", GBP), USD) is None
