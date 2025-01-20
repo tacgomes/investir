@@ -443,8 +443,8 @@ class TaxCalculator:
         self, isin: ISIN, holding: Section104Holding
     ) -> Decimal | None:
         if (price := self._findata.get_security_price(isin)) and (
-            price_gbp := self._findata.convert_currency(price.amount, price.currency)
+            price_gbp := self._findata.convert_money(price)
         ):
-            return holding.quantity * price_gbp
+            return holding.quantity * price_gbp.amount
 
         return None

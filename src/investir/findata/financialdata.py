@@ -88,14 +88,12 @@ class FinancialData:
 
         return fx_rate
 
-    def convert_currency(
-        self, amount: Decimal, currency_from: Currency, currency_to: Currency = GBP
-    ) -> Decimal | None:
-        if currency_from == currency_to:
-            return amount
+    def convert_money(self, money: Money, currency: Currency = GBP) -> Money | None:
+        if money.currency == currency:
+            return money
 
-        if fx_rate := self.get_foreign_exchange_rate(currency_from, currency_to):
-            return amount * fx_rate
+        if fx_rate := self.get_foreign_exchange_rate(money.currency, currency):
+            return Money(money.amount * fx_rate, currency)
 
         return None
 
