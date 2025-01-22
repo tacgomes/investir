@@ -1,5 +1,5 @@
 from collections.abc import Callable, Mapping, Sequence, ValuesView
-from typing import NamedTuple, TypeVar
+from typing import Any, NamedTuple, TypeVar
 
 from investir.exceptions import AmbiguousTickerError
 from investir.prettytable import Field, Format, PrettyTable
@@ -79,18 +79,18 @@ class TrHistory:
 
     def get_orders_table(
         self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
+    ) -> tuple[PrettyTable, str]:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
                 Field("Security Name"),
                 Field("ISIN"),
                 Field("Ticker"),
-                Field("Total Cost (£)", Format.DECIMAL, show_sum=True),
-                Field("Net Proceeds (£)", Format.DECIMAL, show_sum=True),
+                Field("Total Cost (£)", Format.DECIMAL),
+                Field("Net Proceeds (£)", Format.DECIMAL),
                 Field("Quantity", Format.QUANTITY),
                 Field("Price (£)", Format.DECIMAL),
-                Field("Fees (£)", Format.DECIMAL, show_sum=True),
+                Field("Fees (£)", Format.DECIMAL),
             ]
         )
 
@@ -124,19 +124,27 @@ class TrHistory:
                 divider=divider,
             )
 
-        return table
+        summary = TrHistory._make_summary(
+            {
+                "Purchase costs (GBP):": table.total("Total Cost (£)"),
+                "Sale proceeds (GBP):": table.total("Net Proceeds (£)"),
+                "Fees (GBP):": table.total("Fees (£)"),
+            }
+        )
+
+        return table, summary
 
     def get_dividends_table(
         self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
+    ) -> tuple[PrettyTable, str]:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
                 Field("Security Name"),
                 Field("ISIN"),
                 Field("Ticker"),
-                Field("Net Amount (£)", Format.DECIMAL, show_sum=True),
-                Field("Widthheld Amount (£)", Format.DECIMAL, show_sum=True),
+                Field("Net Amount (£)", Format.DECIMAL),
+                Field("Widthheld Amount (£)", Format.DECIMAL),
             ]
         )
 
@@ -153,16 +161,23 @@ class TrHistory:
                 divider=divider,
             )
 
-        return table
+        summary = TrHistory._make_summary(
+            {
+                "Net amount (GBP):": table.total("Net Amount (£)"),
+                "Withheld amount (GBP):": table.total("Widthheld Amount (£)"),
+            }
+        )
+
+        return table, summary
 
     def get_transfers_table(
         self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
+    ) -> tuple[PrettyTable, str]:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
-                Field("Deposit (£)", Format.DECIMAL, show_sum=True),
-                Field("Withdrawal (£)", Format.DECIMAL, show_sum=True),
+                Field("Deposit (£)", Format.DECIMAL),
+                Field("Withdrawal (£)", Format.DECIMAL),
             ]
         )
 
@@ -183,15 +198,22 @@ class TrHistory:
 
             table.add_row([tr.date, deposited, widthdrew], divider=divider)
 
-        return table
+        summary = TrHistory._make_summary(
+            {
+                "Deposits (GBP):": table.total("Deposit (£)"),
+                "Withdrawals (GBP):": table.total("Withdrawal (£)"),
+            }
+        )
+
+        return table, summary
 
     def get_interest_table(
         self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
+    ) -> tuple[PrettyTable, str]:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
-                Field("Amount (£)", Format.DECIMAL, show_sum=True),
+                Field("Amount (£)", Format.DECIMAL),
             ]
         )
 
@@ -205,7 +227,11 @@ class TrHistory:
 
             table.add_row([tr.date, tr.total], divider=divider)
 
-        return table
+        summary = TrHistory._make_summary(
+            {"Total interest (GBP):": table.total("Amount (£)")}
+        )
+
+        return table, summary
 
     def _securities_map(self) -> Mapping[ISIN, Security]:
         if not self._securities:
@@ -214,3 +240,12 @@ class TrHistory:
                 for o in sorted(self._orders, key=lambda o: o.name)
             }
         return self._securities
+
+    @staticmethod
+    def _make_summary(rows: Mapping[str, Any]) -> str:
+        max_field_len = max(len(field) for field in rows) + 2
+        max_val_len = len("1000000.00")
+        return "".join(
+            f"{field:{max_field_len}}{val:>{max_val_len}}\n"
+            for field, val in rows.items()
+        )
