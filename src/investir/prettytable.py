@@ -1,5 +1,6 @@
 from collections.abc import Callable, Sequence
 from dataclasses import KW_ONLY, dataclass
+from datetime import date
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -24,7 +25,9 @@ class Format(Enum):
 
 def date_format(format: str) -> Callable[[str, Any], str]:
     def _date_format(_field, val) -> str:
-        return val.strftime(format)
+        if isinstance(val, date):
+            return val.strftime(format)
+        return val
 
     return _date_format
 
@@ -47,6 +50,7 @@ class Field:
     format: Format | None = None
     _: KW_ONLY
     visible: bool = True
+    show_sum: bool = False
 
 
 class PrettyTable(prettytable.PrettyTable):
@@ -71,6 +75,13 @@ class PrettyTable(prettytable.PrettyTable):
                 field.name = boldify(field.name)
             self.field_names = [field.name for field in self.__fields]
 
+        if (
+            self.rows
+            and any(field.show_sum for field in self.__fields)
+            and format in (OutputFormat.TEXT, OutputFormat.HTML)
+        ):
+            self._insert_totals_row()
+
         self._apply_formatting()
 
         start_nl = "\n" if leading_nl else ""
@@ -89,18 +100,24 @@ class PrettyTable(prettytable.PrettyTable):
 
         return f"{start_nl}{table_str}{end_nl}"
 
-    def total(self, field_name: str) -> Decimal:
-        field_idx = self._field_index(field_name)
-        total = sum(
-            (round(row[field_idx], 2) for row in self.rows if row[field_idx]),
-            Decimal("0.00"),
-        )
-        return round(total, 2)
+    def _insert_totals_row(self) -> None:
+        totals_row = []
 
-    def _field_index(self, field_name: str) -> int:
-        return next(
-            idx for idx, field in enumerate(self.__fields) if field.name == field_name
-        )
+        for idx, field in enumerate(self.__fields):
+            if field.show_sum:
+                total = sum(
+                    (
+                        round(row[idx], 2)
+                        for row in self.rows
+                        if row[idx] and row[idx] != "n/a"
+                    ),
+                    Decimal("0.0"),
+                )
+                totals_row.append(total)
+            else:
+                totals_row.append("")
+
+        self.add_row(totals_row)
 
     def _apply_formatting(self) -> None:
         for field in self.__fields:
