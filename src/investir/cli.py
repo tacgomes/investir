@@ -18,7 +18,7 @@ from investir.findata import (
 )
 from investir.logging import configure_logger
 from investir.parser import ParserFactory
-from investir.prettytable import OutputFormat, PrettyTable
+from investir.prettytable import OutputFormat
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
 from investir.trhistory import TrHistory
@@ -165,18 +165,6 @@ def create_filters(
     return filters
 
 
-def print_table_and_summary(
-    table: PrettyTable, summary: str, format: OutputFormat
-) -> None:
-    if not table:
-        return
-
-    print(table.to_string(format, leading_nl=config.logging_enabled))
-
-    if summary and format == OutputFormat.TEXT:
-        print(summary)
-
-
 def version_callback(value: bool) -> None:
     if value:
         print(f"{__package__} {importlib.metadata.version(__package__)}")
@@ -276,8 +264,8 @@ def orders_command(
         tr_type = Disposal
 
     filters = create_filters(tax_year=tax_year, ticker=ticker, tr_type=tr_type)
-    table, summary = tr_hist.get_orders_table(filters)
-    print_table_and_summary(table, summary, format)
+    if table := tr_hist.get_orders_table(filters):
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("dividends")
@@ -292,8 +280,8 @@ def dividends_command(
     """
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year, ticker=ticker)
-    table, summary = tr_hist.get_dividends_table(filters)
-    print_table_and_summary(table, summary, format)
+    if table := tr_hist.get_dividends_table(filters):
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("transfers")
@@ -324,8 +312,8 @@ def transfers_command(
         total_op = None
 
     filters = create_filters(tax_year=tax_year, total_op=total_op)
-    table, summary = tr_hist.get_transfers_table(filters)
-    print_table_and_summary(table, summary, format)
+    if table := tr_hist.get_transfers_table(filters):
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("interest")
@@ -339,8 +327,8 @@ def interest_command(
     """
     tr_hist, _ = parse(files)
     filters = create_filters(tax_year=tax_year)
-    table, summary = tr_hist.get_interest_table(filters)
-    print_table_and_summary(table, summary, format)
+    if table := tr_hist.get_interest_table(filters):
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 @app.command("capital-gains")
@@ -412,8 +400,8 @@ def holdings_command(
     """
     _, tax_calculator = parse(files)
     ticker = Ticker(ticker) if ticker else None
-    table = tax_calculator.get_holdings_table(ticker, show_gain_loss)
-    print_table_and_summary(table, "", format)
+    if table := tax_calculator.get_holdings_table(ticker, show_gain_loss):
+        print(table.to_string(format, leading_nl=config.logging_enabled))
 
 
 def main() -> None:
