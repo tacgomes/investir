@@ -69,7 +69,9 @@ class PrettyTable(prettytable.PrettyTable):
     def __bool__(self) -> bool:
         return len(self.rows) > 0
 
-    def to_string(self, format: OutputFormat, leading_nl: bool = True) -> str:
+    def to_string(
+        self, format: OutputFormat = OutputFormat.TEXT, leading_nl: bool = True
+    ) -> str:
         if format == OutputFormat.TEXT:
             for field in self.__fields:
                 field.name = boldify(field.name)
