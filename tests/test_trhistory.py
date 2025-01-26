@@ -183,27 +183,27 @@ def test_get_ticker_isin_when_ticker_ambigous():
 
 def test_trhistory_get_orders_table():
     tr_hist = TrHistory(orders=[ORDER1, ORDER2])
-    table = tr_hist.get_orders_table()
-    assert ORDER1.name in str(table)
-    assert ORDER2.name in str(table)
+    table_str = tr_hist.get_orders_table().to_string()
+    assert ORDER1.name in table_str
+    assert ORDER2.name in table_str
 
 
 def test_trhistory_get_dividends_table():
     tr_hist = TrHistory(dividends=[DIVIDEND1, DIVIDEND2])
-    table = tr_hist.get_dividends_table()
-    assert DIVIDEND1.name in str(table)
-    assert DIVIDEND2.name in str(table)
+    table_str = tr_hist.get_dividends_table().to_string()
+    assert DIVIDEND1.name in table_str
+    assert DIVIDEND2.name in table_str
 
 
 def test_trhistory_get_transfers_table():
     tr_hist = TrHistory(transfers=[TRANSFER1, TRANSFER2])
-    table = tr_hist.get_transfers_table()
-    assert str(TRANSFER1.total) in str(table)
-    assert str(abs(TRANSFER2.total)) in str(table)
+    table_str = tr_hist.get_transfers_table().to_string()
+    assert str(TRANSFER1.total) in table_str
+    assert str(abs(TRANSFER2.total)) in table_str
 
 
 def test_trhistory_get_interest_table():
     tr_hist = TrHistory(interest=[INTEREST1, INTEREST2])
-    table = tr_hist.get_interest_table()
-    assert str(INTEREST1.total) in str(table)
-    assert str(INTEREST2.total) in str(table)
+    table_str = tr_hist.get_interest_table().to_string()
+    assert str(INTEREST1.total) in table_str
+    assert str(INTEREST2.total) in table_str
