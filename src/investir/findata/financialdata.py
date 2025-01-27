@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Final
 
 import yaml
-from moneyed import GBP, Currency, Money
+from moneyed import Currency, Money
 
 from investir.findata.dataprovider import (
     DataProviderError,
@@ -88,7 +88,7 @@ class FinancialData:
 
         return fx_rate
 
-    def convert_money(self, money: Money, currency: Currency = GBP) -> Money | None:
+    def convert_money(self, money: Money, currency) -> Money | None:
         if money.currency == currency:
             return money
 

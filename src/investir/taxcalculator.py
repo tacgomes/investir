@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import TypeAlias
 
+from investir.const import BASE_CURRENCY
 from investir.exceptions import AmbiguousTickerError, IncompleteRecordsError
 from investir.findata import FinancialData
 from investir.prettytable import Field, Format, PrettyTable
@@ -443,8 +444,8 @@ class TaxCalculator:
         self, isin: ISIN, holding: Section104Holding
     ) -> Decimal | None:
         if (price := self._findata.get_security_price(isin)) and (
-            price_gbp := self._findata.convert_money(price)
+            price_base_currency := self._findata.convert_money(price, BASE_CURRENCY)
         ):
-            return holding.quantity * price_gbp.amount
+            return holding.quantity * price_base_currency.amount
 
         return None
