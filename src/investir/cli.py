@@ -160,7 +160,7 @@ def create_filters(
         filters.append(lambda tr: isinstance(tr, tr_type))
 
     if total_op is not None:
-        filters.append(lambda tr: total_op(tr.total, 0.0))
+        filters.append(lambda tr: total_op(tr.total.amount, 0.0))
 
     return filters
 

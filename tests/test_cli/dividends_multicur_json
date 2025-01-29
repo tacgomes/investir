@@ -1,0 +1,32 @@
+[
+    [
+        "Date",
+        "Security Name",
+        "ISIN",
+        "Ticker",
+        "Net Amount",
+        "Net Amount (Currency)",
+        "Widthheld Amount",
+        "Widthheld Amount (Currency)"
+    ],
+    {
+        "Date": "2022-06-02",
+        "ISIN": "US5949181045",
+        "Net Amount": "4.12",
+        "Net Amount (Currency)": "GBP",
+        "Security Name": "Microsoft",
+        "Ticker": "MSFT",
+        "Widthheld Amount": "3.42",
+        "Widthheld Amount (Currency)": "USD"
+    },
+    {
+        "Date": "2022-06-12",
+        "ISIN": "NL0010273215",
+        "Net Amount": "5.12",
+        "Net Amount (Currency)": "GBP",
+        "Security Name": "ASML",
+        "Ticker": "ASML",
+        "Widthheld Amount": "1.23",
+        "Widthheld Amount (Currency)": "EUR"
+    }
+]

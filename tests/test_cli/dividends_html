@@ -5,8 +5,8 @@
             <th>Security Name</th>
             <th>ISIN</th>
             <th>Ticker</th>
-            <th>Net Amount (£)</th>
-            <th>Widthheld Amount (£)</th>
+            <th>Net Amount (GBP)</th>
+            <th>Widthheld Amount (GBP)</th>
         </tr>
     </thead>
     <tbody>

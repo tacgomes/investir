@@ -2,7 +2,7 @@
     <thead>
         <tr>
             <th>Date</th>
-            <th>Amount (£)</th>
+            <th>Amount (GBP)</th>
         </tr>
     </thead>
     <tbody>

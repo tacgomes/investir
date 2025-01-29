@@ -6,8 +6,14 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import TypeAlias
 
+from moneyed import Money
+
 from investir.const import BASE_CURRENCY
-from investir.exceptions import AmbiguousTickerError, IncompleteRecordsError
+from investir.exceptions import (
+    AmbiguousTickerError,
+    IncompleteRecordsError,
+    InvestirError,
+)
 from investir.findata import FinancialData
 from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import Acquisition, Disposal, Order
@@ -47,7 +53,9 @@ class CapitalGain:
     def gain_loss(self) -> Decimal:
         # Disposal fees have been added to the `cost` so the gross
         # proceeds are used.
-        return self.disposal.total - self.cost
+        return (
+            self.disposal.total - Money(self.cost, self.disposal.total.currency)
+        ).amount
 
     @property
     def quantity(self) -> Decimal:
@@ -70,7 +78,7 @@ class CapitalGain:
             f"{self.disposal.date} "
             f"{self.disposal.isin:<4} "
             f"quantity: {self.quantity}, "
-            f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.total}, "
+            f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.total.amount}, "
             f"gain: £{self.gain_loss:.2f}, "
             f"identification: {self.identification}"
         )
@@ -184,13 +192,13 @@ class TaxCalculator:
                     cg.disposal.isin,
                     cg.quantity,
                     cg.cost,
-                    cg.disposal.total,
+                    cg.disposal.total.amount,
                     cg.gain_loss,
                 ]
             )
 
             num_disposals += 1
-            disposal_proceeds += round(cg.disposal.total, 2)
+            disposal_proceeds += round(cg.disposal.total.amount, 2)
             total_cost += round(cg.cost, 2)
             if cg.gain_loss > 0.0:
                 total_gains += cg.gain_loss
@@ -282,6 +290,8 @@ class TaxCalculator:
 
         logger.info("Calculating capital gains")
 
+        self._validate_orders()
+
         # First normalise the orders by retroactively adjusting their
         # share quantity for any eventual share sub-division or share
         # consolidation event.
@@ -318,6 +328,16 @@ class TaxCalculator:
             self._capital_gains[year] = sorted(
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.isin)
             )
+
+    def _validate_orders(self) -> None:
+        for order in self._tr_hist.orders:
+            if (order.total.currency, order.fees.currency) != (
+                BASE_CURRENCY,
+                BASE_CURRENCY,
+            ):
+                raise InvestirError(
+                    f"Orders with a non-GBP total are not supported: {order}"
+                )
 
     def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
         return [
@@ -387,7 +407,7 @@ class TaxCalculator:
                 d_idx += 1
 
             self._capital_gains[d.tax_year()].append(
-                CapitalGain(d, a.total_cost + d.fees, a.date)
+                CapitalGain(d, a.total_cost.amount + d.fees.amount, a.date)
             )
 
         self._acquisitions[isin] = [o for o in acquisits if o not in matched]
@@ -404,10 +424,12 @@ class TaxCalculator:
 
             if isinstance(order, Acquisition):
                 if holding is not None:
-                    holding.increase(order.date, order.quantity, order.total_cost)
+                    holding.increase(
+                        order.date, order.quantity, order.total_cost.amount
+                    )
                 else:
                     self._holdings[isin] = Section104Holding(
-                        order.date, order.quantity, order.total_cost
+                        order.date, order.quantity, order.total_cost.amount
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:
@@ -429,7 +451,7 @@ class TaxCalculator:
                         del self._holdings[isin]
 
                     self._capital_gains[order.tax_year()].append(
-                        CapitalGain(order, allowable_cost + order.fees)
+                        CapitalGain(order, allowable_cost + order.fees.amount)
                     )
                 else:
                     raise_or_warn(

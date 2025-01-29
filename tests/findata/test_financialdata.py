@@ -21,12 +21,13 @@ from investir.findata import (
 from investir.transaction import Acquisition, Disposal
 from investir.trhistory import TrHistory
 from investir.typing import ISIN
+from investir.utils import sterling
 
 ORDER1 = Acquisition(
     datetime(2018, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    total=Decimal("10.0"),
+    total=sterling("10.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -34,7 +35,7 @@ ORDER2 = Acquisition(
     datetime(2020, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    total=Decimal("10.0"),
+    total=sterling("10.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -42,7 +43,7 @@ ORDER3 = Disposal(
     datetime(2022, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("AMZN-ISIN"),
     name="Amazon",
-    total=Decimal("25.0"),
+    total=sterling("25.0"),
     quantity=Decimal("2.0"),
 )
 
@@ -50,7 +51,7 @@ ORDER4 = Acquisition(
     datetime(2024, 1, 1, tzinfo=timezone.utc),
     isin=ISIN("NFLX-ISIN"),
     name="Netflix",
-    total=Decimal("15.0"),
+    total=sterling("15.0"),
     quantity=Decimal("2.0"),
 )
 
@@ -58,7 +59,7 @@ ORDER5 = Acquisition(
     datetime(2024, 3, 1, tzinfo=timezone.utc),
     isin=ISIN("NOTF-ISIN"),
     name="Not Found",
-    total=Decimal("5.0"),
+    total=sterling("5.0"),
     quantity=Decimal("1.0"),
 )
 
@@ -66,7 +67,7 @@ ORDER6 = Acquisition(
     datetime(2024, 6, 1, tzinfo=timezone.utc),
     isin=ISIN("MSFT-ISIN"),
     name="Microsoft",
-    total=Decimal("15.0"),
+    total=sterling("15.0"),
     quantity=Decimal("2.0"),
 )
 

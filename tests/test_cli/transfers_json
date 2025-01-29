@@ -1,32 +1,44 @@
 [
     [
         "Date",
-        "Deposit (\u00a3)",
-        "Withdrawal (\u00a3)"
+        "Deposit",
+        "Deposit (Currency)",
+        "Withdrawal",
+        "Withdrawal (Currency)"
     ],
     {
         "Date": "2021-03-02",
-        "Deposit (\u00a3)": "6000.00",
-        "Withdrawal (\u00a3)": ""
+        "Deposit": "6000.00",
+        "Deposit (Currency)": "GBP",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
     },
     {
         "Date": "2021-07-28",
-        "Deposit (\u00a3)": "4000.00",
-        "Withdrawal (\u00a3)": ""
+        "Deposit": "4000.00",
+        "Deposit (Currency)": "GBP",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
     },
     {
         "Date": "2022-02-24",
-        "Deposit (\u00a3)": "",
-        "Withdrawal (\u00a3)": "400.00"
+        "Deposit": "",
+        "Deposit (Currency)": null,
+        "Withdrawal": "400.00",
+        "Withdrawal (Currency)": "GBP"
     },
     {
         "Date": "2022-04-08",
-        "Deposit (\u00a3)": "",
-        "Withdrawal (\u00a3)": "100.00"
+        "Deposit": "",
+        "Deposit (Currency)": null,
+        "Withdrawal": "100.00",
+        "Withdrawal (Currency)": "GBP"
     },
     {
         "Date": "2023-01-03",
-        "Deposit (\u00a3)": "2000.00",
-        "Withdrawal (\u00a3)": ""
+        "Deposit": "2000.00",
+        "Deposit (Currency)": "GBP",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
     }
 ]

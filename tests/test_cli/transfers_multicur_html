@@ -1,0 +1,41 @@
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Deposit</th>
+            <th>Withdrawal</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>01/05/2022</td>
+            <td>1000.00 GBP</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>02/05/2022</td>
+            <td>1000.00 USD</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>03/05/2022</td>
+            <td>500.00 EUR</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>04/05/2022</td>
+            <td></td>
+            <td>250.00 GBP</td>
+        </tr>
+        <tr>
+            <td>04/05/2022</td>
+            <td></td>
+            <td>100.00 USD</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>1000.00 GBP<br>1000.00 USD<br>500.00 EUR</td>
+            <td>250.00 GBP<br>100.00 USD</td>
+        </tr>
+    </tbody>
+</table>

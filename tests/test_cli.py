@@ -14,7 +14,8 @@ from investir.cli import app
 from investir.config import config
 
 PROJECT_DIR = Path(__file__).parent.parent
-DATA_FILE = str(PROJECT_DIR / "data" / "freetrade.csv")
+DATA_FILE1 = str(PROJECT_DIR / "data" / "freetrade.csv")
+DATA_FILE2 = str(PROJECT_DIR / "data" / "trading212_multi-currency.csv")
 TEST_DIR = PROJECT_DIR / "tests" / "test_cli"
 EX_OK = getattr(os, "EX_OK", 0)
 
@@ -37,7 +38,7 @@ def fixture_execute() -> Callable:
     return _execute
 
 
-test_data = [
+test_data1 = [
     # Orders
     ("orders", "orders"),
     ("orders --tax-year 2022", "orders_ty2022"),
@@ -137,10 +138,48 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize("cmd,expected", test_data)
+@pytest.mark.parametrize("cmd,expected", test_data1)
 def test_cli_output(request, execute, cmd, expected):
     expected_output = TEST_DIR / expected
-    result = execute([*shlex.split(cmd), DATA_FILE])
+    result = execute([*shlex.split(cmd), DATA_FILE1])
+
+    if request.config.getoption("--regen-outputs"):
+        expected_output.write_text(result.stdout)
+    else:
+        assert not result.stderr
+        assert result.exit_code == EX_OK
+
+        assert expected_output.exists()
+        assert (
+            result.stdout.splitlines()
+            == expected_output.read_text(encoding="utf-8").splitlines()
+        )
+
+
+test_data2 = [
+    ("orders --output text", "orders_multicur_text"),
+    ("orders --output csv", "orders_multicur_csv"),
+    ("orders --output json", "orders_multicur_json"),
+    ("orders --output html", "orders_multicur_html"),
+    ("dividends --output text", "dividends_multicur_text"),
+    ("dividends --output csv", "dividends_multicur_csv"),
+    ("dividends --output json", "dividends_multicur_json"),
+    ("dividends --output html", "dividends_multicur_html"),
+    ("interest --output text", "interest_multicur_text"),
+    ("interest --output csv", "interest_multicur_csv"),
+    ("interest --output json", "interest_multicur_json"),
+    ("interest --output html", "interest_multicur_html"),
+    ("transfers --output text", "transfers_multicur_text"),
+    ("transfers --output csv", "transfers_multicur_csv"),
+    ("transfers --output json", "transfers_multicur_json"),
+    ("transfers --output html", "transfers_multicur_html"),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", test_data2)
+def test_cli_output_multiple_currencies(request, execute, cmd, expected):
+    expected_output = TEST_DIR / expected
+    result = execute([*shlex.split(cmd), DATA_FILE2])
 
     if request.config.getoption("--regen-outputs"):
         expected_output.write_text(result.stdout)
@@ -169,77 +208,77 @@ def test_capital_gains_multiple_input_files(execute):
 
 
 def test_orders_command_no_results(execute):
-    result = execute(["orders", "--tax-year", "2008", DATA_FILE])
+    result = execute(["orders", "--tax-year", "2008", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_dividends_command_no_results(execute):
-    result = execute(["dividends", "--tax-year", "2008", DATA_FILE])
+    result = execute(["dividends", "--tax-year", "2008", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_transfers_command_no_results(execute):
-    result = execute(["transfers", "--tax-year", "2008", DATA_FILE])
+    result = execute(["transfers", "--tax-year", "2008", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_interest_command_no_results(execute):
-    result = execute(["interest", "--tax-year", "2008", DATA_FILE])
+    result = execute(["interest", "--tax-year", "2008", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_capital_gains_command_no_results(execute):
-    result = execute(["capital-gains", "--tax-year", "2008", DATA_FILE])
+    result = execute(["capital-gains", "--tax-year", "2008", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_holdings_no_results(execute):
-    result = execute(["holdings", "--ticker", "NOTFOUND", DATA_FILE])
+    result = execute(["holdings", "--ticker", "NOTFOUND", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_verbosity_mutually_exclusive_filters(execute):
-    result = execute(["--quiet", "--verbose", "orders", DATA_FILE])
+    result = execute(["--quiet", "--verbose", "orders", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
 def test_orders_command_mutually_exclusive_filters(execute):
-    result = execute(["orders", "--acquisitions", "--disposals", DATA_FILE])
+    result = execute(["orders", "--acquisitions", "--disposals", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
 def test_transfers_command_mutually_exclusive_filters(execute):
-    result = execute(["transfers", "--deposits", "--withdrawals", DATA_FILE])
+    result = execute(["transfers", "--deposits", "--withdrawals", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
 def test_capital_gains_command_mutually_exclusive_filters(execute):
-    result = execute(["capital-gains", "--gains", "--losses", DATA_FILE])
+    result = execute(["capital-gains", "--gains", "--losses", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
 def test_capital_gains_command_tax_year_required(execute):
-    result = execute(["capital-gains", "--output", "json", DATA_FILE])
+    result = execute(["capital-gains", "--output", "json", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
@@ -268,7 +307,7 @@ def test_version_option(execute):
 
 def test_verbose_option(execute):
     result = execute(
-        ["orders", DATA_FILE],
+        ["orders", DATA_FILE1],
         global_opts=[
             "--verbose",
             "--offline",
@@ -284,7 +323,7 @@ def test_verbose_option(execute):
 
 def test_default_verbosity(execute):
     result = execute(
-        ["orders", DATA_FILE],
+        ["orders", DATA_FILE1],
         global_opts=[
             "--offline",
             "--cache-file",
@@ -325,7 +364,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
 )
 def test_holdings_with_unrealised_gain_loss_calculated(execute):
     result = execute(
-        ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE],
+        ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE1],
         global_opts=[
             "--quiet",
             "--cache-file",

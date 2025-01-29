@@ -5,11 +5,11 @@ from decimal import Decimal
 from typing import Final
 
 import pytest
+from moneyed import Money
 
 from investir.config import config
 from investir.exceptions import (
     CalculatedAmountError,
-    CurrencyError,
     FeesError,
     OrderDateError,
     ParseError,
@@ -18,6 +18,7 @@ from investir.exceptions import (
 from investir.parser.trading212 import Trading212Parser
 from investir.transaction import Acquisition, Disposal
 from investir.typing import ISIN, Ticker
+from investir.utils import sterling
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
@@ -64,11 +65,11 @@ DIVIDEND: Final = {
     "Name": "Skyworks",
     "No. of shares": "2.1",
     "Price / share": "532.5",
-    "Currency (Price / share)": "EUR",
+    "Currency (Price / share)": "USD",
     "Exchange rate": "1.0",
     "Total": "2.47",
     "Currency (Total)": "GBP",
-    "Currency (Withholding tax)": "EUR",
+    "Currency (Withholding tax)": "USD",
 }
 
 
@@ -107,11 +108,17 @@ def fixture_create_parser_format_unrecognised(tmp_path) -> Callable:
 
 def test_parser_happy_path(create_parser):  # noqa: PLR0915
     acquisition1 = ACQUISITION
+
     acquisition2 = dict(ACQUISITION)
     acquisition2["Action"] = "Limit buy"
 
+    acquisition3 = dict(ACQUISITION)
+    acquisition3["Finra fee (GBP)"] = "5.2"
+    del acquisition3["Stamp duty (GBP)"]
+
     disposal1 = DISPOSAL
     disposal2 = dict(DISPOSAL)
+
     disposal2["Action"] = "Limit sell"
 
     dividend1 = DIVIDEND
@@ -147,6 +154,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
             acquisition2,
             disposal1,
             disposal2,
+            acquisition3,
             dividend1,
             dividend2,
             dividend3,
@@ -159,7 +167,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert parser.can_parse()
 
     parser_result = parser.parse()
-    assert len(parser_result.orders) == 4
+    assert len(parser_result.orders) == 5
 
     order = parser_result.orders[0]
     assert isinstance(order, Acquisition)
@@ -167,9 +175,9 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == "Amazon"
-    assert order.total == Decimal("1325.00")
+    assert order.total == sterling("1325.00")
     assert order.quantity == Decimal("10")
-    assert order.fees == Decimal("5.2")
+    assert order.fees == sterling("5.2")
     assert order == parser_result.orders[1]
 
     order = parser_result.orders[2]
@@ -178,10 +186,15 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.total == Decimal("1118.25")
+    assert order.total == sterling("1118.25")
     assert order.quantity == Decimal("2.1")
-    assert order.fees == Decimal("6.4")
-    assert order == parser_result.orders[3]
+    assert order.fees == sterling("6.4")
+
+    assert parser_result.orders[3] == order
+
+    order = parser_result.orders[4]
+    assert isinstance(order, Acquisition)
+    assert order.fees == sterling("5.2")
 
     assert len(parser_result.dividends) == 3
     dividend = parser_result.dividends[0]
@@ -190,8 +203,8 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert dividend.isin == ISIN("SWKS-ISIN")
     assert dividend.ticker == Ticker("SWKS")
     assert dividend.name == "Skyworks"
-    assert dividend.total == Decimal("2.47")
-    assert dividend.withheld is None
+    assert dividend.total == sterling("2.47")
+    assert dividend.withheld == Money("0.0", "USD")
     assert dividend == parser_result.dividends[1]
     assert dividend == parser_result.dividends[2]
 
@@ -199,16 +212,16 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
 
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
-    assert transfer.total == Decimal("1000.00")
+    assert transfer.total == sterling("1000.00")
 
     transfer = parser_result.transfers[1]
     assert transfer.timestamp == TIMESTAMP
-    assert transfer.total == Decimal("-500.25")
+    assert transfer.total == sterling("-500.25")
 
     assert len(parser_result.interest) == 1
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
-    assert interest.total == Decimal("4.65")
+    assert interest.total == sterling("4.65")
 
 
 def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
@@ -247,9 +260,9 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == Ticker("Amazon")
-    assert order.total == Decimal("1325.00")
+    assert order.total == sterling("1325.00")
     assert order.quantity == Decimal("10")
-    assert order.fees == Decimal("0.0")
+    assert order.fees == sterling("0.0")
 
     order = parser_result.orders[1]
     assert isinstance(order, Disposal)
@@ -257,9 +270,9 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.total == Decimal("1118.25")
+    assert order.total == sterling("1118.25")
     assert order.quantity == Decimal("2.1")
-    assert order.fees == Decimal("0.0")
+    assert order.fees == sterling("0.0")
 
     order = parser_result.orders[2]
     assert isinstance(order, Acquisition)
@@ -267,9 +280,9 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.isin == ISIN("MSFT-ISIN")
     assert order.ticker == Ticker("MSFT")
     assert order.name == "Microsoft"
-    assert order.total == Decimal("1325.00")
+    assert order.total == sterling("1325.00")
     assert order.quantity == Decimal("10.0")
-    assert order.fees == Decimal("1.3")
+    assert order.fees == sterling("1.3")
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):
@@ -306,15 +319,6 @@ def test_parser_invalid_transaction_type(create_parser):
     parser.parse()
 
 
-def test_parser_invalid_account_currency(create_parser):
-    order = dict(ACQUISITION)
-    order["Currency (Total)"] = "USD"
-    parser = create_parser([order])
-    assert parser.can_parse()
-    with pytest.raises(CurrencyError):
-        parser.parse()
-
-
 def test_parser_order_too_old(create_parser):
     order = dict(ACQUISITION)
     order["Time"] = "2008-04-05T09:00:00.000Z"
@@ -334,6 +338,16 @@ def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
         parser.parse()
 
 
+def test_parser_conversion_fee_but_no_fee_currency(create_parser):
+    order = dict(ACQUISITION)
+    order["Currency conversion fee"] = "3.2"
+    order["Currency (Currency conversion fee)"] = ""
+    parser = create_parser([order])
+    assert parser.can_parse()
+    with pytest.raises(ParseError):
+        parser.parse()
+
+
 def test_parser_stamp_duty_and_finra_fee_non_zero(create_parser):
     order = dict(ACQUISITION)
     order["Finra fee (GBP)"] = "1.2"
@@ -343,14 +357,24 @@ def test_parser_stamp_duty_and_finra_fee_non_zero(create_parser):
         parser.parse()
 
 
-def test_parser_currency_conversion_fee_not_in_pound_sterling(create_parser):
+def test_parser_currency_conversion_fee_different_than_total_currency(create_parser):
     order = dict(ACQUISITION)
+    order["Total"] = "1326.20"
     order["Currency conversion fee"] = "1.2"
     order["Currency (Currency conversion fee)"] = "USD"
     del order["Stamp duty (GBP)"]
     parser = create_parser([order])
     assert parser.can_parse()
-    with pytest.raises(CurrencyError):
+    with pytest.raises(TypeError):
+        parser.parse()
+
+
+def test_parser_dividend_tax_withheld_in_different_currency(create_parser):
+    dividend = dict(DIVIDEND)
+    dividend["Currency (Withholding tax)"] = "EUR"
+    parser = create_parser([dividend])
+    assert parser.can_parse()
+    with pytest.raises(ParseError):
         parser.parse()
 
 
@@ -360,15 +384,6 @@ def test_parser_calculated_amount_mismatch(create_parser):
     parser = create_parser([order])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
-        parser.parse()
-
-
-def test_parser_dividend_tax_withheld_in_different_currency(create_parser):
-    dividend = dict(DIVIDEND)
-    dividend["Currency (Withholding tax)"] = "USD"
-    parser = create_parser([dividend])
-    assert parser.can_parse()
-    with pytest.raises(ParseError):
         parser.parse()
 
 

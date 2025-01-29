@@ -1,0 +1,32 @@
+[
+    [
+        "Date",
+        "Amount",
+        "Amount (Currency)"
+    ],
+    {
+        "Amount": "3.0",
+        "Amount (Currency)": "GBP",
+        "Date": "2022-05-06"
+    },
+    {
+        "Amount": "4.0",
+        "Amount (Currency)": "GBP",
+        "Date": "2022-05-07"
+    },
+    {
+        "Amount": "5.0",
+        "Amount (Currency)": "USD",
+        "Date": "2022-05-08"
+    },
+    {
+        "Amount": "1.0",
+        "Amount (Currency)": "USD",
+        "Date": "2022-05-09"
+    },
+    {
+        "Amount": "1.0",
+        "Amount (Currency)": "EUR",
+        "Date": "2022-05-10"
+    }
+]

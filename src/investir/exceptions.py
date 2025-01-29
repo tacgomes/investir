@@ -19,11 +19,6 @@ class TransactionTypeError(ParseError):
         super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
 
 
-class CurrencyError(ParseError):
-    def __init__(self, file: Path, row: Mapping[str, str], currency: str) -> None:
-        super().__init__(file, row, f"Currency not supported ('{currency}')")
-
-
 class CalculatedAmountError(ParseError):
     def __init__(
         self,
@@ -35,8 +30,8 @@ class CalculatedAmountError(ParseError):
         super().__init__(
             file,
             row,
-            f"Calculated amount (£{cal_amount}) is different than the "
-            f"expected value (£{csv_amount})",
+            f"Calculated amount ({cal_amount}) is different than the "
+            f"expected value ({csv_amount})",
         )
 
 

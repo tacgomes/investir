@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
+from moneyed import Money
 
 from investir.config import config
 from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
-    CurrencyError,
     FeesError,
     OrderDateError,
     TransactionTypeError,
@@ -106,13 +106,6 @@ class FreetradeParser:
                     continue
 
                 if fn := parse_fn.get(tr_type):
-                    if row["Account Currency"] != "GBP":
-                        raise CurrencyError(
-                            self._csv_file,
-                            row,
-                            row["Account Currency"],
-                        )
-
                     timestamp = parse_timestamp(row["Timestamp"])
                     total_amount = Decimal(row["Total Amount"])
                     total_currency = row["Account Currency"]
@@ -176,9 +169,9 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                total=total_amount - fees,
+                total=Money(total_amount - fees, total_currency),
                 quantity=quantity,
-                fees=allowable_fees,
+                fees=Money(allowable_fees, total_currency),
                 tr_id=order_id,
             )
         )
@@ -225,8 +218,8 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                total=total_amount,
-                withheld=withheld_tax_amount * base_fx_rate,
+                total=Money(total_amount, total_currency),
+                withheld=Money(withheld_tax_amount * base_fx_rate, total_currency),
             )
         )
 
@@ -243,7 +236,7 @@ class FreetradeParser:
         if tr_type == "WITHDRAWAL":
             total_amount = -abs(total_amount)
 
-        self._transfers.append(Transfer(timestamp, total_amount))
+        self._transfers.append(Transfer(timestamp, Money(total_amount, total_currency)))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
@@ -255,6 +248,6 @@ class FreetradeParser:
         total_amount: Decimal,
         total_currency: str,
     ):
-        self._interest.append(Interest(timestamp, total_amount))
+        self._interest.append(Interest(timestamp, Money(total_amount, total_currency)))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
