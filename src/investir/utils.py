@@ -4,6 +4,8 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from decimal import Decimal
 from typing import Final
 
+from moneyed import GBP, Money
+
 from investir.config import config
 from investir.typing import Year
 
@@ -49,6 +51,18 @@ def raise_or_warn(ex: Exception) -> None:
 
 def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
     return Decimal(val) if val.strip() else default
+
+
+def read_sterling(amount: str | None) -> Money:
+    return (
+        Money(amount=amount, currency=GBP)
+        if amount is not None and amount.strip()
+        else GBP.zero
+    )
+
+
+def sterling(amount: str) -> Money:
+    return Money(amount=amount, currency=GBP)
 
 
 def dict2str(d: Mapping[str, str]) -> str:

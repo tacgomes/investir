@@ -1,0 +1,44 @@
+[
+    [
+        "Date",
+        "Deposit",
+        "Deposit (Currency)",
+        "Withdrawal",
+        "Withdrawal (Currency)"
+    ],
+    {
+        "Date": "2022-05-01",
+        "Deposit": "1000",
+        "Deposit (Currency)": "GBP",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
+    },
+    {
+        "Date": "2022-05-02",
+        "Deposit": "1000",
+        "Deposit (Currency)": "USD",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
+    },
+    {
+        "Date": "2022-05-03",
+        "Deposit": "500",
+        "Deposit (Currency)": "EUR",
+        "Withdrawal": "",
+        "Withdrawal (Currency)": null
+    },
+    {
+        "Date": "2022-05-04",
+        "Deposit": "",
+        "Deposit (Currency)": null,
+        "Withdrawal": "250",
+        "Withdrawal (Currency)": "GBP"
+    },
+    {
+        "Date": "2022-05-04",
+        "Deposit": "",
+        "Deposit (Currency)": null,
+        "Withdrawal": "100",
+        "Withdrawal (Currency)": "USD"
+    }
+]

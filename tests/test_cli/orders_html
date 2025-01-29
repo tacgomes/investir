@@ -5,11 +5,11 @@
             <th>Security Name</th>
             <th>ISIN</th>
             <th>Ticker</th>
-            <th>Total Cost (£)</th>
-            <th>Net Proceeds (£)</th>
+            <th>Total Cost (GBP)</th>
+            <th>Net Proceeds (GBP)</th>
             <th>Quantity</th>
-            <th>Price (£)</th>
-            <th>Fees (£)</th>
+            <th>Price (GBP)</th>
+            <th>Fees (GBP)</th>
         </tr>
     </thead>
     <tbody>

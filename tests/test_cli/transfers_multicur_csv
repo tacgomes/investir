@@ -1,0 +1,6 @@
+Date,Deposit,Deposit (Currency),Withdrawal,Withdrawal (Currency)
+2022-05-01,1000,GBP,,
+2022-05-02,1000,USD,,
+2022-05-03,500,EUR,,
+2022-05-04,,,250,GBP
+2022-05-04,,,100,USD

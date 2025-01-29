@@ -86,11 +86,11 @@ class TrHistory:
                 Field("Security Name"),
                 Field("ISIN"),
                 Field("Ticker"),
-                Field("Total Cost (£)", Format.DECIMAL, show_sum=True),
-                Field("Net Proceeds (£)", Format.DECIMAL, show_sum=True),
+                Field("Total Cost", Format.MONEY, show_sum=True),
+                Field("Net Proceeds", Format.MONEY, show_sum=True),
                 Field("Quantity", Format.QUANTITY),
-                Field("Price (£)", Format.DECIMAL),
-                Field("Fees (£)", Format.DECIMAL, show_sum=True),
+                Field("Price", Format.MONEY),
+                Field("Fees", Format.MONEY, show_sum=True),
             ]
         )
 
@@ -135,8 +135,8 @@ class TrHistory:
                 Field("Security Name"),
                 Field("ISIN"),
                 Field("Ticker"),
-                Field("Net Amount (£)", Format.DECIMAL, show_sum=True),
-                Field("Widthheld Amount (£)", Format.DECIMAL, show_sum=True),
+                Field("Net Amount", Format.MONEY, show_sum=True),
+                Field("Widthheld Amount", Format.MONEY, show_sum=True),
             ]
         )
 
@@ -149,7 +149,14 @@ class TrHistory:
             )
 
             table.add_row(
-                [tr.date, tr.name, tr.isin, tr.ticker, tr.total, tr.withheld or "n/a"],
+                [
+                    tr.date,
+                    tr.name,
+                    tr.isin,
+                    tr.ticker,
+                    tr.total,
+                    tr.withheld,
+                ],
                 divider=divider,
             )
 
@@ -161,8 +168,8 @@ class TrHistory:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
-                Field("Deposit (£)", Format.DECIMAL, show_sum=True),
-                Field("Withdrawal (£)", Format.DECIMAL, show_sum=True),
+                Field("Deposit", Format.MONEY, show_sum=True),
+                Field("Withdrawal", Format.MONEY, show_sum=True),
             ]
         )
 
@@ -170,7 +177,7 @@ class TrHistory:
         last_idx = len(transactions) - 1
 
         for idx, tr in enumerate(transactions):
-            if tr.total > 0:
+            if tr.total.amount > 0:
                 deposited = tr.total
                 widthdrew = ""
             else:
@@ -191,7 +198,7 @@ class TrHistory:
         table = PrettyTable(
             [
                 Field("Date", Format.DATE),
-                Field("Amount (£)", Format.DECIMAL, show_sum=True),
+                Field("Amount", Format.MONEY, show_sum=True),
             ]
         )
 

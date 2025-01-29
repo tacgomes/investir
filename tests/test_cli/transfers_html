@@ -2,8 +2,8 @@
     <thead>
         <tr>
             <th>Date</th>
-            <th>Deposit (£)</th>
-            <th>Withdrawal (£)</th>
+            <th>Deposit (GBP)</th>
+            <th>Withdrawal (GBP)</th>
         </tr>
     </thead>
     <tbody>

@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
+from moneyed import Money, get_currency
 
 from investir.config import config
 from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
-    CurrencyError,
     FeesError,
     OrderDateError,
     ParseError,
@@ -29,7 +29,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal
+from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
 
 logger = logging.getLogger(__name__)
 
@@ -128,12 +128,6 @@ class Trading212Parser:
                     continue
 
                 if fn := parse_fn.get(tr_type):
-                    currency_total = row["Currency (Total)"]
-                    if currency_total != "GBP":
-                        raise_or_warn(
-                            CurrencyError(self._csv_file, row, currency_total)
-                        )
-
                     timestamp = parse_timestamp(row["Time"])
                     tr_id = row["ID"]
                     total_amount = Decimal(row["Total"])
@@ -159,11 +153,24 @@ class Trading212Parser:
         name = row["Name"]
         num_shares = Decimal(row["No. of shares"])
         price_share = Decimal(row["Price / share"])
-        exchange_rate = Decimal(row["Exchange rate"])
-        fx_conversion_fee = read_decimal(row["Currency conversion fee"])
-        currency_fx_conversion_fee = row["Currency (Currency conversion fee)"]
-        stamp_duty = read_decimal(row.get("Stamp duty (GBP)", ""))
-        finra_fee = read_decimal(row.get("Finra fee (GBP)", ""))
+        exchange_rate = read_decimal(row["Exchange rate"], default=Decimal("1.0"))
+
+        conversion_fee = row.get("Currency conversion fee")
+        currency_conversion_fee = row.get("Currency (Currency conversion fee)")
+
+        if conversion_fee and not currency_conversion_fee:
+            raise ParseError(
+                self._csv_file, row, "Conversion fee found but no fee currency given"
+            )
+
+        fx_fee = (
+            Money(conversion_fee, currency_conversion_fee)
+            if conversion_fee and currency_conversion_fee
+            else get_currency(total_currency).zero
+        )
+
+        stamp_duty = read_sterling(row.get("Stamp duty (GBP)"))
+        finra_fee = read_sterling(row.get("Finra fee (GBP)"))
 
         if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
@@ -171,21 +178,30 @@ class Trading212Parser:
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)
 
-        if stamp_duty and (fx_conversion_fee or finra_fee):
+        if stamp_duty and (fx_fee or finra_fee):
             raise FeesError(self._csv_file, row)
 
-        if fx_conversion_fee and currency_fx_conversion_fee != "GBP":
-            raise CurrencyError(self._csv_file, row, currency_fx_conversion_fee)
-
         order_class: type[Order] = Acquisition
-        fees = stamp_duty + finra_fee + fx_conversion_fee
+
+        # TODO: If the currency for the total is different than the
+        #       currency for the fees, or if the FINRA and FX fees are
+        #       defined in different currencies, parsing will fail when
+        #       attempting to sum incompatible money objects.
+
+        fees = fx_fee
+
+        if stamp_duty:
+            fees += stamp_duty
+
+        if finra_fee:
+            fees += finra_fee
 
         if tr_type in ("Market sell", "Limit sell"):
             order_class = Disposal
             fees *= -1
 
         calculated_amount = round(
-            (round(price_share * num_shares, 2) / exchange_rate) + fees, 2
+            (round(price_share * num_shares, 2) / exchange_rate) + fees.amount, 2
         )
 
         if abs(calculated_amount - total_amount) > Decimal("0.01"):
@@ -206,7 +222,7 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                total=total_amount - fees,
+                total=Money(total_amount, total_currency) - fees,
                 quantity=num_shares,
                 fees=allowable_fees,
                 tr_id=tr_id,
@@ -228,6 +244,7 @@ class Trading212Parser:
         ticker = row["Ticker"]
         name = row["Name"]
         currency_price_share = row["Currency (Price / share)"]
+        withholding_tax = read_decimal(row["Withholding tax"])
         currency_withholding_tax = row["Currency (Withholding tax)"]
         fx_conversion_fee = row["Currency conversion fee"]
 
@@ -250,8 +267,8 @@ class Trading212Parser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                total=total_amount,
-                withheld=None,
+                total=Money(total_amount, total_currency),
+                withheld=Money(withholding_tax, currency_withholding_tax),
                 tr_id=tr_id,
             )
         )
@@ -273,7 +290,9 @@ class Trading212Parser:
         if tr_type == "Withdrawal":
             total_amount = -abs(total_amount)
 
-        self._transfers.append(Transfer(timestamp, tr_id=tr_id, total=total_amount))
+        self._transfers.append(
+            Transfer(timestamp, tr_id=tr_id, total=Money(total_amount, total_currency))
+        )
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
@@ -289,6 +308,8 @@ class Trading212Parser:
         if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-        self._interest.append(Interest(timestamp, tr_id=tr_id, total=total_amount))
+        self._interest.append(
+            Interest(timestamp, tr_id=tr_id, total=Money(total_amount, total_currency))
+        )
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])

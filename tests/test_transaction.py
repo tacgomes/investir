@@ -6,6 +6,7 @@ import pytest
 from investir.findata import Split
 from investir.transaction import Acquisition, Disposal, Order
 from investir.typing import ISIN, Ticker
+from investir.utils import sterling
 
 
 def test_acquisition_order():
@@ -16,9 +17,9 @@ def test_acquisition_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("100.0"),
+        total=sterling("100.0"),
         quantity=Decimal("20.0"),
-        fees=Decimal("1.4"),
+        fees=sterling("1.4"),
         tr_id="ORDER",
     )
 
@@ -37,9 +38,9 @@ def test_disposal_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("50.0"),
+        total=sterling("50.0"),
         quantity=Decimal("10.0"),
-        fees=Decimal("1.7"),
+        fees=sterling("1.7"),
         tr_id="ORDER",
     )
 
@@ -56,9 +57,9 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("100.0"),
+        total=sterling("100.0"),
         quantity=Decimal("20.0"),
-        fees=Decimal("1.4"),
+        fees=sterling("1.4"),
     )
 
     order2 = Acquisition(
@@ -66,9 +67,9 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("50.0"),
+        total=sterling("50.0"),
         quantity=Decimal("5.0"),
-        fees=Decimal("1.5"),
+        fees=sterling("1.5"),
     )
 
     order3 = Acquisition(
@@ -76,9 +77,9 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("10.0"),
+        total=sterling("10.0"),
         quantity=Decimal("4.0"),
-        fees=Decimal("0.1"),
+        fees=sterling("0.1"),
     )
 
     merged_order = Order.merge(order1, order2, order3)
@@ -86,9 +87,9 @@ def test_order_merge():
     assert merged_order.isin == ISIN("AMZN-ISIN")
     assert merged_order.ticker == Ticker("AMZN")
     assert merged_order.name == "Amazon"
-    assert merged_order.total == Decimal("160")
+    assert merged_order.total == sterling("160")
     assert merged_order.quantity == Decimal("29")
-    assert merged_order.fees == Decimal("3.0")
+    assert merged_order.fees == sterling("3.0")
 
 
 def test_order_split():
@@ -99,9 +100,9 @@ def test_order_split():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=Decimal("120.0"),
+        total=sterling("120.0"),
         quantity=Decimal("12.0"),
-        fees=Decimal("6.0"),
+        fees=sterling("6.0"),
     )
 
     matched, remainder = order.split(Decimal("8.0"))
@@ -111,18 +112,18 @@ def test_order_split():
     assert matched.isin == ISIN("AMZN-ISIN")
     assert matched.ticker == Ticker("AMZN")
     assert matched.name == "Amazon"
-    assert matched.total == Decimal("80.0")
+    assert matched.total == sterling("80.0")
     assert matched.quantity == Decimal("8.0")
-    assert matched.fees == Decimal("4.0")
+    assert matched.fees == sterling("4.0")
 
     assert isinstance(remainder, Acquisition)
     assert remainder.timestamp == date_time
     assert remainder.isin == ISIN("AMZN-ISIN")
     assert remainder.ticker == Ticker("AMZN")
     assert remainder.name == "Amazon"
-    assert remainder.total == Decimal("40.0")
+    assert remainder.total == sterling("40.0")
     assert remainder.quantity == Decimal("4.0")
-    assert remainder.fees == Decimal("2.0")
+    assert remainder.fees == sterling("2.0")
 
     with pytest.raises(AssertionError):
         order.split(Decimal("12.1"))
@@ -133,7 +134,7 @@ def test_order_adjust_quantity():
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("AMZN-ISIN"),
         name="Amazon",
-        total=Decimal("10.0"),
+        total=sterling("10.0"),
         quantity=Decimal("1.0"),
     )
 
@@ -141,7 +142,7 @@ def test_order_adjust_quantity():
         datetime(2020, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("AMZN-ISIN"),
         name="Amazon",
-        total=Decimal("10.0"),
+        total=sterling("10.0"),
         quantity=Decimal("1.0"),
     )
 
