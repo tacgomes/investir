@@ -1,0 +1,38 @@
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Security Name</th>
+            <th>ISIN</th>
+            <th>Ticker</th>
+            <th>Net Amount (GBP)</th>
+            <th>Widthheld Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>02/06/2022</td>
+            <td>Microsoft</td>
+            <td>US5949181045</td>
+            <td>MSFT</td>
+            <td>4.12</td>
+            <td>3.42 USD</td>
+        </tr>
+        <tr>
+            <td>12/06/2022</td>
+            <td>ASML</td>
+            <td>NL0010273215</td>
+            <td>ASML</td>
+            <td>5.12</td>
+            <td>1.23 EUR</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>9.24</td>
+            <td>3.42 USD<br>1.23 EUR</td>
+        </tr>
+    </tbody>
+</table>

@@ -5,18 +5,25 @@ from decimal import Decimal
 import pytest
 
 from investir.exceptions import AmbiguousTickerError
-from investir.transaction import Acquisition, Disposal, Dividend, Interest, Transfer
+from investir.transaction import (
+    Acquisition,
+    Disposal,
+    Dividend,
+    Interest,
+    Transfer,
+)
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
+from investir.utils import sterling
 
 ORDER1 = Acquisition(
     datetime(2023, 4, 6, 18, 4, 50),
     isin=ISIN("AMZN-ISIN"),
     ticker=Ticker("AMZN"),
     name="Amazon",
-    total=Decimal("10.0"),
+    total=sterling("10.0"),
     quantity=Decimal("1.0"),
-    fees=Decimal("0.5"),
+    fees=sterling("0.5"),
     tr_id="ORDER1",
 )
 
@@ -25,9 +32,9 @@ ORDER2 = Disposal(
     isin=ISIN("GOOG-ISIN"),
     ticker=Ticker("GOOG"),
     name="Alphabet",
-    total=Decimal("15.0"),
+    total=sterling("15.0"),
     quantity=Decimal("2.0"),
-    fees=Decimal("1.0"),
+    fees=sterling("1.0"),
     tr_id="ORDER2",
 )
 
@@ -36,7 +43,7 @@ ORDER3 = Disposal(
     isin=ISIN("AAPL-ISIN"),
     ticker=Ticker("AAPL"),
     name="Apple",
-    total=Decimal("1.0"),
+    total=sterling("1.0"),
     quantity=Decimal("1.0"),
     tr_id="ORDER3",
 )
@@ -46,7 +53,7 @@ ORDER4 = Disposal(
     isin=ISIN("AAPL-ISIN"),
     ticker=Ticker("AAPL"),
     name="Apple",
-    total=Decimal("1.0"),
+    total=sterling("1.0"),
     quantity=Decimal("1.0"),
     tr_id="ORDER4",
 )
@@ -56,8 +63,8 @@ DIVIDEND1 = Dividend(
     isin=ISIN("AMZN-ISIN"),
     ticker=Ticker("AMZN"),
     name="Amazon",
-    total=Decimal("5.0"),
-    withheld=Decimal("2.0"),
+    total=sterling("5.0"),
+    withheld=sterling("2.0"),
 )
 
 DIVIDEND2 = Dividend(
@@ -65,17 +72,17 @@ DIVIDEND2 = Dividend(
     isin=ISIN("GOOG-ISIN"),
     ticker=Ticker("GOOG"),
     name="Alphabet",
-    total=Decimal("5.0"),
-    withheld=Decimal("2.0"),
+    total=sterling("5.0"),
+    withheld=sterling("2.0"),
 )
 
-TRANSFER1 = Transfer(datetime(2023, 2, 5, 14, 7, 20), Decimal("3000.0"))
+TRANSFER1 = Transfer(datetime(2023, 2, 5, 14, 7, 20), sterling("3000.0"))
 
-TRANSFER2 = Transfer(datetime(2024, 2, 5, 14, 7, 20), Decimal("-1000.0"))
+TRANSFER2 = Transfer(datetime(2024, 2, 5, 14, 7, 20), sterling("-1000.0"))
 
-INTEREST1 = Interest(datetime(2023, 2, 5, 14, 7, 20), Decimal("1000.0"))
+INTEREST1 = Interest(datetime(2023, 2, 5, 14, 7, 20), sterling("1000.0"))
 
-INTEREST2 = Interest(datetime(2024, 2, 5, 14, 7, 20), Decimal("500.0"))
+INTEREST2 = Interest(datetime(2024, 2, 5, 14, 7, 20), sterling("500.0"))
 
 
 def test_trhistory_duplicates_on_different_files_are_removed():
@@ -121,8 +128,8 @@ def test_trhistory_transfers_are_sorted_by_timestamp():
 
     transfers = tr_hist.transfers
     assert len(transfers) == 2
-    assert transfers[0].total == Decimal("3000")
-    assert transfers[1].total == Decimal("-1000")
+    assert transfers[0].total == sterling("3000")
+    assert transfers[1].total == sterling("-1000")
 
 
 def test_trhistory_interest_is_sorted_by_timestamp():
@@ -164,7 +171,7 @@ def test_get_ticker_isin_when_ticker_ambigous():
         datetime(2023, 1, 1),
         isin=ISIN("NL0010273215"),
         ticker=Ticker("ASML"),
-        total=Decimal("10.0"),
+        total=sterling("10.0"),
         quantity=Decimal("1.0"),
     )
 
@@ -172,7 +179,7 @@ def test_get_ticker_isin_when_ticker_ambigous():
         datetime(2023, 1, 2),
         isin=ISIN("USN070592100"),
         ticker=Ticker("ASML"),
-        total=Decimal("10.0"),
+        total=sterling("10.0"),
         quantity=Decimal("1.0"),
     )
 
@@ -198,12 +205,12 @@ def test_trhistory_get_dividends_table():
 def test_trhistory_get_transfers_table():
     tr_hist = TrHistory(transfers=[TRANSFER1, TRANSFER2])
     table_str = tr_hist.get_transfers_table().to_string()
-    assert str(TRANSFER1.total) in table_str
-    assert str(abs(TRANSFER2.total)) in table_str
+    assert str(TRANSFER1.total.amount) in table_str
+    assert str(abs(TRANSFER2.total.amount)) in table_str
 
 
 def test_trhistory_get_interest_table():
     tr_hist = TrHistory(interest=[INTEREST1, INTEREST2])
     table_str = tr_hist.get_interest_table().to_string()
-    assert str(INTEREST1.total) in table_str
-    assert str(INTEREST2.total) in table_str
+    assert str(INTEREST1.total.amount) in table_str
+    assert str(INTEREST2.total.amount) in table_str

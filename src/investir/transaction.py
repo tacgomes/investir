@@ -8,6 +8,9 @@ from decimal import Decimal
 from functools import reduce
 from typing import ClassVar, TypeVar
 
+from moneyed import Money
+
+from investir.const import BASE_CURRENCY
 from investir.findata.types import Split
 from investir.typing import ISIN, Ticker, Year
 from investir.utils import date_to_tax_year
@@ -21,7 +24,7 @@ else:
 @dataclass(frozen=True)
 class Transaction(ABC):
     timestamp: datetime
-    total: Decimal
+    total: Money
     tr_id: str | None = None
     notes: str | None = None
 
@@ -41,7 +44,7 @@ class Order(Transaction, ABC):
     name: str = ""
     quantity: Decimal
     original_quantity: Decimal | None = None
-    fees: Decimal = Decimal("0.0")
+    fees: Money = BASE_CURRENCY.zero
 
     order_count: ClassVar[int] = 0
 
@@ -50,8 +53,8 @@ class Order(Transaction, ABC):
         object.__setattr__(self, "number", Order.order_count)
 
     @property
-    def price(self) -> Decimal:
-        return self.total / self.quantity
+    def price(self) -> Money:
+        return self.total / self.quantity  # type: ignore[return-value]
 
     def split(self: Self, split_quantity: Decimal) -> tuple[Self, Self]:
         assert self.quantity >= split_quantity
@@ -68,7 +71,7 @@ class Order(Transaction, ABC):
             self,
             total=match_total,
             quantity=match_quantity,
-            fees=match_fees,
+            fees=match_fees,  # type: ignore[arg-type]
             notes=f"Splitted from order {self.number}",
         )
 
@@ -93,9 +96,19 @@ class Order(Transaction, ABC):
             hour=0, minute=0, second=0, microsecond=0
         )
 
-        total = Decimal(sum(order.total for order in orders))
+        currency = orders[0].total.currency
+        total = Money(
+            sum((order.total for order in orders), currency.zero).amount,
+            currency,
+        )
+
         quantity = Decimal(sum(order.quantity for order in orders))
-        fees = Decimal(sum(order.fees for order in orders))
+
+        currency = orders[0].fees.currency
+        fees = Money(
+            sum((order.fees for order in orders), currency.zero).amount,
+            currency,
+        )
 
         notes = "Merged from orders "
         notes += ",".join(str(order.number) for order in orders)
@@ -132,14 +145,14 @@ class Order(Transaction, ABC):
 @dataclass(frozen=True)
 class Acquisition(Order):
     @property
-    def total_cost(self) -> Decimal:
+    def total_cost(self) -> Money:
         return self.total + self.fees
 
 
 @dataclass(frozen=True)
 class Disposal(Order):
     @property
-    def net_proceeds(self) -> Decimal:
+    def net_proceeds(self) -> Money:
         return self.total - self.fees
 
 
@@ -148,7 +161,7 @@ class Dividend(Transaction):
     isin: ISIN
     name: str = ""
     ticker: Ticker | None = None
-    withheld: Decimal | None
+    withheld: Money
 
 
 @dataclass(frozen=True)
