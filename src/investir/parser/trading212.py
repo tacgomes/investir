@@ -114,6 +114,8 @@ class Trading212Parser:
             "Deposit": self._parse_transfer,
             "Withdrawal": self._parse_transfer,
             "Interest on cash": self._parse_interest,
+            "Card debit": None,
+            "Spending cashback": None,
             "Currency conversion": None,
         }
 
