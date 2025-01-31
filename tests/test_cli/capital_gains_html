@@ -6,9 +6,9 @@
             <th>Security Name</th>
             <th>ISIN</th>
             <th>Quantity</th>
-            <th>Cost (£)</th>
-            <th>Proceeds (£)</th>
-            <th>Gain/loss (£)</th>
+            <th>Cost (GBP)</th>
+            <th>Proceeds (GBP)</th>
+            <th>Gain/loss (GBP)</th>
         </tr>
     </thead>
     <tbody>

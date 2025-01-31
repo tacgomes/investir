@@ -1306,7 +1306,7 @@ def test_get_holdings_table_with_gain_loss(make_tax_calculator):
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
     table_str = table.to_string()
-    assert "Gain/Loss (£)" in table_str
+    assert "Gain/Loss (GBP)" in table_str
     assert "50.00" in table_str
 
 
@@ -1327,7 +1327,7 @@ def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calc
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
     table_str = table.to_string()
-    assert "Gain/Loss (£)" in table_str
+    assert "Gain/Loss (GBP)" in table_str
     assert "12.50" in table_str
 
 
@@ -1346,7 +1346,7 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
     table = tax_calculator.get_holdings_table(show_gain_loss=True)
 
     table_str = table.to_string()
-    assert "Gain/Loss (£)" in table_str
+    assert "Gain/Loss (GBP)" in table_str
     assert "n/a" in table_str
 
     tax_calculator = make_tax_calculator(
@@ -1356,7 +1356,7 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
     )
 
     table_str = tax_calculator.get_holdings_table(show_gain_loss=True).to_string()
-    assert "Gain/Loss (£)" in table_str
+    assert "Gain/Loss (GBP)" in table_str
     assert "n/a" in table_str
 
 
