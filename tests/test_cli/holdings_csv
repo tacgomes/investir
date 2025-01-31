@@ -1,4 +1,4 @@
-Security Name,ISIN,Cost (£),Quantity,Current Value (£),Gain/Loss (£),Weight (%)
+Security Name,ISIN,Cost (GBP),Quantity,Current Value (GBP),Gain/Loss (GBP),Weight (%)
 SMT,GB00BLDYK618,2196.812045454545454545454546,162.00000000,,n/a,n/a
 Microsoft,US5949181045,882.3464985164979278272490710,3.62439184,,n/a,n/a
 Apple,US0378331005,301.699341785252128650422842,3.00000000,,n/a,n/a

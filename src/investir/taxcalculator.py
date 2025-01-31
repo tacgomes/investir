@@ -165,9 +165,9 @@ class TaxCalculator:
                 Field("Security Name"),
                 Field("ISIN"),
                 Field("Quantity", Format.QUANTITY),
-                Field("Cost (£)", Format.DECIMAL),
-                Field("Proceeds (£)", Format.DECIMAL),
-                Field("Gain/loss (£)", Format.DECIMAL),
+                Field(f"Cost ({BASE_CURRENCY})", Format.DECIMAL),
+                Field(f"Proceeds ({BASE_CURRENCY})", Format.DECIMAL),
+                Field(f"Gain/loss ({BASE_CURRENCY})", Format.DECIMAL),
             ]
         )
 
@@ -220,10 +220,18 @@ class TaxCalculator:
             [
                 Field("Security Name"),
                 Field("ISIN"),
-                Field("Cost (£)", Format.DECIMAL),
+                Field(f"Cost ({BASE_CURRENCY})", Format.DECIMAL),
                 Field("Quantity", Format.QUANTITY),
-                Field("Current Value (£)", Format.DECIMAL, visible=show_gain_loss),
-                Field("Gain/Loss (£)", Format.DECIMAL, visible=show_gain_loss),
+                Field(
+                    f"Current Value ({BASE_CURRENCY})",
+                    Format.DECIMAL,
+                    visible=show_gain_loss,
+                ),
+                Field(
+                    f"Gain/Loss ({BASE_CURRENCY})",
+                    Format.DECIMAL,
+                    visible=show_gain_loss,
+                ),
                 Field("Weight (%)", Format.DECIMAL, visible=show_gain_loss),
             ]
         )

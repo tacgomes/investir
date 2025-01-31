@@ -5,47 +5,47 @@
         "Security Name",
         "ISIN",
         "Quantity",
-        "Cost (\u00a3)",
-        "Proceeds (\u00a3)",
-        "Gain/loss (\u00a3)"
+        "Cost (GBP)",
+        "Proceeds (GBP)",
+        "Gain/loss (GBP)"
     ],
     {
-        "Cost (\u00a3)": "3493.12",
+        "Cost (GBP)": "3493.12",
         "Disposal Date": "2022-09-20",
-        "Gain/loss (\u00a3)": "1448.41",
+        "Gain/loss (GBP)": "1448.41",
         "ISIN": "US0231351067",
         "Identification": "Section 104",
-        "Proceeds (\u00a3)": "4941.53",
+        "Proceeds (GBP)": "4941.53",
         "Quantity": "48.31896981",
         "Security Name": "Amazon"
     },
     {
-        "Cost (\u00a3)": "324.7926690016643403072609590",
+        "Cost (GBP)": "324.7926690016643403072609590",
         "Disposal Date": "2022-10-14",
-        "Gain/loss (\u00a3)": "-5.0326690016643403072609590",
+        "Gain/loss (GBP)": "-5.0326690016643403072609590",
         "ISIN": "US5949181045",
         "Identification": "Section 104",
-        "Proceeds (\u00a3)": "319.76",
+        "Proceeds (GBP)": "319.76",
         "Quantity": "1.32642",
         "Security Name": "Microsoft"
     },
     {
-        "Cost (\u00a3)": "1094.155192117222311059989321",
+        "Cost (GBP)": "1094.155192117222311059989321",
         "Disposal Date": "2022-12-16",
-        "Gain/loss (\u00a3)": "-114.465192117222311059989321",
+        "Gain/loss (GBP)": "-114.465192117222311059989321",
         "ISIN": "US83088M1027",
         "Identification": "Section 104",
-        "Proceeds (\u00a3)": "979.69",
+        "Proceeds (GBP)": "979.69",
         "Quantity": "8.30000000",
         "Security Name": "Skyworks"
     },
     {
-        "Cost (\u00a3)": "277.2021570417068497862623581",
+        "Cost (GBP)": "277.2021570417068497862623581",
         "Disposal Date": "2023-03-03",
-        "Gain/loss (\u00a3)": "35.7478429582931502137376419",
+        "Gain/loss (GBP)": "35.7478429582931502137376419",
         "ISIN": "US83088M1027",
         "Identification": "Section 104",
-        "Proceeds (\u00a3)": "312.95",
+        "Proceeds (GBP)": "312.95",
         "Quantity": "2.10000000",
         "Security Name": "Skyworks"
     }

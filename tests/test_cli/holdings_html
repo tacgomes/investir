@@ -3,7 +3,7 @@
         <tr>
             <th>Security Name</th>
             <th>ISIN</th>
-            <th>Cost (£)</th>
+            <th>Cost (GBP)</th>
             <th>Quantity</th>
         </tr>
     </thead>
