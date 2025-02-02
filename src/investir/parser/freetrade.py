@@ -107,10 +107,9 @@ class FreetradeParser:
 
                 if fn := parse_fn.get(tr_type):
                     timestamp = parse_timestamp(row["Timestamp"])
-                    total_amount = Decimal(row["Total Amount"])
-                    total_currency = row["Account Currency"]
+                    total = Money(Decimal(row["Total Amount"]), row["Account Currency"])
 
-                    fn(row, tr_type, timestamp, total_amount, total_currency)
+                    fn(row, tr_type, timestamp, total)
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
@@ -121,8 +120,7 @@ class FreetradeParser:
         row: Mapping[str, str],
         tr_type: str,
         timestamp: datetime,
-        total_amount: Decimal,
-        total_currency: str,
+        total: Money,
     ) -> None:
         title = row["Title"]
         action = row["Buy / Sell"]
@@ -151,17 +149,16 @@ class FreetradeParser:
             fees *= -1
 
         calculated_amount = round(price * quantity + fees, 2)
-        if calculated_amount != total_amount:
+        if calculated_amount != total.amount:
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total_amount, calculated_amount
+                    self._csv_file, row, total.amount, calculated_amount
                 )
             )
 
-        if config.include_fx_fees:
-            allowable_fees = abs(fees)
-        else:
-            allowable_fees = stamp_duty
+        allowable_fees = abs(fees)
+        if not config.include_fx_fees:
+            allowable_fees -= fx_fee_amount
 
         self._orders.append(
             order_class(
@@ -169,9 +166,9 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                total=Money(total_amount - fees, total_currency),
+                total=Money(total.amount - fees, total.currency),
                 quantity=quantity,
-                fees=Money(allowable_fees, total_currency),
+                fees=Money(allowable_fees, total.currency),
                 tr_id=order_id,
             )
         )
@@ -183,8 +180,7 @@ class FreetradeParser:
         row: Mapping[str, str],
         tr_type: str,
         timestamp: datetime,
-        total_amount: Decimal,
-        total_currency: str,
+        total: Money,
     ):
         title = row["Title"]
         ticker = row["Ticker"]
@@ -207,9 +203,9 @@ class FreetradeParser:
         # Freetrade does not seem to use a consistent method for rounding dividends.
         # Thus, allow the calculated amount to differ by one pence.
         # https://community.freetrade.io/t/dividend-amount-off-by-one-penny/71806/7
-        if abs(total_amount - calculated_ta) > Decimal("0.01"):
+        if abs(total.amount - calculated_ta) > Decimal("0.01"):
             raise_or_warn(
-                CalculatedAmountError(self._csv_file, row, total_amount, calculated_ta)
+                CalculatedAmountError(self._csv_file, row, total.amount, calculated_ta)
             )
 
         self._dividends.append(
@@ -218,8 +214,8 @@ class FreetradeParser:
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=title,
-                total=Money(total_amount, total_currency),
-                withheld=Money(withheld_tax_amount * base_fx_rate, total_currency),
+                total=total,
+                withheld=Money(withheld_tax_amount * base_fx_rate, total.currency),
             )
         )
 
@@ -230,13 +226,12 @@ class FreetradeParser:
         row: Mapping[str, str],
         tr_type: str,
         timestamp: datetime,
-        total_amount: Decimal,
-        total_currency: str,
+        total: Money,
     ):
         if tr_type == "WITHDRAWAL":
-            total_amount = -abs(total_amount)
+            total = -abs(total)
 
-        self._transfers.append(Transfer(timestamp, Money(total_amount, total_currency)))
+        self._transfers.append(Transfer(timestamp, total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
@@ -245,9 +240,8 @@ class FreetradeParser:
         row: Mapping[str, str],
         tr_type: str,
         timestamp: datetime,
-        total_amount: Decimal,
-        total_currency: str,
+        total: Money,
     ):
-        self._interest.append(Interest(timestamp, Money(total_amount, total_currency)))
+        self._interest.append(Interest(timestamp, total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
