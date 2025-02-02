@@ -105,8 +105,10 @@ class Trading212Parser:
         parse_fn = {
             "Market buy": self._parse_order,
             "Limit buy": self._parse_order,
+            "Stop buy": self._parse_order,
             "Market sell": self._parse_order,
             "Limit sell": self._parse_order,
+            "Stop sell": self._parse_order,
             "Dividend (Ordinary)": self._parse_dividend,
             "Dividend (Dividend)": self._parse_dividend,
             "Dividend (Dividends paid by us corporations)": self._parse_dividend,
@@ -194,7 +196,7 @@ class Trading212Parser:
         if finra_fee:
             fees += finra_fee
 
-        if tr_type in ("Market sell", "Limit sell"):
+        if tr_type in ("Market sell", "Limit sell", "Stop sell"):
             order_class = Disposal
             fees *= -1
 
