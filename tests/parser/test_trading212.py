@@ -110,16 +110,8 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     acquisition1 = ACQUISITION
 
     acquisition2 = dict(ACQUISITION)
-    acquisition2["Action"] = "Limit buy"
-
-    acquisition3 = dict(ACQUISITION)
-    acquisition3["Finra fee (GBP)"] = "5.2"
-    del acquisition3["Stamp duty (GBP)"]
-
-    disposal1 = DISPOSAL
-    disposal2 = dict(DISPOSAL)
-
-    disposal2["Action"] = "Limit sell"
+    acquisition2["Finra fee (GBP)"] = "5.2"
+    del acquisition2["Stamp duty (GBP)"]
 
     dividend1 = DIVIDEND
     dividend2 = dict(DIVIDEND)
@@ -151,10 +143,8 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     parser = create_parser(
         [
             acquisition1,
+            DISPOSAL,
             acquisition2,
-            disposal1,
-            disposal2,
-            acquisition3,
             dividend1,
             dividend2,
             dividend3,
@@ -167,7 +157,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert parser.can_parse()
 
     parser_result = parser.parse()
-    assert len(parser_result.orders) == 5
+    assert len(parser_result.orders) == 3
 
     order = parser_result.orders[0]
     assert isinstance(order, Acquisition)
@@ -178,9 +168,8 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert order.total == sterling("1325.00")
     assert order.quantity == Decimal("10")
     assert order.fees == sterling("5.2")
-    assert order == parser_result.orders[1]
 
-    order = parser_result.orders[2]
+    order = parser_result.orders[1]
     assert isinstance(order, Disposal)
     assert order.timestamp == TIMESTAMP
     assert order.isin == ISIN("SWKS-ISIN")
@@ -190,15 +179,13 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert order.quantity == Decimal("2.1")
     assert order.fees == sterling("6.4")
 
-    assert parser_result.orders[3] == order
-
-    order = parser_result.orders[4]
+    order = parser_result.orders[2]
     assert isinstance(order, Acquisition)
     assert order.fees == sterling("5.2")
 
     assert len(parser_result.dividends) == 3
-    dividend = parser_result.dividends[0]
 
+    dividend = parser_result.dividends[0]
     assert dividend.timestamp == TIMESTAMP
     assert dividend.isin == ISIN("SWKS-ISIN")
     assert dividend.ticker == Ticker("SWKS")
@@ -219,6 +206,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert transfer.total == sterling("-500.25")
 
     assert len(parser_result.interest) == 1
+
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
     assert interest.total == sterling("4.65")
@@ -283,6 +271,35 @@ def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
     assert order.total == sterling("1325.00")
     assert order.quantity == Decimal("10.0")
     assert order.fees == sterling("1.3")
+
+
+def test_parser_different_buy_sell_actions(create_parser):
+    acquisition1 = dict(ACQUISITION)  # Market buy
+
+    acquisition2 = dict(ACQUISITION)
+    acquisition2["Action"] = "Limit buy"
+
+    acquisition3 = dict(ACQUISITION)
+    acquisition3["Action"] = "Stop buy"
+
+    disposal1 = dict(DISPOSAL)  # Market sell
+
+    disposal2 = dict(DISPOSAL)
+    disposal2["Action"] = "Limit sell"
+
+    disposal3 = dict(DISPOSAL)
+    disposal3["Action"] = "Stop sell"
+
+    parser = create_parser(
+        [acquisition1, acquisition2, acquisition3, disposal1, disposal2, disposal3]
+    )
+
+    parser_result = parser.parse()
+    assert len(parser_result.orders) == 6
+
+    orders = parser_result.orders
+    assert orders[0] == orders[1] == orders[2]
+    assert orders[3] == orders[4] == orders[5]
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):
