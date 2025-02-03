@@ -29,26 +29,36 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
+from investir.utils import dict2str, raise_or_warn, read_decimal
 
 logger = logging.getLogger(__name__)
 
 
+def read_money(row: Mapping[str, str], amount_field: str) -> Money | None:
+    if amount := row.get(amount_field, "").strip():
+        return Money(amount=amount, currency=row[f"Currency ({amount_field})"])
+
+    if amount := row.get(f"{amount_field} (GBP)", "").strip():
+        return Money(amount=amount, currency="GBP")
+
+    return None
+
+
+def read_sterling(amount: str | None) -> Money | None:
+    return (
+        Money(amount=amount, currency="GBP")
+        if amount is not None and amount.strip()
+        else None
+    )
+
+
 @ParserFactory.register("Trading212")
 class Trading212Parser:
-    INITIAL_FIELDS: Final = (
+    FIELDS: Final = (
         "Action",
         "Time",
-    )
-
-    MANDATORY_FIELDS: Final = (
-        "Total",
-        "Currency (Total)",
         "Notes",
         "ID",
-    )
-
-    OPTIONAL_FIELDS: Final = (
         "ISIN",
         "Ticker",
         "Name",
@@ -56,18 +66,34 @@ class Trading212Parser:
         "Price / share",
         "Currency (Price / share)",
         "Exchange rate",
-        "Currency (Result)",
-        "Result",
+        "Total",
+        "Currency (Total)",
+        # Dividend
         "Withholding tax",
         "Currency (Withholding tax)",
+        # Fees
+        "Stamp duty (GBP)",
+        "Stamp duty reserve tax (GBP)",
+        "Currency conversion fee",
+        "Currency (Currency conversion fee)",
+        "Finra fee",
+        "Currency (Finra fee)",
+        "Transaction fee",
+        "Currency (Transaction fee)",
+        # Legacy
+        "Total (GBP)",
+        "Currency conversion fee (GBP)",
+        "Transaction fee (GBP)",
+        "Finra fee (GBP)",
+        # Ignored
+        "Result",
+        "Currency (Result)",
+        "Charge amount (GBP)",
+        "Deposit fee (GBP)",
         "Currency conversion from amount",
         "Currency (Currency conversion from amount)",
         "Currency conversion to amount",
         "Currency (Currency conversion to amount)",
-        "Currency conversion fee",
-        "Currency (Currency conversion fee)",
-        "Finra fee (GBP)",
-        "Stamp duty (GBP)",
         "Merchant name",
         "Merchant category",
     )
@@ -83,21 +109,15 @@ class Trading212Parser:
         with self._csv_file.open(encoding="utf-8") as file:
             reader = csv.DictReader(file)
             fieldnames = reader.fieldnames or []
-            idx = len(self.INITIAL_FIELDS)
-            fields1 = fieldnames[:idx]
-            fields2 = fieldnames[idx:]
 
-            if tuple(fields1) != self.INITIAL_FIELDS:
-                return False
+        if any(f not in self.FIELDS for f in fieldnames):
+            return False
 
-            if any(f not in fields2 for f in self.MANDATORY_FIELDS):
-                return False
+        if "Action" not in fieldnames or "Time" not in fieldnames:
+            return False
 
-            if any(
-                f not in self.MANDATORY_FIELDS and f not in self.OPTIONAL_FIELDS
-                for f in fields2
-            ):
-                return False
+        if "Total" not in fieldnames and "Total (GBP)" not in fieldnames:
+            return False
 
         return True
 
@@ -132,12 +152,12 @@ class Trading212Parser:
                 if fn := parse_fn.get(tr_type):
                     timestamp = parse_timestamp(row["Time"])
                     tr_id = row["ID"]
-                    total = Money(Decimal(row["Total"]), row["Currency (Total)"])
 
                     if timestamp.tzinfo is None:
                         timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-                    fn(row, tr_type, timestamp, tr_id, total)
+                    if (total := read_money(row, "Total")) is not None:
+                        fn(row, tr_type, timestamp, tr_id, total)
 
         return ParsingResult(
             self._orders, self._dividends, self._transfers, self._interest
@@ -158,28 +178,32 @@ class Trading212Parser:
         price_share = Decimal(row["Price / share"])
         exchange_rate = read_decimal(row["Exchange rate"], default=Decimal("1.0"))
 
-        conversion_fee = row.get("Currency conversion fee")
-        currency_conversion_fee = row.get("Currency (Currency conversion fee)")
-
-        if conversion_fee and not currency_conversion_fee:
-            raise ParseError(
-                self._csv_file, row, "Conversion fee found but no fee currency given"
-            )
-
-        fx_fee = (
-            Money(conversion_fee, currency_conversion_fee)
-            if conversion_fee and currency_conversion_fee
-            else total.currency.zero
-        )
-
+        # TODO: The PTM levy fee and the French Financial Transaction
+        #       Tax (FRR) fee are not parsed as it is unclear what their
+        #       field titles would be in the CSV. The list of possible
+        #       fees is available at:
+        #       https://helpcentre.trading212.com/hc/en-us/articles/360007081637-What-are-the-applicable-stock-exchange-fees
         stamp_duty = read_sterling(row.get("Stamp duty (GBP)"))
-        finra_fee = read_sterling(row.get("Finra fee (GBP)"))
+        stamp_duty_reserve_tax = read_sterling(row.get("Stamp duty reserve tax (GBP)"))
+        fx_fee = read_money(row, "Currency conversion fee")
+        sec_fee = read_money(row, "Transaction fee")
+        finra_fee = read_money(row, "Finra fee")
 
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)
 
-        if stamp_duty and (fx_fee or finra_fee):
-            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Finra fee (GBP)")
+        if stamp_duty and stamp_duty_reserve_tax:
+            raise FeesError(
+                self._csv_file, row, "Stamp duty (GBP)", "Stamp duty reserve tax (GBP)"
+            )
+
+        stamp_duty = stamp_duty or stamp_duty_reserve_tax
+
+        if stamp_duty and finra_fee:
+            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Finra fee")
+
+        if stamp_duty and sec_fee:
+            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Transaction fee")
 
         order_class: type[Order] = Acquisition
 
@@ -188,13 +212,19 @@ class Trading212Parser:
         #       defined in different currencies, parsing will fail when
         #       attempting to sum incompatible money objects.
 
-        fees = fx_fee
+        fees = total.currency.zero
 
         if stamp_duty:
             fees += stamp_duty
 
+        if fx_fee:
+            fees += fx_fee
+
         if finra_fee:
             fees += finra_fee
+
+        if sec_fee:
+            fees += sec_fee
 
         if tr_type in ("Market sell", "Limit sell", "Stop sell"):
             order_class = Disposal
@@ -212,7 +242,7 @@ class Trading212Parser:
             )
 
         allowable_fees = abs(fees)
-        if not config.include_fx_fees:
+        if not config.include_fx_fees and fx_fee:
             allowable_fees -= fx_fee
 
         self._orders.append(
