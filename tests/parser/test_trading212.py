@@ -22,6 +22,25 @@ from investir.utils import sterling
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
+LEGACY_FIELDS: Final = {
+    "Total (GBP)",
+    "Currency conversion fee (GBP)",
+    "Transaction fee (GBP)",
+    "Finra fee (GBP)",
+}
+
+
+RECENT_FIELDS: Final = {
+    "Total",
+    "Currency (Total)",
+    "Currency conversion fee",
+    "Currency (Currency conversion fee)",
+    "Finra fee",
+    "Currency (Finra fee)",
+    "Transaction fee",
+    "Currency (Transaction fee)",
+}
+
 
 ACQUISITION: Final = {
     "Action": "Market buy",
@@ -37,7 +56,6 @@ ACQUISITION: Final = {
     "Currency (Total)": "GBP",
     "Stamp duty (GBP)": "5.2",
 }
-
 
 DISPOSAL: Final = {
     "Action": "Market sell",
@@ -55,7 +73,6 @@ DISPOSAL: Final = {
     "Currency conversion fee": "6.4",
     "Currency (Currency conversion fee)": "GBP",
 }
-
 
 DIVIDEND: Final = {
     "Action": "Dividend (Ordinary)",
@@ -78,14 +95,15 @@ def fixture_create_parser(tmp_path) -> Callable:
     config.reset()
     config.include_fx_fees = True
 
-    def _create_parser(rows: Sequence[Mapping[str, str]]) -> Trading212Parser:
+    def _create_parser(
+        rows: Sequence[Mapping[str, str]], legacy_fields: bool = False
+    ) -> Trading212Parser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
-            field_names = (
-                Trading212Parser.INITIAL_FIELDS
-                + Trading212Parser.MANDATORY_FIELDS
-                + Trading212Parser.OPTIONAL_FIELDS
-            )
+            if not legacy_fields:
+                field_names = set(Trading212Parser.FIELDS) - LEGACY_FIELDS
+            else:
+                field_names = set(Trading212Parser.FIELDS) - RECENT_FIELDS
             writer = csv.DictWriter(file, fieldnames=field_names)
             writer.writeheader()
             writer.writerows(rows)
@@ -106,13 +124,7 @@ def fixture_create_parser_format_unrecognised(tmp_path) -> Callable:
     return _create_parser
 
 
-def test_parser_happy_path(create_parser):  # noqa: PLR0915
-    acquisition1 = ACQUISITION
-
-    acquisition2 = dict(ACQUISITION)
-    acquisition2["Finra fee (GBP)"] = "5.2"
-    del acquisition2["Stamp duty (GBP)"]
-
+def test_parser_happy_path(create_parser):
     deposit = {
         "Action": "Deposit",
         "Time": TIMESTAMP,
@@ -136,9 +148,8 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
 
     parser = create_parser(
         [
-            acquisition1,
+            ACQUISITION,
             DISPOSAL,
-            acquisition2,
             DIVIDEND,
             deposit,
             withdrawal,
@@ -149,7 +160,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert parser.can_parse()
 
     parser_result = parser.parse()
-    assert len(parser_result.orders) == 3
+    assert len(parser_result.orders) == 2
 
     order = parser_result.orders[0]
     assert isinstance(order, Acquisition)
@@ -170,10 +181,6 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert order.total == sterling("1118.25")
     assert order.quantity == Decimal("2.1")
     assert order.fees == sterling("6.4")
-
-    order = parser_result.orders[2]
-    assert isinstance(order, Acquisition)
-    assert order.fees == sterling("5.2")
 
     assert len(parser_result.dividends) == 1
 
@@ -313,26 +320,87 @@ def test_parser_different_dividends_actions(create_parser):
     assert dividends[0] == dividends[1] == dividends[2] == dividends[3]
 
 
+def test_parser_different_fee_types(create_parser):
+    order1 = dict(ACQUISITION)
+    del order1["Stamp duty (GBP)"]
+    order1["Total"] = "1333.40"
+    order1["Stamp duty reserve tax (GBP)"] = "5.2"
+    order1["Currency conversion fee"] = "3.2"
+    order1["Currency (Currency conversion fee)"] = "GBP"
+
+    order2 = dict(ACQUISITION)
+    del order2["Stamp duty (GBP)"]
+    order2["Total"] = "1334.30"
+    order2["Currency (Total)"] = "GBP"
+    order2["Currency conversion fee"] = "3.2"
+    order2["Currency (Currency conversion fee)"] = "GBP"
+    order2["Transaction fee"] = "2.1"
+    order2["Currency (Transaction fee)"] = "GBP"
+    order2["Finra fee"] = "4.0"
+    order2["Currency (Finra fee)"] = "GBP"
+
+    parser = create_parser([order1, order2])
+
+    parser_result = parser.parse()
+    assert len(parser_result.orders) == 2
+
+    order = parser_result.orders[0]
+    assert order.total == sterling("1325.00")
+    assert order.fees == sterling("8.4")
+
+    order = parser_result.orders[1]
+    assert order.total == sterling("1325.00")
+    assert order.fees == sterling("9.3")
+
+
+def test_parser_legacy_fields(create_parser):
+    acquisition = {
+        "Action": "Market buy",
+        "Time": TIMESTAMP,
+        "ISIN": "AMZN-ISIN",
+        "Ticker": "AMZN",
+        "Name": "Amazon",
+        "No. of shares": "10.0",
+        "Price / share": "132.5",
+        "Currency (Price / share)": "GBP",
+        "Exchange rate": "1.0",
+        "Total (GBP)": "1334.30",
+        "Currency conversion fee (GBP)": "3.2",
+        "Transaction fee (GBP)": "2.1",
+        "Finra fee (GBP)": "4.0",
+    }
+
+    parser = create_parser([acquisition], legacy_fields=True)
+    assert parser.can_parse()
+
+    parser_result = parser.parse()
+    assert len(parser_result.orders) == 1
+
+    order = parser_result.orders[0]
+    assert order.total == sterling("1325.00")
+    assert order.fees == sterling("9.3")
+
+
 def test_parser_cannot_parse(create_parser_format_unrecognised):
-    # Fields don't start with initial fields
-    parser = create_parser_format_unrecognised(Trading212Parser.MANDATORY_FIELDS)
-    assert parser.can_parse() is False
-
-    # One mandatory field is missing
-    parser = create_parser_format_unrecognised(
-        [*Trading212Parser.INITIAL_FIELDS, *Trading212Parser.MANDATORY_FIELDS[1:]]
-    )
-    assert parser.can_parse() is False
-
     # An unsupported field was found
     parser = create_parser_format_unrecognised(
-        [
-            *Trading212Parser.INITIAL_FIELDS,
-            *Trading212Parser.MANDATORY_FIELDS,
-            "Unknown Field",
-        ]
+        [*Trading212Parser.FIELDS, "Unknown Field"]
     )
     assert parser.can_parse() is False
+
+    # Total field is missing
+    fields = list(Trading212Parser.FIELDS)
+    fields.remove("Total")
+    fields.remove("Total (GBP)")
+    parser = create_parser_format_unrecognised(fields)
+    assert parser.can_parse() is False
+
+    # Action or Time fields are missing
+    for field in ["Action", "Time"]:
+        fields = list(Trading212Parser.FIELDS)
+        fields.remove(field)
+        parser = create_parser_format_unrecognised(fields)
+        assert parser.can_parse() is False, f"{field} field test failed"
 
 
 def test_parser_invalid_transaction_type(create_parser):
@@ -356,29 +424,29 @@ def test_parser_order_too_old(create_parser):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
+def test_parser_stamp_duty_and_stamp_duty_reserve_tax_non_zero(create_parser):
     order = dict(ACQUISITION)
-    order["Currency conversion fee"] = "1.2"
-    order["Currency (Currency conversion fee)"] = "GBP"
+    order["Stamp duty reserve tax (GBP)"] = "5.2"
     parser = create_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_conversion_fee_but_no_fee_currency(create_parser):
+def test_parser_stamp_duty_and_finra_fee_non_zero(create_parser):
     order = dict(ACQUISITION)
-    order["Currency conversion fee"] = "3.2"
-    order["Currency (Currency conversion fee)"] = ""
+    order["Finra fee"] = "1.2"
+    order["Currency (Finra fee)"] = "GBP"
     parser = create_parser([order])
     assert parser.can_parse()
-    with pytest.raises(ParseError):
+    with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_finra_fee_non_zero(create_parser):
+def test_parser_stamp_duty_and_sec_fee_non_zero(create_parser):
     order = dict(ACQUISITION)
-    order["Finra fee (GBP)"] = "1.2"
+    order["Transaction fee"] = "1.2"
+    order["Currency (Transaction fee)"] = "USD"
     parser = create_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
