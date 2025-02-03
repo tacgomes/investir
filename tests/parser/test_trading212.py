@@ -113,12 +113,6 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     acquisition2["Finra fee (GBP)"] = "5.2"
     del acquisition2["Stamp duty (GBP)"]
 
-    dividend1 = DIVIDEND
-    dividend2 = dict(DIVIDEND)
-    dividend2["Action"] = "Dividend (Dividends paid by us corporations)"
-    dividend3 = dict(DIVIDEND)
-    dividend3["Action"] = "Dividend (Dividends paid by foreign corporations)"
-
     deposit = {
         "Action": "Deposit",
         "Time": TIMESTAMP,
@@ -145,9 +139,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
             acquisition1,
             DISPOSAL,
             acquisition2,
-            dividend1,
-            dividend2,
-            dividend3,
+            DIVIDEND,
             deposit,
             withdrawal,
             interest,
@@ -183,7 +175,7 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert isinstance(order, Acquisition)
     assert order.fees == sterling("5.2")
 
-    assert len(parser_result.dividends) == 3
+    assert len(parser_result.dividends) == 1
 
     dividend = parser_result.dividends[0]
     assert dividend.timestamp == TIMESTAMP
@@ -192,8 +184,6 @@ def test_parser_happy_path(create_parser):  # noqa: PLR0915
     assert dividend.name == "Skyworks"
     assert dividend.total == sterling("2.47")
     assert dividend.withheld == Money("0.0", "USD")
-    assert dividend == parser_result.dividends[1]
-    assert dividend == parser_result.dividends[2]
 
     assert len(parser_result.transfers) == 2
 
@@ -300,6 +290,27 @@ def test_parser_different_buy_sell_actions(create_parser):
     orders = parser_result.orders
     assert orders[0] == orders[1] == orders[2]
     assert orders[3] == orders[4] == orders[5]
+
+
+def test_parser_different_dividends_actions(create_parser):
+    dividend1 = dict(DIVIDEND)  # Dividend (Ordinary)
+
+    dividend2 = dict(DIVIDEND)
+    dividend2["Action"] = "Dividend (Dividend)"
+
+    dividend3 = dict(DIVIDEND)
+    dividend3["Action"] = "Dividend (Dividends paid by us corporations)"
+
+    dividend4 = dict(DIVIDEND)
+    dividend4["Action"] = "Dividend (Dividends paid by foreign corporations)"
+
+    parser = create_parser([dividend1, dividend2, dividend3, dividend4])
+
+    parser_result = parser.parse()
+    assert len(parser_result.dividends) == 4
+
+    dividends = parser_result.dividends
+    assert dividends[0] == dividends[1] == dividends[2] == dividends[3]
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):
