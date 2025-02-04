@@ -132,6 +132,9 @@ class Trading212Parser:
                     tr_id = row["ID"]
                     total = Money(Decimal(row["Total"]), row["Currency (Total)"])
 
+                    if timestamp.tzinfo is None:
+                        timestamp = timestamp.replace(tzinfo=timezone.utc)
+
                     fn(row, tr_type, timestamp, tr_id, total)
 
         return ParsingResult(
@@ -169,9 +172,6 @@ class Trading212Parser:
 
         stamp_duty = read_sterling(row.get("Stamp duty (GBP)"))
         finra_fee = read_sterling(row.get("Finra fee (GBP)"))
-
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)
@@ -244,9 +244,6 @@ class Trading212Parser:
         currency_withholding_tax = row["Currency (Withholding tax)"]
         fx_conversion_fee = row["Currency conversion fee"]
 
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
-
         if fx_conversion_fee:
             raise ParseError(self._csv_file, row, "Dividend with conversion fee")
 
@@ -279,9 +276,6 @@ class Trading212Parser:
         tr_id: str,
         total: Money,
     ):
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
-
         if tr_type == "Withdrawal":
             total = -abs(total)
 
@@ -297,9 +291,6 @@ class Trading212Parser:
         tr_id: str,
         total: Money,
     ):
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=timezone.utc)
-
         self._interest.append(Interest(timestamp, tr_id=tr_id, total=total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
