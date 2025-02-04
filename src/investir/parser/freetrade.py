@@ -141,7 +141,7 @@ class FreetradeParser:
             raise OrderDateError(self._csv_file, row)
 
         if stamp_duty and fx_fee_amount:
-            raise FeesError(self._csv_file, row)
+            raise FeesError(self._csv_file, row, "Stamp Duty", "FX Fee Amount")
 
         order_class: type[Order] = Acquisition
         fees = stamp_duty + fx_fee_amount

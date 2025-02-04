@@ -179,7 +179,7 @@ class Trading212Parser:
             raise OrderDateError(self._csv_file, row)
 
         if stamp_duty and (fx_fee or finra_fee):
-            raise FeesError(self._csv_file, row)
+            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Finra fee (GBP)")
 
         order_class: type[Order] = Acquisition
 

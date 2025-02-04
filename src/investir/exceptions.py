@@ -36,8 +36,12 @@ class CalculatedAmountError(ParseError):
 
 
 class FeesError(ParseError):
-    def __init__(self, file: Path, row: Mapping[str, str]) -> None:
-        super().__init__(file, row, "Stamp duty and conversion fees are both non-zero")
+    def __init__(self, file: Path, row: Mapping[str, str], fee_a: str, fee_b) -> None:
+        super().__init__(
+            file,
+            row,
+            f"Incompatible fees have a non-zero amount: '{fee_a}' and '{fee_b}'",
+        )
 
 
 class OrderDateError(ParseError):
