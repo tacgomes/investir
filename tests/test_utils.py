@@ -14,7 +14,6 @@ from investir.utils import (
     multifilter,
     raise_or_warn,
     read_decimal,
-    read_sterling,
     sterling,
     tax_year_full_date,
     tax_year_period,
@@ -71,13 +70,6 @@ def test_read_decimal():
     assert read_decimal("0.0") == Decimal("0.0")
     assert read_decimal("2.5") == Decimal("2.5")
     assert read_decimal("", Decimal("2.7")) == Decimal("2.7")
-
-
-def test_read_sterling():
-    assert read_sterling("") == Money("0.0", "GBP")
-    assert read_sterling(" ") == Money("0.0", "GBP")
-    assert read_sterling("0.0") == Money("0.0", "GBP")
-    assert read_sterling("2.5") == Money("2.5", "GBP")
 
 
 def test_sterling():
