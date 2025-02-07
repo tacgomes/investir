@@ -1,4 +1,4 @@
-Date,Security Name,ISIN,Ticker,Total Cost,Total Cost (Currency),Net Proceeds,Net Proceeds (Currency),Quantity,Price,Price (Currency),Fees,Fees (Currency)
+Date,Security Name,ISIN,Ticker,Cost,Cost (Currency),Proceeds,Proceeds (Currency),Quantity,Price,Price (Currency),Fees,Fees (Currency)
 2021-04-07,Apple,US0378331005,AAPL,1940.99,GBP,,,20.13713692,96.15219917767733984300683794,GBP,4.76,GBP
 2021-06-05,Apple,US0378331005,AAPL,998.48,GBP,,,9.09199546,109.3280352341926928326908777,GBP,4.47,GBP
 2021-06-11,Microsoft,US5949181045,MSFT,2715.44,GBP,,,15.00246544,180.1863840854146970126264793,GBP,12.20,GBP

@@ -5,8 +5,8 @@
             <th>Security Name</th>
             <th>ISIN</th>
             <th>Ticker</th>
-            <th>Total Cost (GBP)</th>
-            <th>Net Proceeds (GBP)</th>
+            <th>Cost (GBP)</th>
+            <th>Proceeds (GBP)</th>
             <th>Quantity</th>
             <th>Price (GBP)</th>
             <th>Fees (GBP)</th>

@@ -1,4 +1,4 @@
-Date,Security Name,ISIN,Ticker,Total Cost,Total Cost (Currency),Net Proceeds,Net Proceeds (Currency),Quantity,Price,Price (Currency),Fees,Fees (Currency)
+Date,Security Name,ISIN,Ticker,Cost,Cost (Currency),Proceeds,Proceeds (Currency),Quantity,Price,Price (Currency),Fees,Fees (Currency)
 2022-06-03,PayPal,US70450Y1038,PYPL,313.67,USD,,,4.13171759,75.91757983633145652629176913,USD,0,USD
 2022-06-10,Microsoft,US5949181045,MSFT,843.26,GBP,,,2.95081184,284.0946984949064051471340172,GBP,4.95,GBP
 2022-06-10,ASML,NL0010273215,ASML,656.50,EUR,,,1.0000000000,656.5,EUR,0,EUR
