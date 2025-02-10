@@ -96,19 +96,9 @@ class Order(Transaction, ABC):
             hour=0, minute=0, second=0, microsecond=0
         )
 
-        currency = orders[0].total.currency
-        total = Money(
-            sum((order.total for order in orders), currency.zero).amount,
-            currency,
-        )
-
+        total = reduce(operator.add, (order.total for order in orders))
         quantity = Decimal(sum(order.quantity for order in orders))
-
-        currency = orders[0].fees.currency
-        fees = Money(
-            sum((order.fees for order in orders), currency.zero).amount,
-            currency,
-        )
+        fees = reduce(operator.add, (order.fees for order in orders))
 
         notes = "Merged from orders "
         notes += ",".join(str(order.number) for order in orders)
