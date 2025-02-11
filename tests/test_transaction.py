@@ -26,8 +26,9 @@ def test_acquisition_order():
     assert order.date == date(2022, 4, 6)
     assert order.tax_year() == 2022
     assert order.number == count + 1
-    assert order.price == order.total / order.quantity
+    assert order.price == order.cost_before_fees / order.quantity
     assert order.total_cost == order.total + order.fees
+    assert order.cost_before_fees == order.total
 
 
 def test_disposal_order():
@@ -47,8 +48,9 @@ def test_disposal_order():
     assert order.date == date(2023, 4, 6)
     assert order.tax_year() == 2023
     assert order.number == count + 1
-    assert order.price == order.total / order.quantity
+    assert order.price == order.gross_proceeds / order.quantity
     assert order.net_proceeds == order.total - order.fees
+    assert order.gross_proceeds == order.total
 
 
 def test_order_merge():

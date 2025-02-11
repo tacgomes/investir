@@ -52,14 +52,10 @@ class Order(Transaction, ABC):
         Order.order_count += 1
         object.__setattr__(self, "number", Order.order_count)
 
-    @property
-    def price(self) -> Money:
-        return self.total / self.quantity  # type: ignore[return-value]
-
     def split(self: Self, split_quantity: Decimal) -> tuple[Self, Self]:
         assert self.quantity >= split_quantity
 
-        match_total = self.price * split_quantity
+        match_total = self.price * split_quantity  # type: ignore[attr-defined]
         match_quantity = split_quantity
         match_fees = self.fees / self.quantity * split_quantity
 
@@ -138,12 +134,28 @@ class Acquisition(Order):
     def total_cost(self) -> Money:
         return self.total + self.fees
 
+    @property
+    def cost_before_fees(self) -> Money:
+        return self.total
+
+    @property
+    def price(self) -> Money:
+        return self.cost_before_fees / self.quantity  # type: ignore[return-value]
+
 
 @dataclass(frozen=True)
 class Disposal(Order):
     @property
     def net_proceeds(self) -> Money:
         return self.total - self.fees
+
+    @property
+    def gross_proceeds(self) -> Money:
+        return self.total
+
+    @property
+    def price(self) -> Money:
+        return self.gross_proceeds / self.quantity  # type: ignore[return-value]
 
 
 @dataclass(kw_only=True, frozen=True)
