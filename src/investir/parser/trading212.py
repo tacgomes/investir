@@ -29,7 +29,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal
+from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +42,6 @@ def read_money(row: Mapping[str, str], amount_field: str) -> Money | None:
         return Money(amount=amount, currency="GBP")
 
     return None
-
-
-def read_sterling(amount: str | None) -> Money | None:
-    return (
-        Money(amount=amount, currency="GBP")
-        if amount is not None and amount.strip()
-        else None
-    )
 
 
 @ParserFactory.register("Trading212")

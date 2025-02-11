@@ -53,6 +53,14 @@ def read_decimal(val: str, default: Decimal = Decimal("0.0")) -> Decimal:
     return Decimal(val) if val.strip() else default
 
 
+def read_sterling(amount: str | None) -> Money | None:
+    return (
+        Money(amount=amount, currency="GBP")
+        if amount is not None and amount.strip()
+        else None
+    )
+
+
 def sterling(amount: str) -> Money:
     return Money(amount=amount, currency=GBP)
 
