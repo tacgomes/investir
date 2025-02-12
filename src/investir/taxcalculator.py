@@ -54,7 +54,8 @@ class CapitalGain:
         # Disposal fees have been added to the `cost` so the gross
         # proceeds are used.
         return (
-            self.disposal.total - Money(self.cost, self.disposal.total.currency)
+            self.disposal.gross_proceeds
+            - Money(self.cost, self.disposal.total.currency)
         ).amount
 
     @property
@@ -78,7 +79,8 @@ class CapitalGain:
             f"{self.disposal.date} "
             f"{self.disposal.isin:<4} "
             f"quantity: {self.quantity}, "
-            f"cost: £{self.cost:.2f}, proceeds: £{self.disposal.total.amount}, "
+            f"cost: £{self.cost:.2f}, "
+            f"proceeds: £{self.disposal.gross_proceeds.amount}, "
             f"gain: £{self.gain_loss:.2f}, "
             f"identification: {self.identification}"
         )
@@ -192,13 +194,13 @@ class TaxCalculator:
                     cg.disposal.isin,
                     cg.quantity,
                     cg.cost,
-                    cg.disposal.total.amount,
+                    cg.disposal.gross_proceeds.amount,
                     cg.gain_loss,
                 ]
             )
 
             num_disposals += 1
-            disposal_proceeds += round(cg.disposal.total.amount, 2)
+            disposal_proceeds += round(cg.disposal.gross_proceeds.amount, 2)
             total_cost += round(cg.cost, 2)
             if cg.gain_loss > 0.0:
                 total_gains += cg.gain_loss
