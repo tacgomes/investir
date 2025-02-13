@@ -67,7 +67,6 @@ DIVIDEND: Final = {
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path) -> Callable:
     config.reset()
-    config.include_fx_fees = True
 
     def _create_parser(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
@@ -148,7 +147,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.total == sterling("1118.25")
+    assert order.total == sterling("1111.85")
     assert order.quantity == Decimal("2.1")
     assert order.fees == sterling("6.4")
 
@@ -158,7 +157,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == "Amazon"
-    assert order.total == sterling("1325.00")
+    assert order.total == sterling("1330.20")
     assert order.quantity == Decimal("10")
     assert order.fees == sterling("5.2")
 
@@ -186,68 +185,6 @@ def test_parser_happy_path(create_parser):
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
     assert interest.total == sterling("4.65")
-
-
-def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
-    config.include_fx_fees = False
-
-    order1 = dict(ACQUISITION)
-    order1["Timestamp"] = TIMESTAMP
-    order1["FX Fee Amount"] = "5.2"
-    del order1["Stamp Duty"]
-
-    order2 = dict(DISPOSAL)
-    order2["Timestamp"] = TIMESTAMP
-
-    order3 = {
-        "Title": "Microsoft",
-        "Type": "ORDER",
-        "Timestamp": TIMESTAMP,
-        "Account Currency": "GBP",
-        "Total Amount": "1326.30",
-        "Buy / Sell": "BUY",
-        "Ticker": "MSFT",
-        "ISIN": "MSFT-ISIN",
-        "Price per Share in Account Currency": "132.5",
-        "Stamp Duty": "1.3",
-        "Quantity": "10.0",
-        "FX Fee Amount": "",
-    }
-
-    parser = create_parser([order1, order2, order3])
-
-    parser_result = parser.parse()
-    assert len(parser_result.orders) == 3
-
-    order = parser_result.orders[0]
-    assert isinstance(order, Acquisition)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("MSFT-ISIN")
-    assert order.ticker == Ticker("MSFT")
-    assert order.name == "Microsoft"
-    assert order.total == sterling("1325.00")
-    assert order.quantity == Decimal("10.0")
-    assert order.fees == sterling("1.3")
-
-    order = parser_result.orders[1]
-    assert isinstance(order, Disposal)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("SWKS-ISIN")
-    assert order.ticker == Ticker("SWKS")
-    assert order.name == "Skyworks"
-    assert order.total == sterling("1118.25")
-    assert order.quantity == Decimal("2.1")
-    assert order.fees == sterling("0.0")
-
-    order = parser_result.orders[2]
-    assert isinstance(order, Acquisition)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("AMZN-ISIN")
-    assert order.ticker == Ticker("AMZN")
-    assert order.name == "Amazon"
-    assert order.total == sterling("1325.00")
-    assert order.quantity == Decimal("10")
-    assert order.fees == sterling("0.0")
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):

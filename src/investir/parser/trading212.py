@@ -9,7 +9,6 @@ from typing import Final
 from dateutil.parser import parse as parse_timestamp
 from moneyed import Money
 
-from investir.config import config
 from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
@@ -233,19 +232,15 @@ class Trading212Parser:
                 )
             )
 
-        allowable_fees = abs(fees)
-        if not config.include_fx_fees and fx_fee:
-            allowable_fees -= fx_fee
-
         self._orders.append(
             order_class(
                 timestamp,
                 isin=ISIN(isin),
                 ticker=Ticker(ticker),
                 name=name,
-                total=total - fees,
+                total=total,
                 quantity=num_shares,
-                fees=allowable_fees,
+                fees=abs(fees),
                 tr_id=tr_id,
             )
         )

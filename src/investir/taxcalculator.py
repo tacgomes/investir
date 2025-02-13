@@ -417,7 +417,7 @@ class TaxCalculator:
                 d_idx += 1
 
             self._capital_gains[d.tax_year()].append(
-                CapitalGain(d, a.total_cost.amount + d.fees.amount, a.date)
+                CapitalGain(d, a.total.amount + d.fees.amount, a.date)
             )
 
         self._acquisitions[isin] = [o for o in acquisits if o not in matched]
@@ -434,12 +434,10 @@ class TaxCalculator:
 
             if isinstance(order, Acquisition):
                 if holding is not None:
-                    holding.increase(
-                        order.date, order.quantity, order.total_cost.amount
-                    )
+                    holding.increase(order.date, order.quantity, order.total.amount)
                 else:
                     self._holdings[isin] = Section104Holding(
-                        order.date, order.quantity, order.total_cost.amount
+                        order.date, order.quantity, order.total.amount
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:

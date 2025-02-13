@@ -17,8 +17,8 @@ def test_acquisition_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("100.0"),
         quantity=Decimal("20.0"),
+        total=sterling("101.4"),
         fees=sterling("1.4"),
         tr_id="ORDER",
     )
@@ -27,8 +27,7 @@ def test_acquisition_order():
     assert order.tax_year() == 2022
     assert order.number == count + 1
     assert order.price == order.cost_before_fees / order.quantity
-    assert order.total_cost == order.total + order.fees
-    assert order.cost_before_fees == order.total
+    assert order.cost_before_fees == order.total - order.fees
 
 
 def test_disposal_order():
@@ -39,8 +38,8 @@ def test_disposal_order():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("50.0"),
         quantity=Decimal("10.0"),
+        total=sterling("48.3"),
         fees=sterling("1.7"),
         tr_id="ORDER",
     )
@@ -49,8 +48,7 @@ def test_disposal_order():
     assert order.tax_year() == 2023
     assert order.number == count + 1
     assert order.price == order.gross_proceeds / order.quantity
-    assert order.net_proceeds == order.total - order.fees
-    assert order.gross_proceeds == order.total
+    assert order.gross_proceeds == order.total + order.fees
 
 
 def test_order_merge():
@@ -59,7 +57,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("100.0"),
+        total=sterling("101.4"),
         quantity=Decimal("20.0"),
         fees=sterling("1.4"),
     )
@@ -69,7 +67,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("50.0"),
+        total=sterling("51.5"),
         quantity=Decimal("5.0"),
         fees=sterling("1.5"),
     )
@@ -79,7 +77,7 @@ def test_order_merge():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("10.0"),
+        total=sterling("10.1"),
         quantity=Decimal("4.0"),
         fees=sterling("0.1"),
     )
@@ -89,8 +87,8 @@ def test_order_merge():
     assert merged_order.isin == ISIN("AMZN-ISIN")
     assert merged_order.ticker == Ticker("AMZN")
     assert merged_order.name == "Amazon"
-    assert merged_order.total == sterling("160")
-    assert merged_order.quantity == Decimal("29")
+    assert merged_order.total == sterling("163.0")
+    assert merged_order.quantity == Decimal("29.0")
     assert merged_order.fees == sterling("3.0")
 
 
@@ -102,7 +100,7 @@ def test_order_split():
         isin=ISIN("AMZN-ISIN"),
         ticker=Ticker("AMZN"),
         name="Amazon",
-        total=sterling("120.0"),
+        total=sterling("126.0"),
         quantity=Decimal("12.0"),
         fees=sterling("6.0"),
     )
@@ -114,7 +112,7 @@ def test_order_split():
     assert matched.isin == ISIN("AMZN-ISIN")
     assert matched.ticker == Ticker("AMZN")
     assert matched.name == "Amazon"
-    assert matched.total == sterling("80.0")
+    assert matched.total == sterling("84.0")
     assert matched.quantity == Decimal("8.0")
     assert matched.fees == sterling("4.0")
 
@@ -123,7 +121,7 @@ def test_order_split():
     assert remainder.isin == ISIN("AMZN-ISIN")
     assert remainder.ticker == Ticker("AMZN")
     assert remainder.name == "Amazon"
-    assert remainder.total == sterling("40.0")
+    assert remainder.total == sterling("42.0")
     assert remainder.quantity == Decimal("4.0")
     assert remainder.fees == sterling("2.0")
 
