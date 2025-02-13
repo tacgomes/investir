@@ -74,7 +74,7 @@ def test_section_104_disposal(make_tax_calculator):
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("1000.0"),
-        total=sterling("4000.0"),
+        total=sterling("4150.0"),
         fees=sterling("150.0"),
     )
 
@@ -82,7 +82,7 @@ def test_section_104_disposal(make_tax_calculator):
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("500.0"),
-        total=sterling("2050.0"),
+        total=sterling("2130"),
         fees=sterling("80.0"),
     )
 
@@ -90,7 +90,7 @@ def test_section_104_disposal(make_tax_calculator):
         datetime(2023, 5, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("700.0"),
-        total=sterling("3360.0"),
+        total=sterling("3260.0"),
         fees=sterling("100.0"),
     )
 
@@ -98,7 +98,7 @@ def test_section_104_disposal(make_tax_calculator):
         datetime(2024, 2, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("400.0"),
-        total=sterling("2080.0"),
+        total=sterling("1975"),
         fees=sterling("105.0"),
     )
 
@@ -134,7 +134,7 @@ def test_section_104_with_no_disposal_made(make_tax_calculator):
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("1000.0"),
-        total=sterling("4000.0"),
+        total=sterling("4150.0"),
         fees=sterling("150.0"),
     )
 
@@ -142,7 +142,7 @@ def test_section_104_with_no_disposal_made(make_tax_calculator):
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("500.0"),
-        total=sterling("2000.0"),
+        total=sterling("2050.0"),
         fees=sterling("50.0"),
     )
 
@@ -536,7 +536,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("10.0"),
-        total=sterling("30.0"),
+        total=sterling("31.5"),
         fees=sterling("1.5"),
     )
 
@@ -544,7 +544,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
-        total=sterling("40.0"),
+        total=sterling("40.5"),
         fees=sterling("0.5"),
     )
 
@@ -552,7 +552,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
-        total=sterling("50.0"),
+        total=sterling("49.6"),
         fees=sterling("0.4"),
     )
 
@@ -560,7 +560,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         datetime(2019, 3, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
-        total=sterling("50.0"),
+        total=sterling("49.2"),
         fees=sterling("0.8"),
     )
 
@@ -1390,7 +1390,7 @@ def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("1000.0"),
-        total=Money("4000.0", "USD"),
+        total=Money("4150.0", "USD"),
         fees=sterling("150.0"),
     )
 
@@ -1398,7 +1398,7 @@ def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
         quantity=Decimal("500.0"),
-        total=sterling("2050.0"),
+        total=sterling("2130.0"),
         fees=Money("80.0", "USD"),
     )
 

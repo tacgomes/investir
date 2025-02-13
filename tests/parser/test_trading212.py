@@ -93,7 +93,6 @@ DIVIDEND: Final = {
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path) -> Callable:
     config.reset()
-    config.include_fx_fees = True
 
     def _create_parser(
         rows: Sequence[Mapping[str, str]], legacy_fields: bool = False
@@ -168,7 +167,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("AMZN-ISIN")
     assert order.ticker == Ticker("AMZN")
     assert order.name == "Amazon"
-    assert order.total == sterling("1325.00")
+    assert order.total == sterling("1330.20")
     assert order.quantity == Decimal("10")
     assert order.fees == sterling("5.2")
 
@@ -178,7 +177,7 @@ def test_parser_happy_path(create_parser):
     assert order.isin == ISIN("SWKS-ISIN")
     assert order.ticker == Ticker("SWKS")
     assert order.name == "Skyworks"
-    assert order.total == sterling("1118.25")
+    assert order.total == sterling("1111.85")
     assert order.quantity == Decimal("2.1")
     assert order.fees == sterling("6.4")
 
@@ -207,67 +206,6 @@ def test_parser_happy_path(create_parser):
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
     assert interest.total == sterling("4.65")
-
-
-def test_parser_when_fx_fees_are_not_allowable_cost(create_parser):
-    config.include_fx_fees = False
-
-    order1 = dict(ACQUISITION)
-    order1["Currency conversion fee"] = "5.2"
-    order1["Currency (Currency conversion fee)"] = "GBP"
-    del order1["Stamp duty (GBP)"]
-
-    order2 = dict(DISPOSAL)
-
-    order3 = {
-        "Action": "Market buy",
-        "Time": TIMESTAMP,
-        "ISIN": "MSFT-ISIN",
-        "Ticker": "MSFT",
-        "Name": "Microsoft",
-        "No. of shares": "10.0",
-        "Price / share": "132.5",
-        "Currency (Price / share)": "GBP",
-        "Exchange rate": "1.0",
-        "Total": "1326.30",
-        "Currency (Total)": "GBP",
-        "Stamp duty (GBP)": "1.3",
-    }
-
-    parser = create_parser([order1, order2, order3])
-
-    parser_result = parser.parse()
-    assert len(parser_result.orders) == 3
-
-    order = parser_result.orders[0]
-    assert isinstance(order, Acquisition)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("AMZN-ISIN")
-    assert order.ticker == Ticker("AMZN")
-    assert order.name == Ticker("Amazon")
-    assert order.total == sterling("1325.00")
-    assert order.quantity == Decimal("10")
-    assert order.fees == sterling("0.0")
-
-    order = parser_result.orders[1]
-    assert isinstance(order, Disposal)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("SWKS-ISIN")
-    assert order.ticker == Ticker("SWKS")
-    assert order.name == "Skyworks"
-    assert order.total == sterling("1118.25")
-    assert order.quantity == Decimal("2.1")
-    assert order.fees == sterling("0.0")
-
-    order = parser_result.orders[2]
-    assert isinstance(order, Acquisition)
-    assert order.timestamp == TIMESTAMP
-    assert order.isin == ISIN("MSFT-ISIN")
-    assert order.ticker == Ticker("MSFT")
-    assert order.name == "Microsoft"
-    assert order.total == sterling("1325.00")
-    assert order.quantity == Decimal("10.0")
-    assert order.fees == sterling("1.3")
 
 
 def test_parser_different_buy_sell_actions(create_parser):
@@ -345,11 +283,11 @@ def test_parser_different_fee_types(create_parser):
     assert len(parser_result.orders) == 2
 
     order = parser_result.orders[0]
-    assert order.total == sterling("1325.00")
+    assert order.total == sterling("1333.40")
     assert order.fees == sterling("8.4")
 
     order = parser_result.orders[1]
-    assert order.total == sterling("1325.00")
+    assert order.total == sterling("1334.30")
     assert order.fees == sterling("9.3")
 
 
@@ -377,7 +315,7 @@ def test_parser_legacy_fields(create_parser):
     assert len(parser_result.orders) == 1
 
     order = parser_result.orders[0]
-    assert order.total == sterling("1325.00")
+    assert order.total == sterling("1334.30")
     assert order.fees == sterling("9.3")
 
 

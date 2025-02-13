@@ -5,6 +5,7 @@ from investir.exceptions import AmbiguousTickerError
 from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import (
     Acquisition,
+    Disposal,
     Dividend,
     Interest,
     Order,
@@ -98,12 +99,8 @@ class TrHistory:
         last_idx = len(transactions) - 1
 
         for idx, tr in enumerate(transactions):
-            net_proceeds = None
-            total_cost = None
-            if isinstance(tr, Acquisition):
-                total_cost = tr.total_cost
-            else:
-                net_proceeds = tr.net_proceeds
+            cost = tr.total if isinstance(tr, Acquisition) else None
+            proceeds = tr.total if isinstance(tr, Disposal) else None
 
             divider = (
                 idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
@@ -115,8 +112,8 @@ class TrHistory:
                     tr.name,
                     tr.isin,
                     tr.ticker,
-                    total_cost,
-                    net_proceeds,
+                    cost,
+                    proceeds,
                     tr.quantity,
                     tr.price,
                     tr.fees,

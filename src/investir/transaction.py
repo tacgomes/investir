@@ -55,7 +55,7 @@ class Order(Transaction, ABC):
     def split(self: Self, split_quantity: Decimal) -> tuple[Self, Self]:
         assert self.quantity >= split_quantity
 
-        match_total = self.price * split_quantity  # type: ignore[attr-defined]
+        match_total = self.total / self.quantity * split_quantity
         match_quantity = split_quantity
         match_fees = self.fees / self.quantity * split_quantity
 
@@ -65,7 +65,7 @@ class Order(Transaction, ABC):
 
         match = replace(
             self,
-            total=match_total,
+            total=match_total,  # type: ignore[arg-type]
             quantity=match_quantity,
             fees=match_fees,  # type: ignore[arg-type]
             notes=f"Splitted from order {self.number}",
@@ -131,12 +131,8 @@ class Order(Transaction, ABC):
 @dataclass(frozen=True)
 class Acquisition(Order):
     @property
-    def total_cost(self) -> Money:
-        return self.total + self.fees
-
-    @property
     def cost_before_fees(self) -> Money:
-        return self.total
+        return self.total - self.fees
 
     @property
     def price(self) -> Money:
@@ -146,12 +142,8 @@ class Acquisition(Order):
 @dataclass(frozen=True)
 class Disposal(Order):
     @property
-    def net_proceeds(self) -> Money:
-        return self.total - self.fees
-
-    @property
     def gross_proceeds(self) -> Money:
-        return self.total
+        return self.total + self.fees
 
     @property
     def price(self) -> Money:
