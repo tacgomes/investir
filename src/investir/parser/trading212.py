@@ -221,14 +221,14 @@ class Trading212Parser:
             order_class = Disposal
             fees *= -1
 
-        calculated_amount = round(
+        calculated_total = round(
             (round(price_share * num_shares, 2) / exchange_rate) + fees.amount, 2
         )
 
-        if abs(calculated_amount - total.amount) > Decimal("0.01"):
+        if abs(calculated_total - total.amount) > Decimal("0.01"):
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_amount
+                    self._csv_file, row, total.amount, calculated_total
                 )
             )
 

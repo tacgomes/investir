@@ -147,11 +147,11 @@ class FreetradeParser:
             order_class = Disposal
             fees *= -1
 
-        calculated_amount = round(price * quantity + fees, 2)
-        if calculated_amount != total.amount:
+        calculated_total = round(price * quantity + fees, 2)
+        if calculated_total != total.amount:
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_amount
+                    self._csv_file, row, total.amount, calculated_total
                 )
             )
 
@@ -186,21 +186,25 @@ class FreetradeParser:
         withheld_tax_percentage = Decimal(row["Dividend Withheld Tax Percentage"])
         withheld_tax_amount = Decimal(row["Dividend Withheld Tax Amount"])
 
-        calculated_ta = (
+        calculated_total = (
             amount_per_share
             * eligible_quantity
             * ((Decimal("100") - withheld_tax_percentage) / 100)
             * base_fx_rate
         )
 
-        calculated_ta = calculated_ta.quantize(Decimal("1.00"), rounding=ROUND_DOWN)
+        calculated_total = calculated_total.quantize(
+            Decimal("1.00"), rounding=ROUND_DOWN
+        )
 
         # Freetrade does not seem to use a consistent method for rounding dividends.
         # Thus, allow the calculated amount to differ by one pence.
         # https://community.freetrade.io/t/dividend-amount-off-by-one-penny/71806/7
-        if abs(total.amount - calculated_ta) > Decimal("0.01"):
+        if abs(total.amount - calculated_total) > Decimal("0.01"):
             raise_or_warn(
-                CalculatedAmountError(self._csv_file, row, total.amount, calculated_ta)
+                CalculatedAmountError(
+                    self._csv_file, row, total.amount, calculated_total
+                )
             )
 
         self._dividends.append(
