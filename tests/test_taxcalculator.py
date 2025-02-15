@@ -16,7 +16,7 @@ from investir.findata import (
     YahooFinanceSecurityInfoProvider,
 )
 from investir.taxcalculator import TaxCalculator
-from investir.transaction import Acquisition, Disposal, Order
+from investir.transaction import Acquisition, Disposal, Fees, Order
 from investir.trhistory import TrHistory
 from investir.typing import ISIN, Ticker
 from investir.utils import sterling
@@ -75,7 +75,7 @@ def test_section_104_disposal(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("1000.0"),
         total=sterling("4150.0"),
-        fees=sterling("150.0"),
+        fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
@@ -83,7 +83,7 @@ def test_section_104_disposal(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("500.0"),
         total=sterling("2130"),
-        fees=sterling("80.0"),
+        fees=Fees(stamp_duty=sterling("80.0")),
     )
 
     order3 = Disposal(
@@ -91,7 +91,7 @@ def test_section_104_disposal(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("700.0"),
         total=sterling("3260.0"),
-        fees=sterling("100.0"),
+        fees=Fees(stamp_duty=sterling("100.0")),
     )
 
     order4 = Disposal(
@@ -99,7 +99,7 @@ def test_section_104_disposal(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("400.0"),
         total=sterling("1975"),
-        fees=sterling("105.0"),
+        fees=Fees(stamp_duty=sterling("105.0")),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3, order4])
@@ -135,7 +135,7 @@ def test_section_104_with_no_disposal_made(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("1000.0"),
         total=sterling("4150.0"),
-        fees=sterling("150.0"),
+        fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
@@ -143,7 +143,7 @@ def test_section_104_with_no_disposal_made(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("500.0"),
         total=sterling("2050.0"),
-        fees=sterling("50.0"),
+        fees=Fees(stamp_duty=sterling("50.0")),
     )
 
     tax_calculator = make_tax_calculator([order1, order2])
@@ -537,7 +537,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("10.0"),
         total=sterling("31.5"),
-        fees=sterling("1.5"),
+        fees=Fees(stamp_duty=sterling("1.5")),
     )
 
     order2 = Acquisition(
@@ -545,7 +545,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
         total=sterling("40.5"),
-        fees=sterling("0.5"),
+        fees=Fees(stamp_duty=sterling("0.5")),
     )
 
     order3 = Disposal(
@@ -553,7 +553,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
         total=sterling("49.6"),
-        fees=sterling("0.4"),
+        fees=Fees(stamp_duty=sterling("0.4")),
     )
 
     order4 = Disposal(
@@ -561,7 +561,7 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
         isin=ISIN("X"),
         quantity=Decimal("5.0"),
         total=sterling("49.2"),
-        fees=sterling("0.8"),
+        fees=Fees(stamp_duty=sterling("0.8")),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3, order4])
@@ -1391,7 +1391,7 @@ def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("1000.0"),
         total=Money("4150.0", "USD"),
-        fees=sterling("150.0"),
+        fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
@@ -1399,7 +1399,7 @@ def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
         isin=ISIN("LOBS"),
         quantity=Decimal("500.0"),
         total=sterling("2130.0"),
-        fees=Money("80.0", "USD"),
+        fees=Fees(finra=Money("80.0", "USD")),
     )
 
     tax_calculator = make_tax_calculator([order1])

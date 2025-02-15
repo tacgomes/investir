@@ -116,7 +116,7 @@ class TrHistory:
                     proceeds,
                     tr.quantity,
                     tr.price,
-                    tr.fees,
+                    tr.fees.total,
                 ],
                 divider=divider,
             )
