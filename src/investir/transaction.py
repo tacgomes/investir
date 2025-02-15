@@ -10,7 +10,7 @@ from typing import ClassVar, TypeVar
 
 from moneyed import Money
 
-from investir.const import BASE_CURRENCY
+from investir.fees import Fees
 from investir.findata.types import Split
 from investir.typing import ISIN, Ticker, Year
 from investir.utils import date_to_tax_year
@@ -44,7 +44,7 @@ class Order(Transaction, ABC):
     name: str = ""
     quantity: Decimal
     original_quantity: Decimal | None = None
-    fees: Money = BASE_CURRENCY.zero
+    fees: Fees = field(default_factory=Fees)
 
     order_count: ClassVar[int] = 0
 
@@ -67,7 +67,7 @@ class Order(Transaction, ABC):
             self,
             total=match_total,  # type: ignore[arg-type]
             quantity=match_quantity,
-            fees=match_fees,  # type: ignore[arg-type]
+            fees=match_fees,
             notes=f"Splitted from order {self.number}",
         )
 
@@ -132,7 +132,7 @@ class Order(Transaction, ABC):
 class Acquisition(Order):
     @property
     def cost_before_fees(self) -> Money:
-        return self.total - self.fees
+        return self.total - self.fees.total
 
     @property
     def price(self) -> Money:
@@ -143,7 +143,7 @@ class Acquisition(Order):
 class Disposal(Order):
     @property
     def gross_proceeds(self) -> Money:
-        return self.total + self.fees
+        return self.total + self.fees.total
 
     @property
     def price(self) -> Money:

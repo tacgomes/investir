@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Final
 
 from dateutil.parser import parse as parse_timestamp
-from moneyed import Money
+from moneyed import GBP, Money
 
 from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
@@ -16,6 +16,7 @@ from investir.exceptions import (
     OrderDateError,
     TransactionTypeError,
 )
+from investir.fees import Fees
 from investir.parser.factory import ParserFactory
 from investir.parser.types import ParsingResult
 from investir.transaction import (
@@ -27,7 +28,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal
+from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +129,8 @@ class FreetradeParser:
         price = Decimal(row["Price per Share in Account Currency"])
         quantity = Decimal(row["Quantity"])
         order_id = row["Order ID"]
-        stamp_duty = read_decimal(row["Stamp Duty"])
-        fx_fee_amount = read_decimal(row["FX Fee Amount"])
+        stamp_duty = read_sterling(row["Stamp Duty"])
+        fx_fee = read_sterling(row["FX Fee Amount"])
 
         if action not in ("BUY", "SELL"):
             raise TransactionTypeError(self._csv_file, row, action)
@@ -137,21 +138,25 @@ class FreetradeParser:
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)
 
-        if stamp_duty and fx_fee_amount:
+        if stamp_duty and fx_fee:
             raise FeesError(self._csv_file, row, "Stamp Duty", "FX Fee Amount")
 
+        fees = Fees(
+            stamp_duty=stamp_duty, forex=fx_fee, default_currency=total.currency
+        )
+
         order_class: type[Order] = Acquisition
-        fees = stamp_duty + fx_fee_amount
+        fees_total = fees.total
 
         if action == "SELL":
             order_class = Disposal
-            fees *= -1
+            fees_total *= -1
 
-        calculated_total = round(price * quantity + fees, 2)
-        if calculated_total != total.amount:
+        calculated_total = (Money(price * quantity, GBP) + fees_total).round(2)
+        if calculated_total != total:
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_total
+                    self._csv_file, row, total.amount, calculated_total.amount
                 )
             )
 
@@ -163,7 +168,7 @@ class FreetradeParser:
                 name=title,
                 total=total,
                 quantity=quantity,
-                fees=Money(abs(fees), total.currency),
+                fees=fees,
                 tr_id=order_id,
             )
         )

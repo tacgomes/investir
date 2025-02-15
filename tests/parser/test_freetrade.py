@@ -149,7 +149,7 @@ def test_parser_happy_path(create_parser):
     assert order.name == "Skyworks"
     assert order.total == sterling("1111.85")
     assert order.quantity == Decimal("2.1")
-    assert order.fees == sterling("6.4")
+    assert order.fees.total == sterling("6.4")
 
     order = parser_result.orders[1]
     assert isinstance(order, Acquisition)
@@ -159,7 +159,7 @@ def test_parser_happy_path(create_parser):
     assert order.name == "Amazon"
     assert order.total == sterling("1330.20")
     assert order.quantity == Decimal("10")
-    assert order.fees == sterling("5.2")
+    assert order.fees.total == sterling("5.2")
 
     assert len(parser_result.dividends) == 1
     dividend = parser_result.dividends[0]

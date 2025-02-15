@@ -169,7 +169,7 @@ def test_parser_happy_path(create_parser):
     assert order.name == "Amazon"
     assert order.total == sterling("1330.20")
     assert order.quantity == Decimal("10")
-    assert order.fees == sterling("5.2")
+    assert order.fees.total == sterling("5.2")
 
     order = parser_result.orders[1]
     assert isinstance(order, Disposal)
@@ -179,7 +179,7 @@ def test_parser_happy_path(create_parser):
     assert order.name == "Skyworks"
     assert order.total == sterling("1111.85")
     assert order.quantity == Decimal("2.1")
-    assert order.fees == sterling("6.4")
+    assert order.fees.total == sterling("6.4")
 
     assert len(parser_result.dividends) == 1
 
@@ -284,11 +284,11 @@ def test_parser_different_fee_types(create_parser):
 
     order = parser_result.orders[0]
     assert order.total == sterling("1333.40")
-    assert order.fees == sterling("8.4")
+    assert order.fees.total == sterling("8.4")
 
     order = parser_result.orders[1]
     assert order.total == sterling("1334.30")
-    assert order.fees == sterling("9.3")
+    assert order.fees.total == sterling("9.3")
 
 
 def test_parser_legacy_fields(create_parser):
@@ -316,7 +316,7 @@ def test_parser_legacy_fields(create_parser):
 
     order = parser_result.orders[0]
     assert order.total == sterling("1334.30")
-    assert order.fees == sterling("9.3")
+    assert order.fees.total == sterling("9.3")
 
 
 def test_parser_cannot_parse(create_parser_format_unrecognised):

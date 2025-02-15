@@ -5,6 +5,7 @@ from decimal import Decimal
 import pytest
 
 from investir.exceptions import AmbiguousTickerError
+from investir.fees import Fees
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -23,7 +24,7 @@ ORDER1 = Acquisition(
     name="Amazon",
     total=sterling("10.0"),
     quantity=Decimal("1.0"),
-    fees=sterling("0.5"),
+    fees=Fees(stamp_duty=sterling("0.5")),
     tr_id="ORDER1",
 )
 
@@ -34,7 +35,7 @@ ORDER2 = Disposal(
     name="Alphabet",
     total=sterling("15.0"),
     quantity=Decimal("2.0"),
-    fees=sterling("1.0"),
+    fees=Fees(stamp_duty=sterling("1.0")),
     tr_id="ORDER2",
 )
 

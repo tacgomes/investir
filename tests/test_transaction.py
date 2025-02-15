@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from investir.fees import Fees
 from investir.findata import Split
 from investir.transaction import Acquisition, Disposal, Order
 from investir.typing import ISIN, Ticker
@@ -19,7 +20,7 @@ def test_acquisition_order():
         name="Amazon",
         quantity=Decimal("20.0"),
         total=sterling("101.4"),
-        fees=sterling("1.4"),
+        fees=Fees(stamp_duty=sterling("1.4")),
         tr_id="ORDER",
     )
 
@@ -27,7 +28,7 @@ def test_acquisition_order():
     assert order.tax_year() == 2022
     assert order.number == count + 1
     assert order.price == order.cost_before_fees / order.quantity
-    assert order.cost_before_fees == order.total - order.fees
+    assert order.cost_before_fees == order.total - order.fees.total
 
 
 def test_disposal_order():
@@ -40,7 +41,7 @@ def test_disposal_order():
         name="Amazon",
         quantity=Decimal("10.0"),
         total=sterling("48.3"),
-        fees=sterling("1.7"),
+        fees=Fees(stamp_duty=sterling("1.7")),
         tr_id="ORDER",
     )
 
@@ -48,7 +49,7 @@ def test_disposal_order():
     assert order.tax_year() == 2023
     assert order.number == count + 1
     assert order.price == order.gross_proceeds / order.quantity
-    assert order.gross_proceeds == order.total + order.fees
+    assert order.gross_proceeds == order.total + order.fees.total
 
 
 def test_order_merge():
@@ -59,7 +60,7 @@ def test_order_merge():
         name="Amazon",
         total=sterling("101.4"),
         quantity=Decimal("20.0"),
-        fees=sterling("1.4"),
+        fees=Fees(stamp_duty=sterling("1.4")),
     )
 
     order2 = Acquisition(
@@ -69,7 +70,7 @@ def test_order_merge():
         name="Amazon",
         total=sterling("51.5"),
         quantity=Decimal("5.0"),
-        fees=sterling("1.5"),
+        fees=Fees(stamp_duty=sterling("1.5")),
     )
 
     order3 = Acquisition(
@@ -79,7 +80,7 @@ def test_order_merge():
         name="Amazon",
         total=sterling("10.1"),
         quantity=Decimal("4.0"),
-        fees=sterling("0.1"),
+        fees=Fees(stamp_duty=sterling("0.1")),
     )
 
     merged_order = Order.merge(order1, order2, order3)
@@ -89,7 +90,7 @@ def test_order_merge():
     assert merged_order.name == "Amazon"
     assert merged_order.total == sterling("163.0")
     assert merged_order.quantity == Decimal("29.0")
-    assert merged_order.fees == sterling("3.0")
+    assert merged_order.fees.total == sterling("3.0")
 
 
 def test_order_split():
@@ -102,7 +103,7 @@ def test_order_split():
         name="Amazon",
         total=sterling("126.0"),
         quantity=Decimal("12.0"),
-        fees=sterling("6.0"),
+        fees=Fees(stamp_duty=sterling("6.0")),
     )
 
     matched, remainder = order.split(Decimal("8.0"))
@@ -114,7 +115,7 @@ def test_order_split():
     assert matched.name == "Amazon"
     assert matched.total == sterling("84.0")
     assert matched.quantity == Decimal("8.0")
-    assert matched.fees == sterling("4.0")
+    assert matched.fees.total == sterling("4.0")
 
     assert isinstance(remainder, Acquisition)
     assert remainder.timestamp == date_time
@@ -123,7 +124,7 @@ def test_order_split():
     assert remainder.name == "Amazon"
     assert remainder.total == sterling("42.0")
     assert remainder.quantity == Decimal("4.0")
-    assert remainder.fees == sterling("2.0")
+    assert remainder.fees.total == sterling("2.0")
 
     with pytest.raises(AssertionError):
         order.split(Decimal("12.1"))

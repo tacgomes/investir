@@ -17,6 +17,7 @@ from investir.exceptions import (
     ParseError,
     TransactionTypeError,
 )
+from investir.fees import Fees
 from investir.parser.factory import ParserFactory
 from investir.parser.types import ParsingResult
 from investir.transaction import (
@@ -196,39 +197,35 @@ class Trading212Parser:
         if stamp_duty and sec_fee:
             raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Transaction fee")
 
+        fees = Fees(
+            stamp_duty=stamp_duty,
+            forex=fx_fee,
+            finra=finra_fee,
+            sec=sec_fee,
+            default_currency=total.currency,
+        )
+
+        # NB: If one of the fees is in a currency different than the currency
+        # for the total or the currency for any other fee that also applies, a
+        # TypeError exception will be raised below. This is not something
+        # expected to happen but it is good to be prepared for that eventuality
+        # instead of silently ignore it.
+
         order_class: type[Order] = Acquisition
-
-        # TODO: If the currency for the total is different than the
-        #       currency for the fees, or if the FINRA and FX fees are
-        #       defined in different currencies, parsing will fail when
-        #       attempting to sum incompatible money objects.
-
-        fees = total.currency.zero
-
-        if stamp_duty:
-            fees += stamp_duty
-
-        if fx_fee:
-            fees += fx_fee
-
-        if finra_fee:
-            fees += finra_fee
-
-        if sec_fee:
-            fees += sec_fee
+        fees_total = fees.total
 
         if tr_type in ("Market sell", "Limit sell", "Stop sell"):
             order_class = Disposal
-            fees *= -1
+            fees_total *= -1
 
-        calculated_total = round(
-            (round(price_share * num_shares, 2) / exchange_rate) + fees.amount, 2
-        )
+        calculated_total = (
+            Money(price_share * num_shares / exchange_rate, total.currency) + fees_total
+        ).round(2)
 
-        if abs(calculated_total - total.amount) > Decimal("0.01"):
+        if abs(calculated_total - total).amount > Decimal("0.01"):
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_total
+                    self._csv_file, row, total.amount, calculated_total.amount
                 )
             )
 
@@ -240,7 +237,7 @@ class Trading212Parser:
                 name=name,
                 total=total,
                 quantity=num_shares,
-                fees=abs(fees),
+                fees=fees,
                 tr_id=tr_id,
             )
         )

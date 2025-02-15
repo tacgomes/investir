@@ -341,9 +341,9 @@ class TaxCalculator:
 
     def _validate_orders(self) -> None:
         for order in self._tr_hist.orders:
-            if (order.total.currency, order.fees.currency) != (
-                BASE_CURRENCY,
-                BASE_CURRENCY,
+            if (
+                order.total.currency != BASE_CURRENCY
+                or order.fees.total.currency != BASE_CURRENCY
             ):
                 raise InvestirError(
                     f"Orders with a non-GBP total are not supported: {order}"
@@ -417,7 +417,7 @@ class TaxCalculator:
                 d_idx += 1
 
             self._capital_gains[d.tax_year()].append(
-                CapitalGain(d, a.total.amount + d.fees.amount, a.date)
+                CapitalGain(d, a.total.amount + d.fees.total.amount, a.date)
             )
 
         self._acquisitions[isin] = [o for o in acquisits if o not in matched]
@@ -459,7 +459,7 @@ class TaxCalculator:
                         del self._holdings[isin]
 
                     self._capital_gains[order.tax_year()].append(
-                        CapitalGain(order, allowable_cost + order.fees.amount)
+                        CapitalGain(order, allowable_cost + order.fees.total.amount)
                     )
                 else:
                     raise_or_warn(
