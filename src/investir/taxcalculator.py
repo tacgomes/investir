@@ -1,13 +1,14 @@
 import logging
 from collections import defaultdict, namedtuple
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import TypeAlias
 
 from moneyed import Money
 
+from investir.config import config
 from investir.const import BASE_CURRENCY
 from investir.exceptions import (
     AmbiguousTickerError,
@@ -307,6 +308,11 @@ class TaxCalculator:
         # consolidation event.
         orders = self._normalise_orders(self._tr_hist.orders)
 
+        # Exclude forex fees from the "total" and "fees" fields if the
+        # include_fx_fees setting is false.
+        if config.include_fx_fees is False:
+            orders = self._exclude_unallowable_costs(orders)
+
         # Group together orders that have the same isin, date and type.
         same_day = self._group_same_day(orders)
 
@@ -354,6 +360,27 @@ class TaxCalculator:
             o.adjust_quantity(self._findata.get_security_info(o.isin).splits)
             for o in orders
         ]
+
+    def _exclude_unallowable_costs(self, orders: Sequence[Order]) -> Sequence[Order]:
+        new_orders = []
+        for order in orders:
+            if order.fees.forex:
+                if isinstance(order, Acquisition):
+                    total = order.total - order.fees.forex
+                else:
+                    total = order.total + order.fees.forex
+
+                new_orders.append(
+                    replace(
+                        order,
+                        total=total,
+                        fees=replace(order.fees, forex=None),
+                        notes="FX fees removed from order {order.number}",
+                    )
+                )
+            else:
+                new_orders.append(order)
+        return new_orders
 
     def _group_same_day(self, orders: Sequence[Order]) -> GroupDict:
         same_day = defaultdict(list)
