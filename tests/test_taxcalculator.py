@@ -590,6 +590,43 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
     assert holding.cost == Decimal("15.75")
 
 
+def test_capital_gains_on_orders_with_forex_fees_excluded(
+    make_tax_calculator,
+):
+    order1 = Acquisition(
+        datetime(2018, 1, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=sterling("52.0"),
+        quantity=Decimal("5.0"),
+        fees=Fees(forex=sterling("2.0")),
+    )
+
+    order2 = Acquisition(
+        datetime(2018, 1, 2, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=sterling("50.0"),
+        quantity=Decimal("5.0"),
+    )
+
+    order3 = Disposal(
+        datetime(2019, 1, 20, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=sterling("197.0"),
+        quantity=Decimal("5.0"),
+        fees=Fees(forex=sterling("3.0")),
+    )
+
+    tax_calculator = make_tax_calculator([order1, order2, order3])
+    config.include_fx_fees = False
+    capital_gains = tax_calculator.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    assert cg.acquisition_date is None
+    assert cg.cost == Decimal("50.0")
+    assert cg.gain_loss == Decimal("150.0")
+
+
 def test_disposals_on_different_tickers(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
