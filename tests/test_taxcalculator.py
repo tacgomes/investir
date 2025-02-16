@@ -73,32 +73,32 @@ def test_section_104_disposal(make_tax_calculator):
     order1 = Acquisition(
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("1000.0"),
         total=sterling("4150.0"),
+        quantity=Decimal("1000.0"),
         fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("500.0"),
         total=sterling("2130"),
+        quantity=Decimal("500.0"),
         fees=Fees(stamp_duty=sterling("80.0")),
     )
 
     order3 = Disposal(
         datetime(2023, 5, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("700.0"),
         total=sterling("3260.0"),
+        quantity=Decimal("700.0"),
         fees=Fees(stamp_duty=sterling("100.0")),
     )
 
     order4 = Disposal(
         datetime(2024, 2, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("400.0"),
         total=sterling("1975"),
+        quantity=Decimal("400.0"),
         fees=Fees(stamp_duty=sterling("105.0")),
     )
 
@@ -133,16 +133,16 @@ def test_section_104_with_no_disposal_made(make_tax_calculator):
     order1 = Acquisition(
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1000.0"),
         total=sterling("4150.0"),
+        quantity=Decimal("1000.0"),
         fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("500.0"),
         total=sterling("2050.0"),
+        quantity=Decimal("500.0"),
         fees=Fees(stamp_duty=sterling("50.0")),
     )
 
@@ -156,43 +156,43 @@ def test_same_day_rule(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, 14, 0, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("70.0"),
+        quantity=Decimal("1.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 20, 15, 0, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("60.0"),
+        quantity=Decimal("1.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 20, 16, 0, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("2.0"),
         total=sterling("65.0"),
+        quantity=Decimal("2.0"),
     )
 
     order5 = Disposal(
         datetime(2019, 1, 20, 17, 0, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("4.0"),
         total=sterling("280.0"),
+        quantity=Decimal("4.0"),
     )
 
     order6 = Acquisition(
         datetime(2019, 1, 20, 18, 0, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("2.0"),
         total=sterling("55.0"),
+        quantity=Decimal("2.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -217,22 +217,22 @@ def test_bed_and_breakfast_rule(days_elapsed, make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Acquisition(
         order2.timestamp + timedelta(days=days_elapsed),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("120.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3])
@@ -260,22 +260,22 @@ def test_acquisitions_are_not_matched_after_thirty_days_of_disposal_date(
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 19, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 2, 19, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("120.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3])
@@ -296,22 +296,22 @@ def test_acquisitions_are_not_matched_before_disposal_date(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Acquisition(
         datetime(2019, 2, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("200.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 2, 19, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3])
@@ -338,36 +338,36 @@ def test_same_day_rule_has_priority_to_bed_and_breakfast_rule(make_tax_calculato
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 25, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     order4 = Disposal(
         datetime(2019, 1, 25, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("170.0"),
+        quantity=Decimal("5.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 27, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("300.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3, order4, order5])
@@ -397,29 +397,29 @@ def test_matching_disposals_with_larger_acquisition(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("60.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 21, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("11.0"),
+        quantity=Decimal("1.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 22, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("7.0"),
         total=sterling("70.0"),
+        quantity=Decimal("7.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3, order4])
@@ -456,43 +456,43 @@ def test_matching_disposal_with_multiple_smaller_acquisitions(make_tax_calculato
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("30.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("50.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("9.0"),
+        quantity=Decimal("1.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 25, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("2.0"),
         total=sterling("16.0"),
+        quantity=Decimal("2.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 27, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("5.0"),
+        quantity=Decimal("1.0"),
     )
 
     order6 = Disposal(
         datetime(2019, 3, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("7.0"),
+        quantity=Decimal("1.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -535,32 +535,32 @@ def test_capital_gains_on_orders_with_fees_included(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("31.5"),
+        quantity=Decimal("10.0"),
         fees=Fees(stamp_duty=sterling("1.5")),
     )
 
     order2 = Acquisition(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("40.5"),
+        quantity=Decimal("5.0"),
         fees=Fees(stamp_duty=sterling("0.5")),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("49.6"),
+        quantity=Decimal("5.0"),
         fees=Fees(stamp_duty=sterling("0.4")),
     )
 
     order4 = Disposal(
         datetime(2019, 3, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("49.2"),
+        quantity=Decimal("5.0"),
         fees=Fees(stamp_duty=sterling("0.8")),
     )
 
@@ -594,43 +594,43 @@ def test_disposals_on_different_tickers(make_tax_calculator):
     order1 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Acquisition(
         datetime(2018, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("Y"),
-        quantity=Decimal("20.0"),
         total=sterling("200.0"),
+        quantity=Decimal("20.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("11.0"),
+        quantity=Decimal("1.0"),
     )
 
     order4 = Disposal(
         datetime(2019, 1, 21, tzinfo=timezone.utc),
         isin=ISIN("Y"),
-        quantity=Decimal("2.0"),
         total=sterling("22.0"),
+        quantity=Decimal("2.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 21, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("2.0"),
         total=sterling("8.0"),
+        quantity=Decimal("2.0"),
     )
 
     order6 = Acquisition(
         datetime(2019, 1, 22, tzinfo=timezone.utc),
         isin=ISIN("Y"),
-        quantity=Decimal("2.0"),
         total=sterling("6.0"),
+        quantity=Decimal("2.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -664,8 +664,8 @@ def test_integrity_disposal_without_acquisition(make_tax_calculator):
     order = Disposal(
         datetime(2019, 1, 17, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("120.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order])
@@ -681,15 +681,15 @@ def test_integrity_disposing_more_than_quantity_acquired(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("100.0"),
+        quantity=Decimal("5.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 3, 17, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("120.0"),
+        quantity=Decimal("10.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2])
@@ -705,29 +705,29 @@ def test_section_104_disposal_with_share_split(make_tax_calculator):
     order1 = Acquisition(
         datetime(2014, 5, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("11.0"),
         total=sterling("3300.0"),
+        quantity=Decimal("11.0"),
     )
 
     order2 = Disposal(
         datetime(2014, 6, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("500.0"),
+        quantity=Decimal("1.0"),
     )
 
     order3 = Acquisition(
         datetime(2014, 8, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("1000.0"),
+        quantity=Decimal("10.0"),
     )
 
     order4 = Disposal(
         datetime(2014, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("1100.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -760,22 +760,22 @@ def test_bed_and_breakfast_rule_with_share_split(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     order3 = Acquisition(
         datetime(2019, 1, 30, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("20.0"),
         total=sterling("160.0"),
+        quantity=Decimal("20.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -804,71 +804,71 @@ def test_rppaccounts_example(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("4.0"),
         total=sterling("12025.0"),
+        quantity=Decimal("4.0"),
     )
 
     order2 = Disposal(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("3.0"),
         total=sterling("9100.0"),
+        quantity=Decimal("3.0"),
     )
 
     order3 = Disposal(
         datetime(2019, 1, 19, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("5000.0"),
+        quantity=Decimal("1.0"),
     )
 
     order4 = Acquisition(
         datetime(2019, 1, 22, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("2000.0"),
+        quantity=Decimal("1.0"),
     )
 
     order5 = Acquisition(
         datetime(2019, 1, 23, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("5.0"),
         total=sterling("15000.0"),
+        quantity=Decimal("5.0"),
     )
 
     order6 = Disposal(
         datetime(2019, 1, 24, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("2.0"),
         total=sterling("8000.0"),
+        quantity=Decimal("2.0"),
     )
 
     order7 = Acquisition(
         datetime(2019, 1, 25, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("3300.0"),
+        quantity=Decimal("1.0"),
     )
 
     order8 = Disposal(
         datetime(2019, 1, 25, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("1.0"),
         total=sterling("3500.0"),
+        quantity=Decimal("1.0"),
     )
 
     order9 = Acquisition(
         datetime(2019, 1, 26, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("4.0"),
         total=sterling("17000.0"),
+        quantity=Decimal("4.0"),
     )
 
     order10 = Disposal(
         datetime(2019, 1, 27, tzinfo=timezone.utc),
         isin=ISIN("X"),
-        quantity=Decimal("8.0"),
         total=sterling("70000.0"),
+        quantity=Decimal("8.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -929,22 +929,22 @@ def test_hmrc_example_crypto22251(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-A"),
-        quantity=Decimal("100.0"),
         total=sterling("1000.0"),
+        quantity=Decimal("100.0"),
     )
 
     order2 = Acquisition(
         datetime(2020, 9, 18, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-A"),
-        quantity=Decimal("50.0"),
         total=sterling("125000.0"),
+        quantity=Decimal("50.0"),
     )
 
     order3 = Disposal(
         datetime(2020, 12, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-A"),
-        quantity=Decimal("50.0"),
         total=sterling("300000.0"),
+        quantity=Decimal("50.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3])
@@ -969,29 +969,29 @@ def test_hmrc_example_crypto22252(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-B"),
-        quantity=Decimal("5000.0"),
         total=sterling("500.0"),
+        quantity=Decimal("5000.0"),
     )
 
     order2 = Disposal(
         datetime(2020, 6, 23, 9, 0, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-B"),
-        quantity=Decimal("1000.0"),
         total=sterling("800.0"),
+        quantity=Decimal("1000.0"),
     )
 
     order3 = Acquisition(
         datetime(2020, 6, 23, 13, 0, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-B"),
-        quantity=Decimal("1600.0"),
         total=sterling("1000.0"),
+        quantity=Decimal("1600.0"),
     )
 
     order4 = Disposal(
         datetime(2020, 6, 23, 19, 0, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-B"),
-        quantity=Decimal("500.0"),
         total=sterling("600.0"),
+        quantity=Decimal("500.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3, order4])
@@ -1016,43 +1016,43 @@ def test_hmrc_example_crypto22253(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("2000.0"),
         total=sterling("1000.0"),
+        quantity=Decimal("2000.0"),
     )
 
     order2 = Disposal(
         datetime(2020, 3, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("1000.0"),
         total=sterling("400.0"),
+        quantity=Decimal("1000.0"),
     )
 
     order3 = Disposal(
         datetime(2020, 4, 20, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("500.0"),
         total=sterling("150.0"),
+        quantity=Decimal("500.0"),
     )
 
     order4 = Acquisition(
         datetime(2020, 4, 21, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("700.0"),
         total=sterling("175.0"),
+        quantity=Decimal("700.0"),
     )
 
     order5 = Acquisition(
         datetime(2020, 4, 28, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("500.0"),
         total=sterling("100.0"),
+        quantity=Decimal("500.0"),
     )
 
     order6 = Acquisition(
         datetime(2020, 5, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-C"),
-        quantity=Decimal("500.0"),
         total=sterling("150.0"),
+        quantity=Decimal("500.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -1097,50 +1097,50 @@ def test_hmrc_example_crypto22254(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("8000.0"),
         total=sterling("1000.0"),
+        quantity=Decimal("8000.0"),
     )
 
     order2 = Disposal(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("5000.0"),
         total=sterling("500.0"),
+        quantity=Decimal("5000.0"),
     )
 
     order3 = Acquisition(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("4000.0"),
         total=sterling("320.0"),
+        quantity=Decimal("4000.0"),
     )
 
     order4 = Acquisition(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("1000.0"),
         total=sterling("75.0"),
+        quantity=Decimal("1000.0"),
     )
 
     order5 = Acquisition(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("1000.0"),
         total=sterling("70.0"),
+        quantity=Decimal("1000.0"),
     )
 
     order6 = Disposal(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("2000.0"),
         total=sterling("142.0"),
+        quantity=Decimal("2000.0"),
     )
 
     order7 = Acquisition(
         datetime(2020, 1, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-D"),
-        quantity=Decimal("500.0"),
         total=sterling("35.0"),
+        quantity=Decimal("500.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -1173,22 +1173,22 @@ def test_hmrc_example_crypto22255(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-E"),
-        quantity=Decimal("14000.0"),
         total=sterling("200000.0"),
+        quantity=Decimal("14000.0"),
     )
 
     order2 = Disposal(
         datetime(2020, 8, 30, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-E"),
-        quantity=Decimal("4000.0"),
         total=sterling("160000.0"),
+        quantity=Decimal("4000.0"),
     )
 
     order3 = Acquisition(
         datetime(2020, 9, 11, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-E"),
-        quantity=Decimal("500.0"),
         total=sterling("17500.0"),
+        quantity=Decimal("500.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2, order3])
@@ -1219,43 +1219,43 @@ def test_hmrc_example_crypto22256(make_tax_calculator):
     order1 = Acquisition(
         datetime(2019, 1, 1, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("100000.0"),
         total=sterling("300000.0"),
+        quantity=Decimal("100000.0"),
     )
 
     order2 = Acquisition(
         datetime(2020, 7, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("10000.0"),
         total=sterling("45000.0"),
+        quantity=Decimal("10000.0"),
     )
 
     order3 = Disposal(
         datetime(2020, 7, 31, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("30000.0"),
         total=sterling("150000.0"),
+        quantity=Decimal("30000.0"),
     )
 
     order4 = Disposal(
         datetime(2020, 8, 5, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("20000.0"),
         total=sterling("100000.0"),
+        quantity=Decimal("20000.0"),
     )
 
     order5 = Acquisition(
         datetime(2020, 8, 6, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("50000.0"),
         total=sterling("225000.0"),
+        quantity=Decimal("50000.0"),
     )
 
     order6 = Disposal(
         datetime(2020, 8, 7, tzinfo=timezone.utc),
         isin=ISIN("TOKEN-F"),
-        quantity=Decimal("100000.0"),
         total=sterling("150000.0"),
+        quantity=Decimal("100000.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -1298,8 +1298,8 @@ def test_get_holdings_table_with_gain_loss(make_tax_calculator):
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
         ticker="TICKER",
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     tax_calculator = make_tax_calculator([order], price=Money("15.0", GBP))
@@ -1315,8 +1315,8 @@ def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calc
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
         ticker="TICKER",
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     tax_calculator = make_tax_calculator(
@@ -1338,8 +1338,8 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
         ticker="TICKER",
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     tax_calculator = make_tax_calculator([order], price=DataProviderError)
@@ -1365,16 +1365,16 @@ def test_get_holdings_table_ambiguous_ticker(make_tax_calculator, capsys):
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
         ticker="TICKER",
-        quantity=Decimal("10.0"),
         total=sterling("100.0"),
+        quantity=Decimal("10.0"),
     )
 
     order2 = Acquisition(
         datetime(2019, 1, 20, tzinfo=timezone.utc),
         isin=ISIN("Y"),
         ticker="TICKER",
-        quantity=Decimal("5.0"),
         total=sterling("150.0"),
+        quantity=Decimal("5.0"),
     )
 
     tax_calculator = make_tax_calculator([order1, order2])
@@ -1389,16 +1389,16 @@ def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
     order1 = Acquisition(
         datetime(2015, 4, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("1000.0"),
         total=Money("4150.0", "USD"),
+        quantity=Decimal("1000.0"),
         fees=Fees(stamp_duty=sterling("150.0")),
     )
 
     order2 = Acquisition(
         datetime(2018, 9, 1, tzinfo=timezone.utc),
         isin=ISIN("LOBS"),
-        quantity=Decimal("500.0"),
         total=sterling("2130.0"),
+        quantity=Decimal("500.0"),
         fees=Fees(finra=Money("80.0", "USD")),
     )
 
