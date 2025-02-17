@@ -89,6 +89,13 @@ DIVIDEND: Final = {
     "Currency (Withholding tax)": "USD",
 }
 
+CASH_INTEREST: Final = {
+    "Action": "Interest on cash",
+    "Time": TIMESTAMP,
+    "Total": "4.65",
+    "Currency (Total)": "GBP",
+}
+
 
 @pytest.fixture(name="create_parser")
 def fixture_create_parser(tmp_path) -> Callable:
@@ -138,13 +145,7 @@ def test_parser_happy_path(create_parser):
         "Currency (Total)": "GBP",
     }
 
-    interest = {
-        "Action": "Interest on cash",
-        "Time": TIMESTAMP,
-        "Total": "4.65",
-        "Currency (Total)": "GBP",
-    }
-
+    result_adjustment = {"Action": "Result adjustment"}
     card_debit = {"Action": "Card debit"}
     spending_cashback = {"Action": "Spending cashback"}
     currency_conversion = {"Action": "Currency conversion"}
@@ -156,7 +157,8 @@ def test_parser_happy_path(create_parser):
             DIVIDEND,
             deposit,
             withdrawal,
-            interest,
+            CASH_INTEREST,
+            result_adjustment,
             card_debit,
             spending_cashback,
             currency_conversion,
@@ -263,6 +265,21 @@ def test_parser_different_dividends_actions(create_parser):
 
     dividends = parser_result.dividends
     assert dividends[0] == dividends[1] == dividends[2] == dividends[3]
+
+
+def test_parser_different_interest_actions(create_parser):
+    interest1 = dict(CASH_INTEREST)
+
+    interest2 = dict(CASH_INTEREST)
+    interest2["Action"] = "Lending interest"
+
+    parser = create_parser([interest1, interest2])
+
+    parser_result = parser.parse()
+    assert len(parser_result.interest) == 2
+
+    interest = parser_result.interest
+    assert interest[0] == interest[1]
 
 
 def test_parser_different_fee_types(create_parser):
