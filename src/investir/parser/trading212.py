@@ -177,7 +177,7 @@ class Trading212Parser:
         #       https://helpcentre.trading212.com/hc/en-us/articles/360007081637-What-are-the-applicable-stock-exchange-fees
         stamp_duty = read_sterling(row.get("Stamp duty (GBP)"))
         stamp_duty_reserve_tax = read_sterling(row.get("Stamp duty reserve tax (GBP)"))
-        fx_fee = read_money(row, "Currency conversion fee")
+        forex_fee = read_money(row, "Currency conversion fee")
         sec_fee = read_money(row, "Transaction fee")
         finra_fee = read_money(row, "Finra fee")
 
@@ -199,7 +199,7 @@ class Trading212Parser:
 
         fees = Fees(
             stamp_duty=stamp_duty,
-            forex=fx_fee,
+            forex=forex_fee,
             finra=finra_fee,
             sec=sec_fee,
             default_currency=total.currency,
