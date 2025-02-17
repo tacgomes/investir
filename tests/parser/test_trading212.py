@@ -145,6 +145,10 @@ def test_parser_happy_path(create_parser):
         "Currency (Total)": "GBP",
     }
 
+    card_debit = {"Action": "Card debit"}
+    spending_cashback = {"Action": "Spending cashback"}
+    currency_conversion = {"Action": "Currency conversion"}
+
     parser = create_parser(
         [
             ACQUISITION,
@@ -153,6 +157,9 @@ def test_parser_happy_path(create_parser):
             deposit,
             withdrawal,
             interest,
+            card_debit,
+            spending_cashback,
+            currency_conversion,
         ]
     )
 
