@@ -97,10 +97,10 @@ def test_yfinance_security_info_provider_missing_field(ticker_mocker):
 
 
 def test_yfinance_exchange_rate_provider(ticker_mocker):
-    ticker_mocker({"bid": 0.775420})
+    ticker_mocker({"bid": 0.75})
     provider = YahooFinanceExchangeRateProvider()
     fx_rate = provider.fetch_exchange_rate(USD, GBP)
-    assert fx_rate == Decimal(0.775420)
+    assert fx_rate == Decimal("0.75")
 
 
 def test_yfinance_exchange_rate_provider_exception_raised(ticker_mocker):
