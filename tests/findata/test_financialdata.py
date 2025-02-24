@@ -15,7 +15,7 @@ from investir.findata import (
     FinancialData,
     SecurityInfo,
     Split,
-    YahooFinanceExchangeRateProvider,
+    YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.transaction import Acquisition, Disposal
@@ -103,7 +103,7 @@ def _make_financial_data(mocker) -> Callable:
         fx_rate: Decimal | Exception | None = None,
     ) -> tuple[FinancialData, Any]:
         security_info_provider = YahooFinanceSecurityInfoProvider()
-        exchange_rate_provider = YahooFinanceExchangeRateProvider()
+        live_rates_provider = YahooFinanceLiveExchangeRateProvider()
 
         mocks = DataProviderMocks(
             mocker.patch.object(
@@ -113,7 +113,7 @@ def _make_financial_data(mocker) -> Callable:
                 security_info_provider, "fetch_price", side_effect=[price]
             ),
             mocker.patch.object(
-                exchange_rate_provider, "fetch_exchange_rate", side_effect=[fx_rate]
+                live_rates_provider, "fetch_exchange_rate", side_effect=[fx_rate]
             ),
         )
 
@@ -121,7 +121,7 @@ def _make_financial_data(mocker) -> Callable:
             tr_hist = TrHistory()
 
         findata = FinancialData(
-            security_info_provider, exchange_rate_provider, tr_hist, cache_file
+            security_info_provider, live_rates_provider, tr_hist, cache_file
         )
 
         return findata, mocks

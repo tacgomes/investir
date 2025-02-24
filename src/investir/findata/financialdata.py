@@ -8,7 +8,7 @@ from moneyed import Currency, Money
 
 from investir.findata.dataprovider import (
     DataProviderError,
-    ExchangeRateProvider,
+    LiveExchangeRateProvider,
     SecurityInfoProvider,
 )
 from investir.findata.types import SecurityInfo
@@ -24,12 +24,12 @@ class FinancialData:
     def __init__(
         self,
         security_info_provider: SecurityInfoProvider | None,
-        exchange_rate_provider: ExchangeRateProvider | None,
+        live_rates_provider: LiveExchangeRateProvider | None,
         tr_hist: TrHistory,
         cache_file: Path,
     ) -> None:
         self._security_info_provider = security_info_provider
-        self._exchange_rate_provider = exchange_rate_provider
+        self._live_rates_provider = live_rates_provider
         self._tr_hist = tr_hist
         self._cache_file = cache_file
         self._security_info: dict[ISIN, SecurityInfo] = {}
@@ -66,9 +66,9 @@ class FinancialData:
         if fx_rate := self._exchange_rates.get((currency_from, currency_to)):
             return fx_rate
 
-        if self._exchange_rate_provider is not None:
+        if self._live_rates_provider is not None:
             try:
-                fx_rate = self._exchange_rate_provider.fetch_exchange_rate(
+                fx_rate = self._live_rates_provider.fetch_exchange_rate(
                     currency_from, currency_to
                 )
                 inverse_fx_rate = Decimal("1.0") / fx_rate

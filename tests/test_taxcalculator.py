@@ -12,7 +12,7 @@ from investir.findata import (
     FinancialData,
     SecurityInfo,
     Split,
-    YahooFinanceExchangeRateProvider,
+    YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.taxcalculator import TaxCalculator
@@ -38,7 +38,7 @@ def _make_tax_calculator(mocker, tmp_path) -> Callable:
             assert all(orders[0].isin == o.isin for o in orders)
 
         security_info_provider = YahooFinanceSecurityInfoProvider()
-        exchange_rate_provider = YahooFinanceExchangeRateProvider()
+        live_rates_provider = YahooFinanceLiveExchangeRateProvider()
         mocker.patch.object(
             security_info_provider,
             "fech_info",
@@ -50,14 +50,14 @@ def _make_tax_calculator(mocker, tmp_path) -> Callable:
             side_effect=[price],
         )
         mocker.patch.object(
-            exchange_rate_provider, "fetch_exchange_rate", side_effect=[fx_rate]
+            live_rates_provider, "fetch_exchange_rate", side_effect=[fx_rate]
         )
 
         tr_hist = TrHistory(orders=orders)
         cache_file = tmp_path / "cache.yaml"
 
         financial_data = FinancialData(
-            security_info_provider, exchange_rate_provider, tr_hist, cache_file
+            security_info_provider, live_rates_provider, tr_hist, cache_file
         )
 
         return TaxCalculator(tr_hist, financial_data)
