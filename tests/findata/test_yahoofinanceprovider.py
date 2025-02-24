@@ -11,7 +11,7 @@ from moneyed import GBP, USD, Money
 from investir.findata import (
     DataProviderError,
     Split,
-    YahooFinanceExchangeRateProvider,
+    YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.typing import ISIN
@@ -96,22 +96,22 @@ def test_yfinance_security_info_provider_missing_field(ticker_mocker):
         provider.fech_info(ISIN("AMZN-ISIN"))
 
 
-def test_yfinance_exchange_rate_provider(ticker_mocker):
+def test_yfinance_live_exchange_rate_provider(ticker_mocker):
     ticker_mocker({"bid": 0.75})
-    provider = YahooFinanceExchangeRateProvider()
+    provider = YahooFinanceLiveExchangeRateProvider()
     fx_rate = provider.fetch_exchange_rate(USD, GBP)
     assert fx_rate == Decimal("0.75")
 
 
-def test_yfinance_exchange_rate_provider_exception_raised(ticker_mocker):
+def test_yfinance_live_exchange_rate_provider_exception_raised(ticker_mocker):
     ticker_mocker(yfinance.exceptions.YFException)
-    provider = YahooFinanceExchangeRateProvider()
+    provider = YahooFinanceLiveExchangeRateProvider()
     with pytest.raises(DataProviderError):
         provider.fetch_exchange_rate(USD, GBP)
 
 
-def test_yfinance_exchange_rate_provider_missing_field(ticker_mocker):
+def test_yfinance_live_exchange_rate_provider_missing_field(ticker_mocker):
     ticker_mocker({})
-    provider = YahooFinanceExchangeRateProvider()
+    provider = YahooFinanceLiveExchangeRateProvider()
     with pytest.raises(DataProviderError):
         provider.fetch_exchange_rate(USD, GBP)

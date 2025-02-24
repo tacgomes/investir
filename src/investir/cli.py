@@ -13,7 +13,7 @@ from investir.config import config
 from investir.exceptions import InvestirError
 from investir.findata import (
     FinancialData,
-    YahooFinanceExchangeRateProvider,
+    YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
 from investir.logging import configure_logger
@@ -126,14 +126,14 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     )
 
     security_info_provider = None
-    exchange_rate_provider = None
+    live_rates_provider = None
     if not config.offline:
         security_info_provider = YahooFinanceSecurityInfoProvider()
-        exchange_rate_provider = YahooFinanceExchangeRateProvider()
+        live_rates_provider = YahooFinanceLiveExchangeRateProvider()
 
     financial_data = FinancialData(
         security_info_provider,
-        exchange_rate_provider,
+        live_rates_provider,
         tr_hist,
         config.cache_file,
     )
