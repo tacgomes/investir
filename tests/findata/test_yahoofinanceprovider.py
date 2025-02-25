@@ -59,17 +59,17 @@ def test_yfinance_security_info_provider(ticker_mocker):
         AMZN_PSERIES,
     )
     provider = YahooFinanceSecurityInfoProvider()
-    security_info = provider.fech_info(ISIN("AMZN-ISIN"))
+    security_info = provider.get_info(ISIN("AMZN-ISIN"))
     assert security_info.name == "Amazon"
     assert security_info.splits == AMZN_SPLITS
-    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
+    assert provider.get_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
 
 
 def test_yfinance_security_info_provider_security_not_found(ticker_mocker):
     ticker_mocker(yfinance.exceptions.YFException, [])
     security_info_provider = YahooFinanceSecurityInfoProvider()
     with pytest.raises(DataProviderError):
-        security_info_provider.fech_info(ISIN("NOT-FOUND"))
+        security_info_provider.get_info(ISIN("NOT-FOUND"))
 
 
 def test_yfinance_security_info_provider_price_in_GBp(ticker_mocker):
@@ -77,29 +77,29 @@ def test_yfinance_security_info_provider_price_in_GBp(ticker_mocker):
         {"currentPrice": 1550, "currency": "GBp"},
     )
     provider = YahooFinanceSecurityInfoProvider()
-    assert provider.fetch_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
+    assert provider.get_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
 
 
 def test_yfinance_security_info_provider_exception_raised(ticker_mocker):
     ticker_mocker(yfinance.exceptions.YFException)
     provider = YahooFinanceSecurityInfoProvider()
     with pytest.raises(DataProviderError):
-        provider.fech_info(ISIN("AMZN-ISIN"))
+        provider.get_info(ISIN("AMZN-ISIN"))
     with pytest.raises(DataProviderError):
-        provider.fetch_price(ISIN("AMZN-ISIN"))
+        provider.get_price(ISIN("AMZN-ISIN"))
 
 
 def test_yfinance_security_info_provider_missing_field(ticker_mocker):
     ticker_mocker({})
     provider = YahooFinanceSecurityInfoProvider()
     with pytest.raises(DataProviderError):
-        provider.fech_info(ISIN("AMZN-ISIN"))
+        provider.get_info(ISIN("AMZN-ISIN"))
 
 
 def test_yfinance_live_exchange_rate_provider(ticker_mocker):
     ticker_mocker({"bid": 0.75})
     provider = YahooFinanceLiveExchangeRateProvider()
-    fx_rate = provider.fetch_exchange_rate(USD, GBP)
+    fx_rate = provider.get_rate(USD, GBP)
     assert fx_rate == Decimal("0.75")
 
 
@@ -107,11 +107,11 @@ def test_yfinance_live_exchange_rate_provider_exception_raised(ticker_mocker):
     ticker_mocker(yfinance.exceptions.YFException)
     provider = YahooFinanceLiveExchangeRateProvider()
     with pytest.raises(DataProviderError):
-        provider.fetch_exchange_rate(USD, GBP)
+        provider.get_rate(USD, GBP)
 
 
 def test_yfinance_live_exchange_rate_provider_missing_field(ticker_mocker):
     ticker_mocker({})
     provider = YahooFinanceLiveExchangeRateProvider()
     with pytest.raises(DataProviderError):
-        provider.fetch_exchange_rate(USD, GBP)
+        provider.get_rate(USD, GBP)

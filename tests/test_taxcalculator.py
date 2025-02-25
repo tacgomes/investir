@@ -41,17 +41,15 @@ def _make_tax_calculator(mocker, tmp_path) -> Callable:
         live_rates_provider = YahooFinanceLiveExchangeRateProvider()
         mocker.patch.object(
             security_info_provider,
-            "fech_info",
+            "get_info",
             return_value=SecurityInfo(splits=splits),
         )
         mocker.patch.object(
             security_info_provider,
-            "fetch_price",
+            "get_price",
             side_effect=[price],
         )
-        mocker.patch.object(
-            live_rates_provider, "fetch_exchange_rate", side_effect=[fx_rate]
-        )
+        mocker.patch.object(live_rates_provider, "get_rate", side_effect=[fx_rate])
 
         tr_hist = TrHistory(orders=orders)
         cache_file = tmp_path / "cache.yaml"

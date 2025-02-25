@@ -12,15 +12,13 @@ class DataProviderError(Exception):
 
 
 class SecurityInfoProvider(Protocol):
-    def fech_info(self, isin: ISIN) -> SecurityInfo:
+    def get_info(self, isin: ISIN) -> SecurityInfo:
         pass
 
-    def fetch_price(self, isin: ISIN) -> Money:
+    def get_price(self, isin: ISIN) -> Money:
         pass
 
 
 class LiveExchangeRateProvider(Protocol):
-    def fetch_exchange_rate(
-        self, currency_from: Currency, currency_to: Currency
-    ) -> Decimal:
+    def get_rate(self, base: Currency, quote: Currency) -> Decimal:
         pass

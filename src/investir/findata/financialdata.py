@@ -47,7 +47,7 @@ class FinancialData:
 
         if self._security_info_provider is not None:
             try:
-                price = self._security_info_provider.fetch_price(isin)
+                price = self._security_info_provider.get_price(isin)
                 logger.debug(
                     "Using %s %s share price for %s",
                     round(price.amount, 2),
@@ -60,29 +60,25 @@ class FinancialData:
 
         return price
 
-    def get_foreign_exchange_rate(
-        self, currency_from: Currency, currency_to: Currency
-    ) -> Decimal | None:
-        if fx_rate := self._exchange_rates.get((currency_from, currency_to)):
+    def get_exchange_rate(self, base: Currency, quote: Currency) -> Decimal | None:
+        if fx_rate := self._exchange_rates.get((base, quote)):
             return fx_rate
 
         if self._live_rates_provider is not None:
             try:
-                fx_rate = self._live_rates_provider.fetch_exchange_rate(
-                    currency_from, currency_to
-                )
+                fx_rate = self._live_rates_provider.get_rate(base, quote)
                 inverse_fx_rate = Decimal("1.0") / fx_rate
                 logger.debug(
                     "Using %s exchange rate for %s (%s) to %s (%s) (inverse rate: %s)",
                     round(fx_rate, 5),
-                    currency_from.name,
-                    currency_from.code,
-                    currency_to.name,
-                    currency_to.code,
+                    base.name,
+                    base.code,
+                    quote.name,
+                    quote.code,
                     round(inverse_fx_rate, 5),
                 )
-                self._exchange_rates[(currency_from), (currency_to)] = fx_rate
-                self._exchange_rates[(currency_to), (currency_from)] = inverse_fx_rate
+                self._exchange_rates[(base), (quote)] = fx_rate
+                self._exchange_rates[(quote), (base)] = inverse_fx_rate
             except DataProviderError as ex:
                 logger.warning(str(ex))
 
@@ -92,7 +88,7 @@ class FinancialData:
         if money.currency == currency:
             return money
 
-        if fx_rate := self.get_foreign_exchange_rate(money.currency, currency):
+        if fx_rate := self.get_exchange_rate(money.currency, currency):
             return Money(money.amount * fx_rate, currency)
 
         return None
@@ -119,7 +115,7 @@ class FinancialData:
             if self._security_info_provider is not None:
                 logger.info("Fetching information for %s - %s", isin, name)
                 try:
-                    self._security_info[isin] = self._security_info_provider.fech_info(
+                    self._security_info[isin] = self._security_info_provider.get_info(
                         isin
                     )
                 except DataProviderError as ex:
