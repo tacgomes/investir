@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class YahooFinanceSecurityInfoProvider:
-    def fech_info(self, isin: ISIN) -> SecurityInfo:
+    def get_info(self, isin: ISIN) -> SecurityInfo:
         try:
             yf_data = yfinance.Ticker(isin)
             name = yf_data.info["shortName"]
@@ -27,7 +27,7 @@ class YahooFinanceSecurityInfoProvider:
 
         return SecurityInfo(name, splits)
 
-    def fetch_price(self, isin: ISIN) -> Money:
+    def get_price(self, isin: ISIN) -> Money:
         try:
             yf_data = yfinance.Ticker(isin)
             price = Decimal(yf_data.info["currentPrice"])
@@ -44,18 +44,15 @@ class YahooFinanceSecurityInfoProvider:
 
 
 class YahooFinanceLiveExchangeRateProvider:
-    def fetch_exchange_rate(
-        self, currency_from: Currency, currency_to: Currency
-    ) -> Decimal:
+    def get_rate(self, base: Currency, quote: Currency) -> Decimal:
         try:
-            yf_data = yfinance.Ticker(f"{currency_from.code}{currency_to.code}=X")
+            yf_data = yfinance.Ticker(f"{base.code}{quote.code}=X")
             fx_rate = Decimal(yf_data.info["bid"])
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
             raise DataProviderError(
                 f"Failed to fetch exchange rate for "
-                f"{currency_from.name} ({currency_from.code}) to "
-                f"{currency_to.name} ({currency_to.code})"
+                f"{base.name} ({base.code}) to {quote.name} ({quote.code})"
             ) from None
 
         return fx_rate
