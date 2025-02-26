@@ -21,19 +21,32 @@ EX_OK = getattr(os, "EX_OK", 0)
 
 
 @pytest.fixture(name="execute")
-def fixture_execute() -> Callable:
+def _execute() -> Callable:
     def _execute(
         args: Sequence[str],
-        global_opts: Sequence[str] = [
-            "--quiet",
-            "--offline",
-            "--cache-file",
-            os.devnull,
-        ],
+        quiet: bool = True,
+        verbose: bool = False,
+        cache: bool = True,
+        offline: bool = True,
     ) -> Result:
         config.reset()
+        opts = []
+
+        if quiet:
+            opts.append("--quiet")
+
+        if verbose:
+            opts.append("--verbose")
+
+        if cache:
+            opts.append("--cache-file")
+            opts.append(os.devnull)
+
+        if offline:
+            opts.append("--offline")
+
         runner = CliRunner(mix_stderr=False)
-        return runner.invoke(app, [*global_opts, *args])
+        return runner.invoke(app, [*opts, *args])
 
     return _execute
 
@@ -285,7 +298,7 @@ def test_capital_gains_command_tax_year_required(execute):
 
 
 def test_invocation_without_any_argument(execute):
-    result = execute([], global_opts=[])
+    result = execute([], quiet=False, cache=False, offline=False)
     assert not result.stderr
     assert "Options" in result.stdout
     assert "Commands" in result.stdout
@@ -298,7 +311,7 @@ def test_invocation_without_any_argument(execute):
 
 
 def test_version_option(execute):
-    result = execute(["--version"], global_opts=[])
+    result = execute(["--version"], cache=False)
     version = importlib.metadata.version("investir")
     assert result.stdout.strip() == f"investir {version}"
     assert not result.stderr
@@ -306,15 +319,7 @@ def test_version_option(execute):
 
 
 def test_verbose_option(execute):
-    result = execute(
-        ["orders", DATA_FILE1],
-        global_opts=[
-            "--verbose",
-            "--offline",
-            "--cache-file",
-            os.devnull,
-        ],
-    )
+    result = execute(["orders", DATA_FILE1], quiet=False, verbose=True)
     assert "INFO" in result.stderr
     assert "DEBUG" in result.stderr
     assert result.stdout
@@ -322,14 +327,7 @@ def test_verbose_option(execute):
 
 
 def test_default_verbosity(execute):
-    result = execute(
-        ["orders", DATA_FILE1],
-        global_opts=[
-            "--offline",
-            "--cache-file",
-            os.devnull,
-        ],
-    )
+    result = execute(["orders", DATA_FILE1], quiet=False)
     assert "INFO" in result.stderr
     assert "DEBUG" not in result.stderr
     assert result.stdout
@@ -343,15 +341,7 @@ def test_default_verbosity(execute):
 )
 def test_capital_gains_with_splits_downloaded_from_internet(execute):
     data_file = str(TEST_DIR / "orders_with_share_splits.csv")
-    result = execute(
-        ["capital-gains", data_file],
-        global_opts=[
-            "--quiet",
-            # "--offline",  # Get splits from the Internet
-            "--cache-file",
-            os.devnull,
-        ],
-    )
+    result = execute(["capital-gains", data_file], offline=False)
 
     assert not result.stderr
     assert result.exit_code == EX_OK
@@ -364,12 +354,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
 )
 def test_holdings_with_unrealised_gain_loss_calculated(execute):
     result = execute(
-        ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE1],
-        global_opts=[
-            "--quiet",
-            "--cache-file",
-            os.devnull,
-        ],
+        ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE1], offline=False
     )
     assert "Not available" not in result.stdout
     assert not result.stderr
