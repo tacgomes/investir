@@ -134,9 +134,8 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
     financial_data = FinancialData(
         security_info_provider,
         live_rates_provider,
-        tr_hist,
-        config.cache_file,
     )
+
     tax_calculator = TaxCalculator(tr_hist, financial_data)
 
     return tr_hist, tax_calculator

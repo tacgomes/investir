@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Protocol
 
@@ -12,7 +13,9 @@ class DataProviderError(Exception):
 
 
 class SecurityInfoProvider(Protocol):
-    def get_info(self, isin: ISIN) -> SecurityInfo:
+    def get_info(
+        self, isin: ISIN, refresh_date: datetime | None = None
+    ) -> SecurityInfo:
         pass
 
     def get_price(self, isin: ISIN) -> Money:
