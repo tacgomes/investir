@@ -357,7 +357,9 @@ class TaxCalculator:
 
     def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
         return [
-            o.adjust_quantity(self._findata.get_security_info(o.isin).splits)
+            o.adjust_quantity(
+                self._findata.get_security_info(o.isin, o.timestamp).splits
+            )
             for o in orders
         ]
 
