@@ -21,7 +21,7 @@ EX_OK = getattr(os, "EX_OK", 0)
 
 
 @pytest.fixture(name="execute")
-def _execute() -> Callable:
+def _execute(tmp_path) -> Callable:
     def _execute(
         args: Sequence[str],
         quiet: bool = True,
@@ -39,8 +39,8 @@ def _execute() -> Callable:
             opts.append("--verbose")
 
         if cache:
-            opts.append("--cache-file")
-            opts.append(os.devnull)
+            opts.append("--cache-dir")
+            opts.append(tmp_path)
 
         if offline:
             opts.append("--offline")

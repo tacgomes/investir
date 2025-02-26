@@ -9,7 +9,7 @@ from platformdirs import user_cache_dir
 class Config:
     strict: bool = True
     offline: bool = False
-    cache_file: Path = Path(user_cache_dir()) / "investir" / "securities.yaml"
+    cache_dir: Path = Path(user_cache_dir()) / "investir"
     include_fx_fees: bool = True
     log_level: int = logging.INFO
     use_colour: bool = True
