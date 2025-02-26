@@ -185,16 +185,17 @@ def main_callback(
             ),
         ),
     ] = config.offline,
-    cache_file: Annotated[
+    cache_dir: Annotated[
         Path,
         typer.Option(
-            dir_okay=False,
+            dir_okay=True,
+            file_okay=False,
             help=(
-                "Cache file to store additional data about securities fetched "
-                "from the Internet."
+                "Location where to store cache files with securities information "
+                "and foreign exchange rates downloaded from the Internet."
             ),
         ),
-    ] = config.cache_file,
+    ] = config.cache_dir,
     include_fx_fees: Annotated[
         bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
     ] = config.include_fx_fees,
@@ -221,7 +222,7 @@ def main_callback(
 
     config.strict = strict
     config.offline = offline
-    config.cache_file = cache_file
+    config.cache_dir = cache_dir
     config.include_fx_fees = include_fx_fees
 
     if quiet:

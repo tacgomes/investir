@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class YahooFinanceSecurityInfoProvider:
     def __init__(self, cache_file: Path | None = None) -> None:
-        self._cache_file = cache_file or config.cache_file
+        self._cache_file = cache_file or config.cache_dir / "securities.yaml"
         self._cache_loaded = False
         self._infos: dict[ISIN, SecurityInfo] = {}
         self._prices: dict[ISIN, Money] = {}
