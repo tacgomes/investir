@@ -358,7 +358,7 @@ class TaxCalculator:
     def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
         return [
             o.adjust_quantity(
-                self._findata.get_security_info(o.isin, o.timestamp).splits
+                self._findata.get_security_info(o.isin, o.name, o.timestamp).splits
             )
             for o in orders
         ]
@@ -502,7 +502,8 @@ class TaxCalculator:
     def _get_holding_value(
         self, isin: ISIN, holding: Section104Holding
     ) -> Decimal | None:
-        if (price := self._findata.get_security_price(isin)) and (
+        security_name = self._tr_hist.get_security_name(isin) or ""
+        if (price := self._findata.get_security_price(isin, security_name)) and (
             price_base_currency := self._findata.convert_money(price, BASE_CURRENCY)
         ):
             return holding.quantity * price_base_currency.amount

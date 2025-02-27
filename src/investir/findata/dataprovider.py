@@ -14,11 +14,11 @@ class DataProviderError(Exception):
 
 class SecurityInfoProvider(Protocol):
     def get_info(
-        self, isin: ISIN, refresh_date: datetime | None = None
+        self, isin: ISIN, name: str = "", refresh_date: datetime | None = None
     ) -> SecurityInfo:
         pass
 
-    def get_price(self, isin: ISIN) -> Money:
+    def get_price(self, isin: ISIN, name: str = "") -> Money:
         pass
 
 

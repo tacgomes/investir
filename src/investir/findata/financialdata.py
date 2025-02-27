@@ -25,20 +25,20 @@ class FinancialData:
         self._live_rates_provider = live_rates_provider
 
     def get_security_info(
-        self, isin: ISIN, refresh_date: datetime | None = None
+        self, isin: ISIN, name: str = "", refresh_date: datetime | None = None
     ) -> SecurityInfo:
         if self._security_info_provider is not None:
             try:
-                return self._security_info_provider.get_info(isin, refresh_date)
+                return self._security_info_provider.get_info(isin, name, refresh_date)
             except DataProviderError as ex:
                 logger.warning(str(ex))
 
-        return SecurityInfo()
+        return SecurityInfo(name, [])
 
-    def get_security_price(self, isin) -> Money | None:
+    def get_security_price(self, isin, name: str = "") -> Money | None:
         if self._security_info_provider is not None:
             try:
-                return self._security_info_provider.get_price(isin)
+                return self._security_info_provider.get_price(isin, name)
             except DataProviderError as ex:
                 logger.warning(str(ex))
 
