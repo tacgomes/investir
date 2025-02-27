@@ -24,7 +24,7 @@ class YahooFinanceSecurityInfoProvider:
         self._prices: dict[ISIN, Money] = {}
 
     def get_info(
-        self, isin: ISIN, refresh_date: datetime | None = None
+        self, isin: ISIN, name: str = "", refresh_date: datetime | None = None
     ) -> SecurityInfo:
         self._load_cache()
 
@@ -32,7 +32,7 @@ class YahooFinanceSecurityInfoProvider:
             if refresh_date is None or info.last_updated >= refresh_date:
                 return info
 
-        logger.info("Fetching information for %s", isin)
+        logger.info("Fetching information for %s - %s", isin, name)
 
         try:
             yf_data = yfinance.Ticker(isin)
@@ -51,9 +51,11 @@ class YahooFinanceSecurityInfoProvider:
 
         return self._infos[isin]
 
-    def get_price(self, isin: ISIN) -> Money:
+    def get_price(self, isin: ISIN, name: str = "") -> Money:
         if cached_price := self._prices.get(isin):
             return cached_price
+
+        logger.info("Fetching last price for %s - %s", isin, name)
 
         try:
             yf_data = yfinance.Ticker(isin)
