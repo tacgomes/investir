@@ -11,7 +11,7 @@ from typing import ClassVar, TypeVar
 from moneyed import Money
 
 from investir.fees import Fees
-from investir.findata.types import Split
+from investir.findata import Split
 from investir.typing import ISIN, Ticker, Year
 from investir.utils import date_to_tax_year
 
