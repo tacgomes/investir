@@ -17,6 +17,16 @@ from investir.findata import (
 from investir.typing import ISIN
 
 
+@pytest.fixture(name="si_provider")
+def _si_provider(tmp_path):
+    return YahooFinanceSecurityInfoProvider(cache_file=tmp_path / "securities.yaml")
+
+
+@pytest.fixture(name="lr_provider")
+def _lr_provider(tmp_path):
+    return YahooFinanceLiveExchangeRateProvider()
+
+
 @pytest.fixture(name="ticker_info")
 def _ticker_info(mocker) -> Callable:
     def _method(info: Mapping[str, Any] | Exception) -> None:
@@ -41,8 +51,9 @@ def _ticker_splits(mocker) -> Callable:
     return _method
 
 
-def test_yfinance_security_info_provider_get_info(ticker_info, ticker_splits, tmp_path):
-    cache_file = tmp_path / "cache.yaml"
+def test_yfinance_security_info_provider_get_info(
+    si_provider, ticker_info, ticker_splits
+):
     now = datetime.now(timezone.utc)
 
     pd_series1 = pd.Series(
@@ -77,72 +88,68 @@ def test_yfinance_security_info_provider_get_info(ticker_info, ticker_splits, tm
 
     info_mock = ticker_info({"shortName": "Amazon"})
     ticker_splits(pd_series1)
-    provider = YahooFinanceSecurityInfoProvider(cache_file)
 
-    security_info = provider.get_info(ISIN("AMZN-ISIN"))
+    security_info = si_provider.get_info(ISIN("AMZN-ISIN"))
     assert security_info.name == "Amazon"
     assert security_info.splits == splits1
     assert info_mock.call_count == 1
 
     # Cache should be used.
-    provider.get_info(ISIN("AMZN-ISIN"))
+    si_provider.get_info(ISIN("AMZN-ISIN"))
     assert info_mock.call_count == 1
 
     # updated-after date is more recent than last-updated.
     ticker_splits(pd.concat([pd_series1, pd_series2]))
-    security_info = provider.get_info(ISIN("AMZN-ISIN"), refresh_date=now)
+    security_info = si_provider.get_info(ISIN("AMZN-ISIN"), refresh_date=now)
     assert security_info.splits == splits1 + splits2
     assert info_mock.call_count == 2
 
     # Recreate provider. Cache should be loaded from file.
-    provider = YahooFinanceSecurityInfoProvider(cache_file)
-    security_info = provider.get_info(
+    si_provider = YahooFinanceSecurityInfoProvider(si_provider._cache_file)
+    security_info = si_provider.get_info(
         ISIN("AMZN-ISIN"), refresh_date=now.replace(microsecond=0)
     )
     assert security_info.splits == splits1 + splits2
     assert info_mock.call_count == 2
 
 
-def test_yfinance_security_info_provider_get_price(ticker_info):
+def test_yfinance_security_info_provider_get_price(si_provider, ticker_info):
     info_mock = ticker_info({"currentPrice": "199.46", "currency": "USD"})
-    provider = YahooFinanceSecurityInfoProvider()
 
-    assert provider.get_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
+    assert si_provider.get_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
     assert info_mock.call_count == 2
 
     # Cache should be used.
-    assert provider.get_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
+    assert si_provider.get_price(ISIN("AMZN-ISIN")) == Money("199.46", USD)
     assert info_mock.call_count == 2
 
 
-def test_yfinance_security_info_provider_price_in_GBp(ticker_info):
+def test_yfinance_security_info_provider_price_in_GBp(si_provider, ticker_info):
     ticker_info({"currentPrice": 1550, "currency": "GBp"})
-    provider = YahooFinanceSecurityInfoProvider()
-    assert provider.get_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
+    assert si_provider.get_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
 
 
-def test_yfinance_security_info_provider_exception_raised(ticker_info):
+def test_yfinance_security_info_provider_exception_raised(si_provider, ticker_info):
     ticker_info(yfinance.exceptions.YFException)
-    provider = YahooFinanceSecurityInfoProvider()
     with pytest.raises(DataProviderError):
-        provider.get_info(ISIN("AMZN-ISIN"))
+        si_provider.get_info(ISIN("AMZN-ISIN"))
     with pytest.raises(DataProviderError):
-        provider.get_price(ISIN("AMZN-ISIN"))
+        si_provider.get_price(ISIN("AMZN-ISIN"))
 
 
-def test_yfinance_live_exchange_rate_provider(ticker_info):
+def test_yfinance_live_exchange_rate_provider(lr_provider, ticker_info):
     info_mock = ticker_info({"bid": 0.75})
-    provider = YahooFinanceLiveExchangeRateProvider()
-    assert provider.get_rate(USD, GBP) == Decimal("0.75")
+    assert lr_provider.get_rate(USD, GBP) == Decimal("0.75")
 
     # Cache should be used.
-    provider.get_rate(USD, GBP)
-    assert provider.get_rate(GBP, USD) == Decimal("1.0") / Decimal("0.75")
+    lr_provider.get_rate(USD, GBP)
+    assert lr_provider.get_rate(GBP, USD) == Decimal("1.0") / Decimal("0.75")
     assert info_mock.call_count == 1
 
 
-def test_yfinance_live_exchange_rate_provider_exception_raised(ticker_info):
+def test_yfinance_live_exchange_rate_provider_exception_raised(
+    lr_provider, ticker_info
+):
     ticker_info(yfinance.exceptions.YFException)
-    provider = YahooFinanceLiveExchangeRateProvider()
     with pytest.raises(DataProviderError):
-        provider.get_rate(USD, GBP)
+        lr_provider.get_rate(USD, GBP)
