@@ -57,7 +57,7 @@ class FinancialData:
         if money.currency == currency:
             return money
 
-        if fx_rate := self.get_exchange_rate(money.currency, currency):
-            return Money(money.amount * fx_rate, currency)
+        if rate := self.get_exchange_rate(money.currency, currency):
+            return Money(money.amount * rate, currency)
 
         return None
