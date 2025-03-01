@@ -112,7 +112,7 @@ class YahooFinanceLiveExchangeRateProvider:
 
         try:
             yf_data = yfinance.Ticker(f"{base.code}{quote.code}=X")
-            fx_rate = Decimal(yf_data.info["bid"])
+            rate = Decimal(yf_data.info["bid"])
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
             raise DataProviderError(
@@ -120,18 +120,18 @@ class YahooFinanceLiveExchangeRateProvider:
                 f"{base.name} ({base.code}) to {quote.name} ({quote.code})"
             ) from None
 
-        inverse_fx_rate = Decimal("1.0") / fx_rate
+        inverse_rate = Decimal("1.0") / rate
         logger.debug(
             "Using %s exchange rate for %s (%s) to %s (%s) (inverse rate: %s)",
-            round(fx_rate, 5),
+            round(rate, 5),
             base.name,
             base.code,
             quote.name,
             quote.code,
-            round(inverse_fx_rate, 5),
+            round(inverse_rate, 5),
         )
 
-        self._rates[(base, quote)] = fx_rate
-        self._rates[(quote, base)] = inverse_fx_rate
+        self._rates[(base, quote)] = rate
+        self._rates[(quote, base)] = inverse_rate
 
-        return fx_rate
+        return rate
