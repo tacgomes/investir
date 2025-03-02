@@ -1,5 +1,5 @@
 from collections.abc import Callable, Mapping
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -11,6 +11,7 @@ from moneyed import GBP, USD, Money
 from investir.findata import (
     DataProviderError,
     Split,
+    YahooFinanceHistoricalExchangeRateProvider,
     YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
@@ -25,6 +26,13 @@ def _si_provider(tmp_path):
 @pytest.fixture(name="lr_provider")
 def _lr_provider(tmp_path):
     return YahooFinanceLiveExchangeRateProvider()
+
+
+@pytest.fixture(name="hr_provider")
+def _hr_provider(tmp_path):
+    return YahooFinanceHistoricalExchangeRateProvider(
+        cache_file=tmp_path / "rates.json"
+    )
 
 
 @pytest.fixture(name="ticker_info")
@@ -47,6 +55,23 @@ def _ticker_splits(mocker) -> Callable:
             return_value=splits,
             new_callable=mocker.PropertyMock,
         )
+
+    return _method
+
+
+@pytest.fixture(name="history_mocker")
+def _history_mocker(mocker) -> Callable:
+    def _method(response: pd.DataFrame | Exception | None = None) -> None:
+        side_effect = response
+        if isinstance(response, pd.DataFrame):
+            side_effect = [response]  # type: ignore[assignment]
+
+        mock = mocker.patch(
+            "yfinance.Ticker.history",
+            side_effect=side_effect,
+        )
+
+        return mock
 
     return _method
 
@@ -153,3 +178,73 @@ def test_yfinance_live_exchange_rate_provider_exception_raised(
     ticker_info(yfinance.exceptions.YFException)
     with pytest.raises(DataProviderError):
         lr_provider.get_rate(USD, GBP)
+
+
+def test_yfinance_historical_exchange_rate_provider(
+    hr_provider,
+    history_mocker,
+):
+    rates1 = pd.DataFrame(
+        data={"Close": [1.24, 1.25, 1.26]},
+        index=[datetime(2024, 1, 1), datetime(2024, 1, 2), datetime(2024, 1, 3)],
+    )
+
+    rates2 = pd.DataFrame(
+        data={"Close": [1.27]},
+        index=[datetime(2024, 1, 4)],
+    )
+
+    mock = history_mocker(rates1)
+
+    # Test that historical rate is fetched online if not in cache.
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 1)) == Decimal(
+        "1.24"
+    )  # FIXME GBP-> USD
+    assert mock.call_count == 1
+
+    # Check all the historical rates were cached and we can read from
+    # the cache.
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 1)) == Decimal("1.24")
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 2)) == Decimal("1.25")
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 3)) == Decimal("1.26")
+    assert mock.call_count == 1
+
+    # Check that we can the read inverse rate from the cache.
+    assert hr_provider.get_rate(USD, GBP, date(2024, 1, 1)) == Decimal("1.0") / Decimal(
+        "1.24"
+    )
+    assert mock.call_count == 1
+
+    # Request new non-cached exchange rate.
+    mock = history_mocker(rates2)
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 4)) == Decimal("1.27")
+    assert mock.call_count == 1
+
+    # Recreate provider. Cache should be loaded from file.
+    hr_provider = YahooFinanceHistoricalExchangeRateProvider(hr_provider._cache_file)
+    mock = history_mocker()
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 1)) == Decimal("1.24")
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 2)) == Decimal("1.25")
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 3)) == Decimal("1.26")
+    assert hr_provider.get_rate(GBP, USD, date(2024, 1, 4)) == Decimal("1.27")
+    assert mock.call_count == 0
+
+
+def test_yfinance_historical_exchange_rate_provider_exception_raised(
+    hr_provider, history_mocker
+):
+    history_mocker(yfinance.exceptions.YFException)
+    with pytest.raises(DataProviderError):
+        hr_provider.get_rate(GBP, USD, date(2024, 1, 1))
+
+
+def test_yfinance_historical_exchange_rate_provider_rate_not_found(
+    hr_provider, history_mocker
+):
+    rates = pd.DataFrame(
+        data={"Close": [1.24]},
+        index=[datetime(2024, 1, 1)],
+    )
+    history_mocker(rates)
+    with pytest.raises(DataProviderError):
+        hr_provider.get_rate(GBP, USD, date(2024, 1, 2))

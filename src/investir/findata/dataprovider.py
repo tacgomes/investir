@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Protocol
 
@@ -24,4 +24,9 @@ class SecurityInfoProvider(Protocol):
 
 class LiveExchangeRateProvider(Protocol):
     def get_rate(self, base: Currency, quote: Currency) -> Decimal:
+        pass
+
+
+class HistoricalExchangeRateProvider(Protocol):
+    def get_rate(self, base: Currency, quote: Currency, rate_date: date) -> Decimal:
         pass

@@ -127,13 +127,13 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
 
     security_info_provider = None
     live_rates_provider = None
+    historical_rates_provider = None
     if not config.offline:
         security_info_provider = YahooFinanceSecurityInfoProvider()
         live_rates_provider = YahooFinanceLiveExchangeRateProvider()
 
     financial_data = FinancialData(
-        security_info_provider,
-        live_rates_provider,
+        security_info_provider, live_rates_provider, historical_rates_provider
     )
 
     tax_calculator = TaxCalculator(tr_hist, financial_data)
