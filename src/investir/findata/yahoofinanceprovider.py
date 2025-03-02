@@ -1,6 +1,7 @@
+import json
 import logging
 import os
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -14,6 +15,10 @@ from investir.findata.types import SecurityInfo, Split
 from investir.typing import ISIN
 
 logger = logging.getLogger(__name__)
+
+
+def make_symbol(a: Currency, b: Currency) -> str:
+    return f"{a.code}{b.code}=X"
 
 
 class YahooFinanceSecurityInfoProvider:
@@ -111,7 +116,7 @@ class YahooFinanceLiveExchangeRateProvider:
             return rate
 
         try:
-            yf_data = yfinance.Ticker(f"{base.code}{quote.code}=X")
+            yf_data = yfinance.Ticker(make_symbol(base, quote))
             rate = Decimal(yf_data.info["bid"])
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
@@ -135,3 +140,70 @@ class YahooFinanceLiveExchangeRateProvider:
         self._rates[(quote, base)] = inverse_rate
 
         return rate
+
+
+class YahooFinanceHistoricalExchangeRateProvider:
+    def __init__(self, cache_file: Path | None = None):
+        self._cache: dict[str, dict[str, str]] = {}
+        self._cache_file = cache_file or config.cache_dir / "yahoo-finance-rates.json"
+        self._cache_loaded = False
+
+    def get_rate(self, base: Currency, quote: Currency, rate_date: date) -> Decimal:
+        self._load_cache()
+
+        if rate := self._find_rate(base, quote, rate_date):
+            return rate
+
+        try:
+            ticker = yfinance.Ticker(make_symbol(base, quote))
+            rates = ticker.history(start=str(rate_date))
+        except Exception as e:
+            logger.debug("Exception from yfinance: %s", repr(e))
+            raise DataProviderError(
+                f"Failed to fetch exchange rate for "
+                f"{base.name} ({base.code}) to "
+                f"{quote.name} ({quote.code})"
+            ) from None
+
+        for timestamp, row in rates.iterrows():
+            currency_pair = f"{base.code}-{quote.code}"
+            date_key = str(timestamp.to_pydatetime().date())
+            self._cache.setdefault(currency_pair, {})[date_key] = str(row["Close"])
+
+        self._save_cache()
+
+        if (rate := self._find_rate(base, quote, rate_date)) is None:
+            raise DataProviderError(
+                f"Exchange rate not found: {base.code}-{quote.code}"
+            )
+
+        return rate
+
+    def _find_rate(
+        self, base: Currency, quote: Currency, rate_date: date
+    ) -> Decimal | None:
+        if rates := self._cache.get(f"{base.code}-{quote.code}"):
+            if rate := rates.get(str(rate_date)):
+                return Decimal(rate)
+        elif rates := self._cache.get(f"{quote.code}-{base.code}"):
+            if rate := rates.get(str(rate_date)):
+                return Decimal("1.0") / Decimal(rate)
+
+        return None
+
+    def _save_cache(self) -> None:
+        self._cache_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self._cache_file.parent / (self._cache_file.name + ".tmp")
+
+        with tmp_path.open("w", encoding="utf-8") as f:
+            json.dump(self._cache, f, indent=4)
+
+        os.replace(tmp_path, self._cache_file)
+
+    def _load_cache(self) -> None:
+        if not self._cache_loaded and self._cache_file.exists():
+            logger.info("Loading historical exchange rates from %s", self._cache_file)
+            with self._cache_file.open(encoding="utf-8") as f:
+                self._cache.update(json.load(f))
+
+        self._cache_loaded = True
