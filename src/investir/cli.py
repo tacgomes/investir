@@ -3,6 +3,7 @@ import logging
 import operator
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -13,6 +14,9 @@ from investir.config import config
 from investir.exceptions import InvestirError
 from investir.findata import (
     FinancialData,
+    HistoricalExchangeRateProvider,
+    HmrcMonthlyExhangeRateProvider,
+    YahooFinanceHistoricalExchangeRateProvider,
     YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
@@ -36,6 +40,11 @@ class OrderedCommands(typer.core.TyperGroup):
 class MutuallyExclusiveOption(click.exceptions.UsageError):
     def __init__(self, opt1: str, opt2: str) -> None:
         super().__init__(f"Option {opt1} cannot be used together with option {opt2}")
+
+
+class RatesProvider(str, Enum):
+    YAHOO_FINANCE = "yahoo-finance"
+    HMRC_MONTHLY = "hmrc-monthly"
 
 
 app = typer.Typer(
@@ -76,6 +85,11 @@ IncludeFxFeesOpt = Annotated[
     bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
 ]
 
+RatesProviderOpt = Annotated[
+    RatesProvider,
+    typer.Option("--rates-provider", "-p", help="Historical exchange rates provider."),
+]
+
 OutputFormatOpt = Annotated[
     OutputFormat,
     typer.Option("--output", "-o", help="Output format."),
@@ -87,7 +101,9 @@ def abort(message: str) -> None:
     raise typer.Exit(code=1)
 
 
-def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
+def parse(
+    input_files: list[Path], rates_provider: RatesProvider = RatesProvider.YAHOO_FINANCE
+) -> tuple[TrHistory, TaxCalculator]:
     orders = []
     dividends = []
     transfers = []
@@ -130,10 +146,17 @@ def parse(input_files: list[Path]) -> tuple[TrHistory, TaxCalculator]:
 
     security_info_provider = None
     live_rates_provider = None
-    historical_rates_provider = None
+    historical_rates_provider: HistoricalExchangeRateProvider | None = None
+
     if not config.offline:
         security_info_provider = YahooFinanceSecurityInfoProvider()
         live_rates_provider = YahooFinanceLiveExchangeRateProvider()
+
+        match rates_provider:
+            case RatesProvider.YAHOO_FINANCE:
+                historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
+            case RatesProvider.HMRC_MONTHLY:  # pragma: no cover
+                historical_rates_provider = HmrcMonthlyExhangeRateProvider()
 
     financial_data = FinancialData(
         security_info_provider, live_rates_provider, historical_rates_provider
@@ -343,6 +366,7 @@ def capital_gains_command(
     ticker: TickerOpt = None,
     include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
+    rates_provider: RatesProviderOpt = RatesProvider.YAHOO_FINANCE,
 ) -> None:
     """
     Show capital gains report.
@@ -357,7 +381,7 @@ def capital_gains_command(
 
     config.include_fx_fees = include_fx_fees
 
-    _, tax_calculator = parse(files)
+    _, tax_calculator = parse(files, rates_provider)
     tax_year = Year(tax_year) if tax_year else None
     ticker = Ticker(ticker) if ticker else None
 
@@ -397,13 +421,14 @@ def holdings_command(
     ] = False,
     include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
+    rates_provider: RatesProviderOpt = RatesProvider.YAHOO_FINANCE,
 ) -> None:
     """
     Show current holdings.
     """
     config.include_fx_fees = include_fx_fees
 
-    _, tax_calculator = parse(files)
+    _, tax_calculator = parse(files, rates_provider)
     ticker = Ticker(ticker) if ticker else None
     if table := tax_calculator.get_holdings_table(ticker, show_gain_loss):
         print(table.to_string(format, leading_nl=config.logging_enabled))
