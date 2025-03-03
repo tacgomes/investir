@@ -72,6 +72,9 @@ TickerOpt = Annotated[
     typer.Option(metavar="TICKER", help="Filter by ticker.", show_default=False),
 ]
 
+IncludeFxFeesOpt = Annotated[
+    bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
+]
 
 OutputFormatOpt = Annotated[
     OutputFormat,
@@ -196,9 +199,6 @@ def main_callback(
             ),
         ),
     ] = config.cache_dir,
-    include_fx_fees: Annotated[
-        bool, typer.Option(help="Include foreign exchange fees as an allowable cost.")
-    ] = config.include_fx_fees,
     verbose: Annotated[
         bool, typer.Option("--verbose", help="Enable additional logging.")
     ] = False,
@@ -223,7 +223,6 @@ def main_callback(
     config.strict = strict
     config.offline = offline
     config.cache_dir = cache_dir
-    config.include_fx_fees = include_fx_fees
 
     if quiet:
         config.log_level = logging.CRITICAL
@@ -342,6 +341,7 @@ def capital_gains_command(
     ] = False,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
+    include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
@@ -354,6 +354,8 @@ def capital_gains_command(
         raise click.exceptions.UsageError(
             f"The {format.value} format requires the option --tax-year to be used"
         )
+
+    config.include_fx_fees = include_fx_fees
 
     _, tax_calculator = parse(files)
     tax_year = Year(tax_year) if tax_year else None
@@ -393,11 +395,14 @@ def holdings_command(
     show_gain_loss: Annotated[
         bool, typer.Option("--show-gain-loss", help="Show unrealised gain/loss.")
     ] = False,
+    include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
     """
     Show current holdings.
     """
+    config.include_fx_fees = include_fx_fees
+
     _, tax_calculator = parse(files)
     ticker = Ticker(ticker) if ticker else None
     if table := tax_calculator.get_holdings_table(ticker, show_gain_loss):
