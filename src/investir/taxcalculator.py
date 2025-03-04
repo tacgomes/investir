@@ -117,10 +117,6 @@ class Section104Holding:
     quantity: Decimal
     cost: Decimal
 
-    def __init__(self, _date: date, quantity: Decimal, cost: Decimal):
-        self.quantity = quantity
-        self.cost = cost
-
     def increase(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
         self.quantity += quantity
         self.cost += cost
@@ -469,7 +465,7 @@ class TaxCalculator:
                     holding.increase(order.date, order.quantity, order.total.amount)
                 else:
                     self._holdings[isin] = Section104Holding(
-                        order.date, order.quantity, order.total.amount
+                        order.quantity, order.total.amount
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:
