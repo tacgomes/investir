@@ -114,6 +114,7 @@ class CapitalGainsSummary:
 
 @dataclass
 class Section104Holding:
+    isin: ISIN
     quantity: Decimal
     cost: Decimal
 
@@ -465,7 +466,7 @@ class TaxCalculator:
                     holding.increase(order.date, order.quantity, order.total.amount)
                 else:
                     self._holdings[isin] = Section104Holding(
-                        order.quantity, order.total.amount
+                        isin, order.quantity, order.total.amount
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:
