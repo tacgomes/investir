@@ -157,6 +157,17 @@ class TaxCalculator:
         return self._holdings.get(isin)
 
     @calculate_capital_gains
+    def get_holding_value(self, isin: ISIN) -> Decimal | None:
+        holding = self._holdings[isin]
+        security_name = self._tr_hist.get_security_name(isin) or ""
+        if (price := self._findata.get_security_price(isin, security_name)) and (
+            price_base_currency := self._findata.convert_money(price, BASE_CURRENCY)
+        ):
+            return holding.quantity * price_base_currency.amount
+
+        return None
+
+    @calculate_capital_gains
     def get_capital_gains_table(
         self,
         tax_year: Year,
@@ -262,7 +273,7 @@ class TaxCalculator:
             {
                 isin: value
                 for isin, holding in holdings
-                if (value := self._get_holding_value(isin, holding)) is not None
+                if (value := self.get_holding_value(isin)) is not None
             }
             if show_gain_loss
             else {}
@@ -498,14 +509,3 @@ class TaxCalculator:
                     )
                     logger.warning("Not calculating holding for %s", isin)
                     break
-
-    def _get_holding_value(
-        self, isin: ISIN, holding: Section104Holding
-    ) -> Decimal | None:
-        security_name = self._tr_hist.get_security_name(isin) or ""
-        if (price := self._findata.get_security_price(isin, security_name)) and (
-            price_base_currency := self._findata.convert_money(price, BASE_CURRENCY)
-        ):
-            return holding.quantity * price_base_currency.amount
-
-        return None
