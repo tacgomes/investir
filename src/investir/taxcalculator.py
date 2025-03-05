@@ -4,7 +4,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TypeAlias
+from typing import Any, TypeAlias, TypeVar, cast
 
 from moneyed import Money
 
@@ -24,6 +24,7 @@ from investir.utils import raise_or_warn
 
 logger = logging.getLogger(__name__)
 
+FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 GroupKey = namedtuple("GroupKey", ["isin", "date", "type"])
 GroupDict: TypeAlias = Mapping[GroupKey, Sequence[Order]]
@@ -129,6 +130,15 @@ class Section104Holding:
         self.cost -= cost
 
 
+def calculate_capital_gains(func: FuncType) -> FuncType:
+    def _decorator(self, *args, **kwargs):
+        if not self._capital_gains and not self._holdings:
+            self._calculate_capital_gains()
+        return func(self, *args, **kwargs)
+
+    return cast(FuncType, _decorator)
+
+
 class TaxCalculator:
     def __init__(self, tr_hist: TrHistory, findata: FinancialData) -> None:
         self._tr_hist = tr_hist
@@ -138,18 +148,18 @@ class TaxCalculator:
         self._holdings: dict[ISIN, Section104Holding] = {}
         self._capital_gains: dict[Year, list[CapitalGain]] = defaultdict(list)
 
+    @calculate_capital_gains
     def capital_gains(self, tax_year: Year | None = None) -> Sequence[CapitalGain]:
-        self._calculate_capital_gains()
-
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
 
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
+    @calculate_capital_gains
     def holding(self, isin: ISIN) -> Section104Holding | None:
-        self._calculate_capital_gains()
         return self._holdings.get(isin)
 
+    @calculate_capital_gains
     def get_capital_gains_table(
         self,
         tax_year: Year,
@@ -158,8 +168,6 @@ class TaxCalculator:
         losses_only: bool,
     ) -> tuple[PrettyTable, CapitalGainsSummary]:
         assert not (gains_only and losses_only)
-
-        self._calculate_capital_gains()
 
         table = PrettyTable(
             [
@@ -214,11 +222,10 @@ class TaxCalculator:
 
         return table, summary
 
+    @calculate_capital_gains
     def get_holdings_table(
         self, ticker_filter: Ticker | None = None, show_gain_loss: bool = False
     ) -> PrettyTable:
-        self._calculate_capital_gains()
-
         table = PrettyTable(
             [
                 Field("Security Name"),
@@ -290,15 +297,11 @@ class TaxCalculator:
 
         return table
 
+    @calculate_capital_gains
     def disposal_years(self) -> Sequence[Year]:
-        self._calculate_capital_gains()
         return list(self._capital_gains.keys())
 
     def _calculate_capital_gains(self) -> None:
-        if self._capital_gains or self._holdings:
-            # Capital gains already calculated.
-            return
-
         logger.info("Calculating capital gains")
 
         self._validate_orders()
