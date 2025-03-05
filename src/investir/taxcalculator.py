@@ -152,6 +152,11 @@ class TaxCalculator:
 
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
+    @property
+    @calculate_capital_gains
+    def holdings(self) -> Sequence[Section104Holding]:
+        return list(self._holdings.values())
+
     @calculate_capital_gains
     def holding(self, isin: ISIN) -> Section104Holding | None:
         return self._holdings.get(isin)
