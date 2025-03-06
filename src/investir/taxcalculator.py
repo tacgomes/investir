@@ -11,15 +11,13 @@ from moneyed import Money
 from investir.config import config
 from investir.const import BASE_CURRENCY
 from investir.exceptions import (
-    AmbiguousTickerError,
     IncompleteRecordsError,
     InvestirError,
 )
 from investir.findata import FinancialData
-from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TrHistory
-from investir.typing import ISIN, Ticker, Year
+from investir.typing import ISIN, Year
 from investir.utils import raise_or_warn
 
 logger = logging.getLogger(__name__)
@@ -38,11 +36,6 @@ def same_day_match(ord1: Acquisition, ord2: Disposal) -> bool:
 def thirty_days_match(ord1: Acquisition, ord2: Disposal) -> bool:
     assert ord1.isin == ord2.isin
     return ord2.date < ord1.date <= ord2.date + timedelta(days=30)
-
-
-def gbp(amount):
-    sign = "" if amount >= 0.0 else "-"
-    return f"{sign}£{abs(amount):.2f}"
 
 
 @dataclass
@@ -85,30 +78,6 @@ class CapitalGain:
             f"proceeds: £{self.disposal.gross_proceeds.amount}, "
             f"gain: £{self.gain_loss:.2f}, "
             f"identification: {self.identification}"
-        )
-
-
-@dataclass
-class CapitalGainsSummary:
-    num_disposals: int
-    disposal_proceeds: Decimal
-    total_cost: Decimal
-    total_gains: Decimal
-    total_losses: Decimal
-
-    @property
-    def net_gains(self) -> Decimal:
-        return self.total_gains - self.total_losses
-
-    def __str__(self) -> str:
-        return (
-            f"{'Number of disposals:':40}{self.num_disposals:>10}      "
-            f"{'Gains in the year, before losses:':34}{gbp(self.total_gains):>10}\n"
-            f"{'Disposal proceeds:':40}{gbp(self.disposal_proceeds):>10}      "
-            f"{'Losses in the year:':34}{gbp(self.total_losses):>10}\n"
-            f"{'Allowable costs (incl. purchase price):':40}"
-            f"{gbp(self.total_cost):>10}      "
-            f"{'Net gain or loss:':34}{gbp(self.net_gains):>10}\n"
         )
 
 
@@ -171,144 +140,6 @@ class TaxCalculator:
             return holding.quantity * price_base_currency.amount
 
         return None
-
-    @calculate_capital_gains
-    def get_capital_gains_table(
-        self,
-        tax_year: Year,
-        ticker_filter: Ticker | None,
-        gains_only: bool,
-        losses_only: bool,
-    ) -> tuple[PrettyTable, CapitalGainsSummary]:
-        assert not (gains_only and losses_only)
-
-        table = PrettyTable(
-            [
-                Field("Disposal Date", Format.DATE),
-                Field("Identification"),
-                Field("Security Name"),
-                Field("ISIN"),
-                Field("Quantity", Format.QUANTITY),
-                Field(f"Cost ({BASE_CURRENCY})", Format.DECIMAL),
-                Field(f"Proceeds ({BASE_CURRENCY})", Format.DECIMAL),
-                Field(f"Gain/loss ({BASE_CURRENCY})", Format.DECIMAL),
-            ]
-        )
-
-        num_disposals = 0
-        disposal_proceeds = total_cost = total_gains = total_losses = Decimal("0.0")
-
-        for cg in self.capital_gains(tax_year):
-            if ticker_filter is not None and cg.disposal.ticker != ticker_filter:
-                continue
-
-            if gains_only and cg.gain_loss < 0.0:
-                continue
-
-            if losses_only and cg.gain_loss > 0.0:
-                continue
-
-            table.add_row(
-                [
-                    cg.disposal.date,
-                    cg.identification,
-                    cg.disposal.name,
-                    cg.disposal.isin,
-                    cg.quantity,
-                    cg.cost,
-                    cg.disposal.gross_proceeds.amount,
-                    cg.gain_loss,
-                ]
-            )
-
-            num_disposals += 1
-            disposal_proceeds += round(cg.disposal.gross_proceeds.amount, 2)
-            total_cost += round(cg.cost, 2)
-            if cg.gain_loss > 0.0:
-                total_gains += cg.gain_loss
-            else:
-                total_losses += abs(cg.gain_loss)
-
-        summary = CapitalGainsSummary(
-            num_disposals, disposal_proceeds, total_cost, total_gains, total_losses
-        )
-
-        return table, summary
-
-    @calculate_capital_gains
-    def get_holdings_table(
-        self, ticker_filter: Ticker | None = None, show_gain_loss: bool = False
-    ) -> PrettyTable:
-        table = PrettyTable(
-            [
-                Field("Security Name"),
-                Field("ISIN"),
-                Field(f"Cost ({BASE_CURRENCY})", Format.DECIMAL),
-                Field("Quantity", Format.QUANTITY),
-                Field(
-                    f"Current Value ({BASE_CURRENCY})",
-                    Format.DECIMAL,
-                    visible=show_gain_loss,
-                ),
-                Field(
-                    f"Gain/Loss ({BASE_CURRENCY})",
-                    Format.DECIMAL,
-                    visible=show_gain_loss,
-                ),
-                Field("Weight (%)", Format.DECIMAL, visible=show_gain_loss),
-            ]
-        )
-
-        holdings = []
-
-        if ticker_filter is None:
-            holdings = sorted(
-                self._holdings.items(), key=lambda x: x[1].cost, reverse=True
-            )
-        else:
-            try:
-                isin = self._tr_hist.get_ticker_isin(ticker_filter)
-            except AmbiguousTickerError as e:
-                logger.warning(e)
-            else:
-                if isin in self._holdings:
-                    holdings = [(isin, self._holdings[isin])]
-
-        holding2value = (
-            {
-                isin: value
-                for isin, holding in holdings
-                if (value := self.get_holding_value(isin)) is not None
-            }
-            if show_gain_loss
-            else {}
-        )
-
-        portfolio_value = sum(val for val in holding2value.values())
-        last_idx = len(holdings) - 1
-
-        for idx, (isin, holding) in enumerate(holdings):
-            gain_loss: Decimal | None = None
-            weight: Decimal | None = None
-
-            if holding_value := holding2value.get(isin):
-                gain_loss = holding_value - holding.cost
-                weight = holding_value / portfolio_value * 100
-
-            table.add_row(
-                [
-                    self._tr_hist.get_security_name(isin),
-                    isin,
-                    holding.cost,
-                    holding.quantity,
-                    holding_value,
-                    gain_loss or "n/a",
-                    weight or "n/a",
-                ],
-                divider=idx == last_idx,
-            )
-
-        return table
 
     @calculate_capital_gains
     def disposal_years(self) -> Sequence[Year]:
