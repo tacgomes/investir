@@ -383,7 +383,8 @@ def test_total_amount_error(execute):
 
 def test_tax_calculator_error(execute):
     csv_file = TEST_DIR / "tax_calculator_error.csv"
-    result = execute(["capital-gains", str(csv_file)])
-    assert not result.stdout
-    assert "Records appear to be incomplete" in result.stderr
-    assert result.exit_code != EX_OK
+    for cmd in ["capital-gains", "holdings"]:
+        result = execute([cmd, str(csv_file)])
+        assert not result.stdout
+        assert "Records appear to be incomplete" in result.stderr
+        assert result.exit_code != EX_OK
