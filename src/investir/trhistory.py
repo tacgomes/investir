@@ -1,11 +1,8 @@
-from collections.abc import Callable, Mapping, Sequence, ValuesView
+from collections.abc import Mapping, Sequence, ValuesView
 from typing import NamedTuple, TypeVar
 
 from investir.exceptions import AmbiguousTickerError
-from investir.prettytable import Field, Format, PrettyTable
 from investir.transaction import (
-    Acquisition,
-    Disposal,
     Dividend,
     Interest,
     Order,
@@ -13,7 +10,6 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import multifilter
 
 T = TypeVar("T", bound=Transaction)
 
@@ -77,139 +73,6 @@ class TrHistory:
                 return next(iter(isins))
             case _:
                 raise AmbiguousTickerError(ticker)
-
-    def get_orders_table(
-        self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
-        table = PrettyTable(
-            [
-                Field("Date", Format.DATE),
-                Field("Security Name"),
-                Field("ISIN"),
-                Field("Ticker"),
-                Field("Cost", Format.MONEY, show_sum=True),
-                Field("Proceeds", Format.MONEY, show_sum=True),
-                Field("Quantity", Format.QUANTITY),
-                Field("Price", Format.MONEY),
-                Field("Fees", Format.MONEY, show_sum=True),
-            ]
-        )
-
-        transactions = list(multifilter(filters, self._orders))
-        last_idx = len(transactions) - 1
-
-        for idx, tr in enumerate(transactions):
-            cost = tr.total if isinstance(tr, Acquisition) else None
-            proceeds = tr.total if isinstance(tr, Disposal) else None
-
-            divider = (
-                idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
-            )
-
-            table.add_row(
-                [
-                    tr.date,
-                    tr.name,
-                    tr.isin,
-                    tr.ticker,
-                    cost,
-                    proceeds,
-                    tr.quantity,
-                    tr.price,
-                    tr.fees.total,
-                ],
-                divider=divider,
-            )
-
-        return table
-
-    def get_dividends_table(
-        self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
-        table = PrettyTable(
-            [
-                Field("Date", Format.DATE),
-                Field("Security Name"),
-                Field("ISIN"),
-                Field("Ticker"),
-                Field("Net Amount", Format.MONEY, show_sum=True),
-                Field("Widthheld Amount", Format.MONEY, show_sum=True),
-            ]
-        )
-
-        transactions = list(multifilter(filters, self._dividends))
-        last_idx = len(transactions) - 1
-
-        for idx, tr in enumerate(transactions):
-            divider = (
-                idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
-            )
-
-            table.add_row(
-                [
-                    tr.date,
-                    tr.name,
-                    tr.isin,
-                    tr.ticker,
-                    tr.total,
-                    tr.withheld,
-                ],
-                divider=divider,
-            )
-
-        return table
-
-    def get_transfers_table(
-        self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
-        table = PrettyTable(
-            [
-                Field("Date", Format.DATE),
-                Field("Deposit", Format.MONEY, show_sum=True),
-                Field("Withdrawal", Format.MONEY, show_sum=True),
-            ]
-        )
-
-        transactions = list(multifilter(filters, self._transfers))
-        last_idx = len(transactions) - 1
-
-        for idx, tr in enumerate(transactions):
-            if tr.total.amount > 0:
-                deposited = tr.total
-                widthdrew = ""
-            else:
-                deposited = ""
-                widthdrew = abs(tr.total)
-
-            divider = (
-                idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
-            )
-
-            table.add_row([tr.date, deposited, widthdrew], divider=divider)
-
-        return table
-
-    def get_interest_table(
-        self, filters: Sequence[Callable] | None = None
-    ) -> PrettyTable:
-        table = PrettyTable(
-            [
-                Field("Date", Format.DATE),
-                Field("Amount", Format.MONEY, show_sum=True),
-            ]
-        )
-
-        transactions = list(multifilter(filters, self._interest))
-        last_idx = len(transactions) - 1
-
-        for idx, tr in enumerate(transactions):
-            divider = (
-                idx == last_idx or tr.tax_year() != transactions[idx + 1].tax_year()
-            )
-
-            table.add_row([tr.date, tr.total], divider=divider)
-
-        return table
 
     def _securities_map(self) -> Mapping[ISIN, Security]:
         if not self._securities:

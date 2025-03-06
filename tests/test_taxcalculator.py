@@ -1328,7 +1328,7 @@ def test_hmrc_example_crypto22256(make_tax_calculator):
     assert holding.cost.quantize(Decimal("0.00")) == Decimal("31363.64")
 
 
-def test_get_holdings_table_with_gain_loss(make_tax_calculator):
+def test_get_holding_value(make_tax_calculator):
     order = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1338,14 +1338,10 @@ def test_get_holdings_table_with_gain_loss(make_tax_calculator):
     )
 
     tax_calculator = make_tax_calculator([order], price=Money("15.0", GBP))
-    table = tax_calculator.get_holdings_table(show_gain_loss=True)
-
-    table_str = table.to_string()
-    assert "Gain/Loss (GBP)" in table_str
-    assert "50.00" in table_str
+    assert tax_calculator.get_holding_value(ISIN("X")) == Decimal("150.0")
 
 
-def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calculator):
+def test_get_holding_value_with_currency_conversion(make_tax_calculator):
     order = Acquisition(
         datetime(2019, 1, 18, tzinfo=timezone.utc),
         isin=ISIN("X"),
@@ -1359,14 +1355,10 @@ def test_get_holdings_table_with_gain_loss_and_currency_conversion(make_tax_calc
         price=Money("15.0", USD),
         fx_rate=Decimal("0.75"),
     )
-    table = tax_calculator.get_holdings_table(show_gain_loss=True)
-
-    table_str = table.to_string()
-    assert "Gain/Loss (GBP)" in table_str
-    assert "12.50" in table_str
+    assert tax_calculator.get_holding_value(ISIN("X")) == Decimal("112.5")
 
 
-def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
+def test_get_holding_value_when_price_or_fx_rate_not_available(
     make_tax_calculator,
 ):
     order = Acquisition(
@@ -1378,46 +1370,7 @@ def test_get_holdings_table_with_gain_loss_when_price_or_fx_rate_not_available(
     )
 
     tax_calculator = make_tax_calculator([order], price=DataProviderError)
-    table = tax_calculator.get_holdings_table(show_gain_loss=True)
-
-    table_str = table.to_string()
-    assert "Gain/Loss (GBP)" in table_str
-    assert "n/a" in table_str
-
-    tax_calculator = make_tax_calculator(
-        [order],
-        price=Money("15.0", USD),
-        fx_rate=DataProviderError,
-    )
-
-    table_str = tax_calculator.get_holdings_table(show_gain_loss=True).to_string()
-    assert "Gain/Loss (GBP)" in table_str
-    assert "n/a" in table_str
-
-
-def test_get_holdings_table_ambiguous_ticker(make_tax_calculator, capsys):
-    order1 = Acquisition(
-        datetime(2019, 1, 18, tzinfo=timezone.utc),
-        isin=ISIN("X"),
-        ticker="TICKER",
-        total=sterling("100.0"),
-        quantity=Decimal("10.0"),
-    )
-
-    order2 = Acquisition(
-        datetime(2019, 1, 20, tzinfo=timezone.utc),
-        isin=ISIN("Y"),
-        ticker="TICKER",
-        total=sterling("150.0"),
-        quantity=Decimal("5.0"),
-    )
-
-    tax_calculator = make_tax_calculator([order1, order2])
-    tax_calculator.get_holdings_table(ticker_filter=Ticker("TICKER"))
-
-    captured = capsys.readouterr()
-    assert not captured.out
-    assert not captured.err
+    assert tax_calculator.get_holding_value(ISIN("X")) is None
 
 
 def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
