@@ -13,7 +13,7 @@ from investir.transaction import (
     Interest,
     Transfer,
 )
-from investir.trhistory import TrHistory
+from investir.trhistory import TransactionHistory
 from investir.typing import ISIN, Ticker
 from investir.utils import sterling
 
@@ -93,58 +93,58 @@ def test_trhistory_duplicates_on_different_files_are_removed():
     # equivalent.
     order1b = replace(ORDER1)
 
-    tr_hist = TrHistory(
+    trhistory = TransactionHistory(
         orders=[ORDER1, order1b],
         dividends=[DIVIDEND1, DIVIDEND1],
         transfers=[TRANSFER1, TRANSFER1],
         interest=[INTEREST1, INTEREST1],
     )
 
-    assert len(tr_hist.orders) == 1
-    assert len(tr_hist.dividends) == 1
-    assert len(tr_hist.transfers) == 1
-    assert len(tr_hist.interest) == 1
+    assert len(trhistory.orders) == 1
+    assert len(trhistory.dividends) == 1
+    assert len(trhistory.transfers) == 1
+    assert len(trhistory.interest) == 1
 
 
 def test_trhistory_transactions_are_sorted_by_timestamp():
-    tr_hist = TrHistory(orders=[ORDER2, ORDER1])
+    trhistory = TransactionHistory(orders=[ORDER2, ORDER1])
 
-    orders = tr_hist.orders
+    orders = trhistory.orders
     assert len(orders) == 2
     assert orders[0].isin == ORDER1.isin
     assert orders[1].isin == ORDER2.isin
 
 
 def test_trhistory_dividends_are_sorted_by_timestamp():
-    tr_hist = TrHistory(dividends=[DIVIDEND2, DIVIDEND1])
+    trhistory = TransactionHistory(dividends=[DIVIDEND2, DIVIDEND1])
 
-    dividends = tr_hist.dividends
+    dividends = trhistory.dividends
     assert len(dividends) == 2
     assert dividends[0].isin == DIVIDEND1.isin
     assert dividends[1].isin == DIVIDEND2.isin
 
 
 def test_trhistory_transfers_are_sorted_by_timestamp():
-    tr_hist = TrHistory(transfers=[TRANSFER2, TRANSFER1])
+    trhistory = TransactionHistory(transfers=[TRANSFER2, TRANSFER1])
 
-    transfers = tr_hist.transfers
+    transfers = trhistory.transfers
     assert len(transfers) == 2
     assert transfers[0].total == sterling("3000")
     assert transfers[1].total == sterling("-1000")
 
 
 def test_trhistory_interest_is_sorted_by_timestamp():
-    tr_hist = TrHistory(interest=[INTEREST2, INTEREST1])
+    trhistory = TransactionHistory(interest=[INTEREST2, INTEREST1])
 
-    interest = tr_hist.interest
+    interest = trhistory.interest
     assert len(interest) == 2
     assert interest[0].total == INTEREST1.total
     assert interest[1].total == INTEREST2.total
 
 
 def test_trhistory_securities():
-    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tuple(tr_hist.securities) == (
+    trhistory = TransactionHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
+    assert tuple(trhistory.securities) == (
         ("GOOG-ISIN", "Alphabet"),
         ("AMZN-ISIN", "Amazon"),
         ("AAPL-ISIN", "Apple"),
@@ -152,19 +152,19 @@ def test_trhistory_securities():
 
 
 def test_get_security_name():
-    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tr_hist.get_security_name(ISIN("AMZN-ISIN")) == "Amazon"
-    assert tr_hist.get_security_name(ISIN("GOOG-ISIN")) == "Alphabet"
-    assert tr_hist.get_security_name(ISIN("AAPL-ISIN")) == "Apple"
-    assert tr_hist.get_security_name(ISIN("NOTF")) is None
+    trhistory = TransactionHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
+    assert trhistory.get_security_name(ISIN("AMZN-ISIN")) == "Amazon"
+    assert trhistory.get_security_name(ISIN("GOOG-ISIN")) == "Alphabet"
+    assert trhistory.get_security_name(ISIN("AAPL-ISIN")) == "Apple"
+    assert trhistory.get_security_name(ISIN("NOTF")) is None
 
 
 def test_get_ticker_isin():
-    tr_hist = TrHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
-    assert tr_hist.get_ticker_isin(Ticker("AMZN")) == ISIN("AMZN-ISIN")
-    assert tr_hist.get_ticker_isin(Ticker("GOOG")) == ISIN("GOOG-ISIN")
-    assert tr_hist.get_ticker_isin(Ticker("AAPL")) == ISIN("AAPL-ISIN")
-    assert tr_hist.get_ticker_isin(Ticker("NOTF")) is None
+    trhistory = TransactionHistory(orders=[ORDER1, ORDER2, ORDER3, ORDER4])
+    assert trhistory.get_ticker_isin(Ticker("AMZN")) == ISIN("AMZN-ISIN")
+    assert trhistory.get_ticker_isin(Ticker("GOOG")) == ISIN("GOOG-ISIN")
+    assert trhistory.get_ticker_isin(Ticker("AAPL")) == ISIN("AAPL-ISIN")
+    assert trhistory.get_ticker_isin(Ticker("NOTF")) is None
 
 
 def test_get_ticker_isin_when_ticker_ambigous():
@@ -184,6 +184,6 @@ def test_get_ticker_isin_when_ticker_ambigous():
         quantity=Decimal("1.0"),
     )
 
-    tr_hist = TrHistory(orders=[order1, order2])
+    trhistory = TransactionHistory(orders=[order1, order2])
     with pytest.raises(AmbiguousTickerError):
-        tr_hist.get_ticker_isin(Ticker("ASML"))
+        trhistory.get_ticker_isin(Ticker("ASML"))

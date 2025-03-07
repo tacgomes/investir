@@ -14,7 +14,7 @@ from investir.transaction import (
     Disposal,
     Transaction,
 )
-from investir.trhistory import TrHistory
+from investir.trhistory import TransactionHistory
 from investir.typing import Ticker, Year
 from investir.utils import boldify, multifilter, tax_year_full_date, tax_year_short_date
 
@@ -53,7 +53,7 @@ class CapitalGainsSummary:
 
 
 class OutputGenerator:
-    def __init__(self, trhistory: TrHistory, taxcalc: TaxCalculator) -> None:
+    def __init__(self, trhistory: TransactionHistory, taxcalc: TaxCalculator) -> None:
         self._trhistory = trhistory
         self._taxcalc = taxcalc
 

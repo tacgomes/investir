@@ -16,7 +16,7 @@ from investir.exceptions import (
 )
 from investir.findata import FinancialData
 from investir.transaction import Acquisition, Disposal, Order
-from investir.trhistory import TrHistory
+from investir.trhistory import TransactionHistory
 from investir.typing import ISIN, Year
 from investir.utils import raise_or_warn
 
@@ -106,8 +106,8 @@ def calculate_capital_gains(func: FuncType) -> FuncType:
 
 
 class TaxCalculator:
-    def __init__(self, tr_hist: TrHistory, findata: FinancialData) -> None:
-        self._tr_hist = tr_hist
+    def __init__(self, trhistory: TransactionHistory, findata: FinancialData) -> None:
+        self._trhistory = trhistory
         self._findata = findata
         self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
@@ -133,7 +133,7 @@ class TaxCalculator:
     @calculate_capital_gains
     def get_holding_value(self, isin: ISIN) -> Decimal | None:
         holding = self._holdings[isin]
-        security_name = self._tr_hist.get_security_name(isin) or ""
+        security_name = self._trhistory.get_security_name(isin) or ""
         if (price := self._findata.get_security_price(isin, security_name)) and (
             price_base_currency := self._findata.convert_money(price, BASE_CURRENCY)
         ):
@@ -153,7 +153,7 @@ class TaxCalculator:
         # First normalise the orders by retroactively adjusting their
         # share quantity for any eventual share sub-division or share
         # consolidation event.
-        orders = self._normalise_orders(self._tr_hist.orders)
+        orders = self._normalise_orders(self._trhistory.orders)
 
         # Exclude forex fees from the "total" and "fees" fields if the
         # include_fx_fees setting is false.
@@ -163,7 +163,7 @@ class TaxCalculator:
         # Group together orders that have the same isin, date and type.
         same_day = self._group_same_day(orders)
 
-        for isin, name in self._tr_hist.securities:
+        for isin, name in self._trhistory.securities:
             logger.debug("Calculating capital gains for %s (%s)", name, isin)
 
             # Merge orders that were issued in the same day and have
@@ -193,7 +193,7 @@ class TaxCalculator:
             )
 
     def _validate_orders(self) -> None:
-        for order in self._tr_hist.orders:
+        for order in self._trhistory.orders:
             if (
                 order.total.currency != BASE_CURRENCY
                 or order.fees.total.currency != BASE_CURRENCY
@@ -324,7 +324,7 @@ class TaxCalculator:
                     if holding.quantity < 0.0:
                         raise_or_warn(
                             IncompleteRecordsError(
-                                isin, self._tr_hist.get_security_name(isin) or "?"
+                                isin, self._trhistory.get_security_name(isin) or "?"
                             )
                         )
                         logger.warning("Not calculating holding for %s", isin)
@@ -340,7 +340,7 @@ class TaxCalculator:
                 else:
                     raise_or_warn(
                         IncompleteRecordsError(
-                            isin, self._tr_hist.get_security_name(isin) or "?"
+                            isin, self._trhistory.get_security_name(isin) or "?"
                         )
                     )
                     logger.warning("Not calculating holding for %s", isin)
