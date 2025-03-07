@@ -26,7 +26,7 @@ from investir.parser import ParserFactory
 from investir.prettytable import OutputFormat
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
-from investir.trhistory import TrHistory
+from investir.trhistory import TransactionHistory
 from investir.typing import Ticker, Year
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ def abort(message: str) -> None:
     raise typer.Exit(code=1)
 
 
-def parse(input_files: list[Path]) -> TrHistory:
+def parse(input_files: list[Path]) -> TransactionHistory:
     orders = []
     dividends = []
     transfers = []
@@ -130,22 +130,24 @@ def parse(input_files: list[Path]) -> TrHistory:
         else:
             abort(f"Unable to find a parser for {path}")
 
-    tr_hist = TrHistory(
+    trhistory = TransactionHistory(
         orders=orders, dividends=dividends, transfers=transfers, interest=interest
     )
 
     logger.info(
         "Total: %s orders, %s dividend payments, %s transfers, %s interest payments",
-        len(tr_hist.orders),
-        len(tr_hist.dividends),
-        len(tr_hist.transfers),
-        len(tr_hist.interest),
+        len(trhistory.orders),
+        len(trhistory.dividends),
+        len(trhistory.transfers),
+        len(trhistory.interest),
     )
 
-    return tr_hist
+    return trhistory
 
 
-def make_output_generator(tr_hist: TrHistory, ctx: typer.Context) -> OutputGenerator:
+def make_output_generator(
+    trhistory: TransactionHistory, ctx: typer.Context
+) -> OutputGenerator:
     security_info_provider = None
     live_rates_provider = None
     historical_rates_provider: HistoricalExchangeRateProvider | None = None
@@ -160,12 +162,12 @@ def make_output_generator(tr_hist: TrHistory, ctx: typer.Context) -> OutputGener
             case RatesProvider.HMRC_MONTHLY:  # pragma: no cover
                 historical_rates_provider = HmrcMonthlyExhangeRateProvider()
 
-    financial_data = FinancialData(
+    findata = FinancialData(
         security_info_provider, live_rates_provider, historical_rates_provider
     )
-    tax_calculator = TaxCalculator(tr_hist, financial_data)
+    taxcalc = TaxCalculator(trhistory, findata)
 
-    return OutputGenerator(tr_hist, tax_calculator)
+    return OutputGenerator(trhistory, taxcalc)
 
 
 def create_filters(

@@ -8,7 +8,7 @@ from investir.taxcalculator import TaxCalculator
 from investir.transaction import (
     Acquisition,
 )
-from investir.trhistory import TrHistory
+from investir.trhistory import TransactionHistory
 from investir.typing import ISIN, Ticker
 from investir.utils import sterling
 
@@ -33,7 +33,7 @@ def test_create_holdings_table_ambiguous_ticker(capsys):
         quantity=Decimal("5.0"),
     )
 
-    trhistory = TrHistory(orders=[order1, order2])
+    trhistory = TransactionHistory(orders=[order1, order2])
     findata = FinancialData(None, None, None)
     taxcalc = TaxCalculator(trhistory, findata)
 

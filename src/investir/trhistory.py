@@ -24,7 +24,7 @@ class Security(NamedTuple):
     name: str = ""
 
 
-class TrHistory:
+class TransactionHistory:
     def __init__(
         self,
         *,
