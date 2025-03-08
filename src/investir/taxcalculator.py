@@ -17,7 +17,7 @@ from investir.exceptions import (
 from investir.findata import FinancialData
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TransactionHistory
-from investir.typing import ISIN, Year
+from investir.typing import ISIN, TaxYear
 from investir.utils import raise_or_warn
 
 logger = logging.getLogger(__name__)
@@ -112,10 +112,10 @@ class TaxCalculator:
         self._acquisitions: dict[ISIN, list[Acquisition]] = defaultdict(list)
         self._disposals: dict[ISIN, list[Disposal]] = defaultdict(list)
         self._holdings: dict[ISIN, Section104Holding] = {}
-        self._capital_gains: dict[Year, list[CapitalGain]] = defaultdict(list)
+        self._capital_gains: dict[TaxYear, list[CapitalGain]] = defaultdict(list)
 
     @calculate_capital_gains
-    def capital_gains(self, tax_year: Year | None = None) -> Sequence[CapitalGain]:
+    def capital_gains(self, tax_year: TaxYear | None = None) -> Sequence[CapitalGain]:
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
 
@@ -142,7 +142,7 @@ class TaxCalculator:
         return None
 
     @calculate_capital_gains
-    def disposal_years(self) -> Sequence[Year]:
+    def disposal_years(self) -> Sequence[TaxYear]:
         return list(self._capital_gains.keys())
 
     def _calculate_capital_gains(self) -> None:

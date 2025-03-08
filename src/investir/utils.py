@@ -7,7 +7,7 @@ from typing import Final
 from moneyed import GBP, Money
 
 from investir.config import config
-from investir.typing import Year
+from investir.typing import TaxYear
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +15,16 @@ TAX_YEAR_START_MONTH: Final = 4
 TAX_YEAR_START_DAY: Final = 6
 
 
-def date_to_tax_year(d: date) -> Year:
+def date_to_tax_year(d: date) -> TaxYear:
     ty_start = date(d.year, TAX_YEAR_START_MONTH, TAX_YEAR_START_DAY)
-    return Year(d.year + 1) if d >= ty_start else Year(d.year)
+    return TaxYear(d.year + 1) if d >= ty_start else TaxYear(d.year)
 
 
-def tax_year_short_date(tax_year: Year) -> str:
+def tax_year_short_date(tax_year: TaxYear) -> str:
     return f"{tax_year - 1}/{(tax_year) % 100}"
 
 
-def tax_year_full_date(tax_year: Year) -> str:
+def tax_year_full_date(tax_year: TaxYear) -> str:
     return f"6th April {tax_year - 1} to 5th April {tax_year}"
 
 

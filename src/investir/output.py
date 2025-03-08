@@ -15,7 +15,7 @@ from investir.transaction import (
     Transaction,
 )
 from investir.trhistory import TransactionHistory
-from investir.typing import Ticker, Year
+from investir.typing import TaxYear, Ticker
 from investir.utils import boldify, multifilter, tax_year_full_date, tax_year_short_date
 
 T = TypeVar("T", bound=Transaction)
@@ -84,7 +84,7 @@ class OutputGenerator:
     def show_capital_gains(
         self,
         format: OutputFormat,
-        tax_year_filter: Year | None,
+        tax_year_filter: TaxYear | None,
         ticker_filter: Ticker | None,
         gains_only: bool,
         losses_only: bool,
@@ -258,7 +258,7 @@ class OutputGenerator:
 
     def _create_capital_gains_table_and_summary(
         self,
-        tax_year: Year,
+        tax_year: TaxYear,
         ticker_filter: Ticker | None,
         gains_only: bool,
         losses_only: bool,
