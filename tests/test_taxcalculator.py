@@ -103,7 +103,7 @@ def test_section_104_disposal(make_tax_calculator):
     taxcalc = make_tax_calculator([order1, order2, order3, order4])
     capital_gains = taxcalc.capital_gains()
     assert len(capital_gains) == 2
-    assert capital_gains == taxcalc.capital_gains(2023)
+    assert capital_gains == taxcalc.capital_gains(2024)
 
     cg = capital_gains[0]
     assert cg.disposal.date == date(2023, 5, 1)

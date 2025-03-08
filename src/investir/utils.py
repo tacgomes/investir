@@ -1,6 +1,6 @@
-import datetime
 import logging
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from datetime import date
 from decimal import Decimal
 from typing import Final
 
@@ -11,30 +11,21 @@ from investir.typing import Year
 
 logger = logging.getLogger(__name__)
 
-TAX_YEAR_MONTH: Final = 4
+TAX_YEAR_START_MONTH: Final = 4
 TAX_YEAR_START_DAY: Final = 6
-TAX_YEAR_END_DAY: Final = 5
 
 
-def tax_year_period(tax_year: Year) -> tuple[datetime.date, datetime.date]:
-    tax_year_start = datetime.date(tax_year, TAX_YEAR_MONTH, TAX_YEAR_START_DAY)
-    tax_year_end = datetime.date(tax_year + 1, TAX_YEAR_MONTH, TAX_YEAR_END_DAY)
-    return tax_year_start, tax_year_end
-
-
-def date_to_tax_year(date: datetime.date) -> Year:
-    tax_year_start, _ = tax_year_period(Year(date.year))
-    if date >= tax_year_start:
-        return Year(tax_year_start.year)
-    return Year(tax_year_start.year - 1)
+def date_to_tax_year(d: date) -> Year:
+    ty_start = date(d.year, TAX_YEAR_START_MONTH, TAX_YEAR_START_DAY)
+    return Year(d.year + 1) if d >= ty_start else Year(d.year)
 
 
 def tax_year_short_date(tax_year: Year) -> str:
-    return f"{tax_year}/{(tax_year + 1) % 100}"
+    return f"{tax_year - 1}/{(tax_year) % 100}"
 
 
 def tax_year_full_date(tax_year: Year) -> str:
-    return f"6th April {tax_year} to 5th April {tax_year + 1}"
+    return f"6th April {tax_year - 1} to 5th April {tax_year}"
 
 
 def multifilter(filters: Sequence[Callable] | None, iterable: Iterable) -> Iterable:

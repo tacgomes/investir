@@ -68,8 +68,8 @@ FilesArg = Annotated[
 TaxYearOpt = Annotated[
     Optional[int],
     typer.Option(
-        min=2008,
-        max=datetime.now().year,
+        min=2009,
+        max=datetime.now().year + 1,
         metavar="TAX-YEAR",
         help="Filter by tax year.",
         show_default=False,
