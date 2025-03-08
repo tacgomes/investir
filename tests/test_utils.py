@@ -6,7 +6,7 @@ from moneyed import Money
 
 from investir.config import config
 from investir.exceptions import InvestirError
-from investir.typing import Year
+from investir.typing import TaxYear
 from investir.utils import (
     boldify,
     date_to_tax_year,
@@ -29,11 +29,11 @@ def test_date_to_tax_year():
 
 
 def test_tax_year_short_date():
-    assert tax_year_short_date(Year(2024)) == "2023/24"
+    assert tax_year_short_date(TaxYear(2024)) == "2023/24"
 
 
 def test_tax_year_full_date():
-    assert tax_year_full_date(Year(2024)) == "6th April 2023 to 5th April 2024"
+    assert tax_year_full_date(TaxYear(2024)) == "6th April 2023 to 5th April 2024"
 
 
 def test_multifilter():

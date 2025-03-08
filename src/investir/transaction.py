@@ -12,7 +12,7 @@ from moneyed import Money
 
 from investir.fees import Fees
 from investir.findata import Split
-from investir.typing import ISIN, Ticker, Year
+from investir.typing import ISIN, TaxYear, Ticker
 from investir.utils import date_to_tax_year
 
 if sys.version_info >= (3, 11):
@@ -32,7 +32,7 @@ class Transaction(ABC):
     def date(self) -> date:
         return self.timestamp.date()
 
-    def tax_year(self) -> Year:
+    def tax_year(self) -> TaxYear:
         return date_to_tax_year(self.date)
 
 

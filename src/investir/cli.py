@@ -27,7 +27,7 @@ from investir.prettytable import OutputFormat
 from investir.taxcalculator import TaxCalculator
 from investir.transaction import Acquisition, Disposal, Transaction
 from investir.trhistory import TransactionHistory
-from investir.typing import Ticker, Year
+from investir.typing import TaxYear, Ticker
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ def create_filters(
     filters = []
 
     if tax_year is not None:
-        filters.append(lambda tr: tr.tax_year() == Year(tax_year))
+        filters.append(lambda tr: tr.tax_year() == TaxYear(tax_year))
 
     if ticker is not None:
         filters.append(lambda tr: tr.ticker == ticker)
@@ -383,7 +383,7 @@ def capital_gains_command(
 
     config.include_fx_fees = include_fx_fees
 
-    tax_year = Year(tax_year) if tax_year else None
+    tax_year = TaxYear(tax_year) if tax_year else None
     ticker = Ticker(ticker) if ticker else None
 
     try:
