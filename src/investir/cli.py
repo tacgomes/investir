@@ -101,7 +101,7 @@ def abort(message: str) -> None:
     raise typer.Exit(code=1)
 
 
-def parse(input_files: list[Path]) -> TransactionHistory:
+def parse(input_files: Sequence[Path]) -> TransactionHistory:
     orders = []
     dividends = []
     transfers = []
