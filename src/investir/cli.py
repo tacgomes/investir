@@ -71,7 +71,8 @@ TaxYearOpt = Annotated[
         min=2009,
         max=datetime.now().year + 1,
         metavar="TAX-YEAR",
-        help="Filter by tax year.",
+        help="Filter by tax year (e.g. Use 2025 to view the transactions "
+        "made in the 2024-2025 tax year).",
         show_default=False,
     ),
 ]
