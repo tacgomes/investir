@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -17,30 +17,23 @@ from investir.utils import (
     read_sterling,
     sterling,
     tax_year_full_date,
-    tax_year_period,
     tax_year_short_date,
 )
 
 
-def test_tax_year_period():
-    tax_year_start, tax_year_end = tax_year_period(2023)
-    assert tax_year_start == datetime.date(2023, 4, 6)
-    assert tax_year_end == datetime.date(2024, 4, 5)
-
-
 def test_date_to_tax_year():
-    assert date_to_tax_year(datetime.date(2023, 4, 5)) == 2022
-    assert date_to_tax_year(datetime.date(2023, 4, 6)) == 2023
-    assert date_to_tax_year(datetime.date(2024, 4, 5)) == 2023
-    assert date_to_tax_year(datetime.date(2024, 4, 6)) == 2024
+    assert date_to_tax_year(date(2023, 4, 5)) == 2023
+    assert date_to_tax_year(date(2023, 4, 6)) == 2024
+    assert date_to_tax_year(date(2024, 4, 5)) == 2024
+    assert date_to_tax_year(date(2024, 4, 6)) == 2025
 
 
 def test_tax_year_short_date():
-    assert tax_year_short_date(Year(2023)) == "2023/24"
+    assert tax_year_short_date(Year(2024)) == "2023/24"
 
 
 def test_tax_year_full_date():
-    assert tax_year_full_date(Year(2023)) == "6th April 2023 to 5th April 2024"
+    assert tax_year_full_date(Year(2024)) == "6th April 2023 to 5th April 2024"
 
 
 def test_multifilter():

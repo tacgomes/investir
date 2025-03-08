@@ -54,21 +54,21 @@ def _execute(tmp_path) -> Callable:
 test_data1 = [
     # Orders
     ("orders", "orders"),
-    ("orders --tax-year 2022", "orders_ty2022"),
+    ("orders --tax-year 2023", "orders_ty2023"),
     ("orders --ticker SWKS", "orders_swks"),
     ("orders --acquisitions", "orders_acquisitions"),
     ("orders --disposals", "orders_disposals"),
     (
-        "orders --tax-year 2022 --ticker SWKS",
-        "orders_ty2022_swks",
+        "orders --tax-year 2023 --ticker SWKS",
+        "orders_ty2023_swks",
     ),
     (
-        "orders --tax-year 2022 --acquisitions",
-        "orders_ty2022_acquisitions",
+        "orders --tax-year 2023 --acquisitions",
+        "orders_ty2023_acquisitions",
     ),
     (
-        "orders --tax-year 2022 --disposals",
-        "orders_ty2022_disposals",
+        "orders --tax-year 2023 --disposals",
+        "orders_ty2023_disposals",
     ),
     (
         "orders --ticker SWKS --acquisitions",
@@ -79,46 +79,46 @@ test_data1 = [
         "orders_swks_disposals",
     ),
     (
-        "orders --tax-year 2022 --ticker SWKS --acquisitions",
-        "orders_ty2022_swks_acquisitions",
+        "orders --tax-year 2023 --ticker SWKS --acquisitions",
+        "orders_ty2023_swks_acquisitions",
     ),
     (
-        "orders --tax-year 2022 --ticker SWKS --disposals",
-        "orders_ty2022_swks_disposals",
+        "orders --tax-year 2023 --ticker SWKS --disposals",
+        "orders_ty2023_swks_disposals",
     ),
     # Dividends
     ("dividends", "dividends"),
-    ("dividends --tax-year 2022", "dividends_ty2022"),
+    ("dividends --tax-year 2023", "dividends_ty2023"),
     ("dividends --ticker AAPL", "dividends_aapl"),
-    ("dividends --tax-year 2022 --ticker AAPL", "dividends_ty2022_aapl"),
+    ("dividends --tax-year 2023 --ticker AAPL", "dividends_ty2023_aapl"),
     # Interest
     ("interest", "interest"),
-    ("interest --tax-year 2022", "interest_ty2022"),
+    ("interest --tax-year 2023", "interest_ty2023"),
     # Transfers
     ("transfers", "transfers"),
-    ("transfers --tax-year 2022", "transfers_ty2022"),
+    ("transfers --tax-year 2023", "transfers_ty2023"),
     ("transfers --deposits", "transfers_deposits"),
     ("transfers --withdrawals", "transfers_withdrawals"),
-    ("transfers --tax-year 2022 --deposits", "transfers_ty2022_deposits"),
-    ("transfers --tax-year 2022 --withdrawals", "transfers_ty2022_withdrawals"),
+    ("transfers --tax-year 2023 --deposits", "transfers_ty2023_deposits"),
+    ("transfers --tax-year 2023 --withdrawals", "transfers_ty2023_withdrawals"),
     # Capital gains
     ("capital-gains", "capital_gains"),
-    ("capital-gains --tax-year 2022", "capital_gains_ty2022"),
+    ("capital-gains --tax-year 2023", "capital_gains_ty2023"),
     ("capital-gains --ticker SWKS", "capital_gains_swks"),
     ("capital-gains --ticker AMZN", "capital_gains_amzn"),
     ("capital-gains --gains", "capital_gains_gains"),
     ("capital-gains --losses", "capital_gains_losses"),
     ("capital-gains --ticker SWKS --gains", "capital_gains_swks_gains"),
     ("capital-gains --ticker SWKS --losses", "capital_gains_swks_losses"),
-    ("capital-gains --tax-year 2022 --gains", "capital_gains_ty2022_gains"),
-    ("capital-gains --tax-year 2022 --losses", "capital_gains_ty2022_losses"),
+    ("capital-gains --tax-year 2023 --gains", "capital_gains_ty2023_gains"),
+    ("capital-gains --tax-year 2023 --losses", "capital_gains_ty2023_losses"),
     (
-        "capital-gains --tax-year 2022 --ticker SWKS --gains",
-        "capital_gains_ty2022_swks_gains",
+        "capital-gains --tax-year 2023 --ticker SWKS --gains",
+        "capital_gains_ty2023_swks_gains",
     ),
     (
-        "capital-gains --tax-year 2022 --ticker SWKS --losses",
-        "capital_gains_ty2022_swks_losses",
+        "capital-gains --tax-year 2023 --ticker SWKS --losses",
+        "capital_gains_ty2023_swks_losses",
     ),
     # Holdings
     ("holdings", "holdings"),
@@ -141,9 +141,9 @@ test_data1 = [
     ("transfers --output json", "transfers_json"),
     ("transfers --output html", "transfers_html"),
     ("capital-gains --output text", "capital_gains"),
-    ("capital-gains --tax-year 2022 --output csv", "capital_gains_csv"),
-    ("capital-gains --tax-year 2022 --output json", "capital_gains_json"),
-    ("capital-gains --tax-year 2022 --output html", "capital_gains_html"),
+    ("capital-gains --tax-year 2023 --output csv", "capital_gains_csv"),
+    ("capital-gains --tax-year 2023 --output json", "capital_gains_json"),
+    ("capital-gains --tax-year 2023 --output html", "capital_gains_html"),
     ("holdings --output text", "holdings"),
     ("holdings --output csv", "holdings_csv"),
     ("holdings --output json", "holdings_json"),
@@ -221,35 +221,35 @@ def test_capital_gains_multiple_input_files(execute):
 
 
 def test_orders_command_no_results(execute):
-    result = execute(["orders", "--tax-year", "2008", DATA_FILE1])
+    result = execute(["orders", "--tax-year", "2009", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_dividends_command_no_results(execute):
-    result = execute(["dividends", "--tax-year", "2008", DATA_FILE1])
+    result = execute(["dividends", "--tax-year", "2009", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_transfers_command_no_results(execute):
-    result = execute(["transfers", "--tax-year", "2008", DATA_FILE1])
+    result = execute(["transfers", "--tax-year", "2009", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_interest_command_no_results(execute):
-    result = execute(["interest", "--tax-year", "2008", DATA_FILE1])
+    result = execute(["interest", "--tax-year", "2009", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
 
 
 def test_capital_gains_command_no_results(execute):
-    result = execute(["capital-gains", "--tax-year", "2008", DATA_FILE1])
+    result = execute(["capital-gains", "--tax-year", "2009", DATA_FILE1])
     assert not result.stdout
     assert not result.stderr
     assert result.exit_code == EX_OK
