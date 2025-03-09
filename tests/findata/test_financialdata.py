@@ -8,8 +8,8 @@ import pytest
 from moneyed import GBP, USD, Money
 
 from investir.findata import (
-    DataProviderError,
     FinancialData,
+    RequestError,
     SecurityInfo,
     Split,
     YahooFinanceHistoricalExchangeRateProvider,
@@ -71,7 +71,7 @@ def test_get_security_info(make_financial_data):
 
 
 def test_get_security_info_exception_raised(make_financial_data):
-    findata, _ = make_financial_data(security_info=DataProviderError)
+    findata, _ = make_financial_data(security_info=RequestError)
     assert findata.get_security_info(ISIN("AMZN-ISIN")) == SecurityInfo()
 
 
@@ -81,7 +81,7 @@ def test_get_security_price(make_financial_data):
 
 
 def test_get_security_price_exception_raised(make_financial_data):
-    findata, _ = make_financial_data(price=DataProviderError)
+    findata, _ = make_financial_data(price=RequestError)
     assert findata.get_security_price(ISIN("AMZN-ISIN")) is None
 
 
@@ -96,9 +96,9 @@ def test_get_exchange_rate_historical(make_financial_data):
 
 
 def test_get_exchange_rate_exception_raised(make_financial_data):
-    findata, _ = make_financial_data(live_rate=DataProviderError)
+    findata, _ = make_financial_data(live_rate=RequestError)
     assert findata.get_exchange_rate(GBP, USD) is None
-    findata, _ = make_financial_data(historical_rate=DataProviderError)
+    findata, _ = make_financial_data(historical_rate=RequestError)
     assert findata.get_exchange_rate(GBP, USD, date(2024, 1, 1)) is None
 
 
