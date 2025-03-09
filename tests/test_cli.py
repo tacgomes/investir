@@ -11,7 +11,6 @@ import pytest
 from typer.testing import CliRunner, Result
 
 from investir.cli import app
-from investir.config import config
 
 PROJECT_DIR = Path(__file__).parent.parent
 DATA_FILE1 = str(PROJECT_DIR / "data" / "freetrade.csv")
@@ -29,7 +28,6 @@ def execute(tmp_path) -> Callable:
         cache: bool = True,
         offline: bool = True,
     ) -> Result:
-        config.reset()
         opts = []
 
         if quiet:

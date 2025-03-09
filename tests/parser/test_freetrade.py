@@ -66,8 +66,6 @@ DIVIDEND: Final = {
 
 @pytest.fixture
 def make_parser(tmp_path) -> Callable:
-    config.reset()
-
     def _wrapper(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
