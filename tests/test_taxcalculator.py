@@ -30,8 +30,6 @@ def make_tax_calculator(mocker, tmp_path) -> Callable:
         price: Money | Exception | None = None,
         fx_rate: Decimal | Exception | None = None,
     ) -> TaxCalculator:
-        config.reset()
-
         if splits is None:
             splits = []
         else:

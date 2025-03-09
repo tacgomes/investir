@@ -99,8 +99,6 @@ CASH_INTEREST: Final = {
 
 @pytest.fixture
 def make_parser(tmp_path) -> Callable:
-    config.reset()
-
     def _wrapper(
         rows: Sequence[Mapping[str, str]], legacy_fields: bool = False
     ) -> Trading212Parser:
