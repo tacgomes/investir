@@ -1,7 +1,9 @@
 from investir.findata.dataprovider import (
-    DataProviderError,
+    DataNotFoundError,
     HistoricalExchangeRateProvider,
     LiveExchangeRateProvider,
+    ProviderError,
+    RequestError,
     SecurityInfoProvider,
 )
 from investir.findata.financialdata import FinancialData
@@ -14,11 +16,13 @@ from investir.findata.yahoofinanceprovider import (
 )
 
 __all__ = [
-    "DataProviderError",
+    "DataNotFoundError",
     "FinancialData",
     "HistoricalExchangeRateProvider",
     "HmrcMonthlyExhangeRateProvider",
     "LiveExchangeRateProvider",
+    "ProviderError",
+    "RequestError",
     "SecurityInfo",
     "SecurityInfoProvider",
     "Split",

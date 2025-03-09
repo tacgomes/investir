@@ -8,7 +8,15 @@ from investir.findata.types import SecurityInfo
 from investir.typing import ISIN
 
 
-class DataProviderError(Exception):
+class ProviderError(Exception):
+    pass
+
+
+class RequestError(ProviderError):
+    pass
+
+
+class DataNotFoundError(ProviderError):
     pass
 
 

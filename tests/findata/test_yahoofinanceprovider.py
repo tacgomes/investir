@@ -9,7 +9,8 @@ import yfinance
 from moneyed import GBP, USD, Money
 
 from investir.findata import (
-    DataProviderError,
+    DataNotFoundError,
+    RequestError,
     Split,
     YahooFinanceHistoricalExchangeRateProvider,
     YahooFinanceLiveExchangeRateProvider,
@@ -156,9 +157,9 @@ def test_yfinance_security_info_provider_price_in_GBp(si_provider, ticker_info):
 
 def test_yfinance_security_info_provider_exception_raised(si_provider, ticker_info):
     ticker_info(yfinance.exceptions.YFException)
-    with pytest.raises(DataProviderError):
+    with pytest.raises(RequestError):
         si_provider.get_info(ISIN("AMZN-ISIN"))
-    with pytest.raises(DataProviderError):
+    with pytest.raises(RequestError):
         si_provider.get_price(ISIN("AMZN-ISIN"))
 
 
@@ -176,7 +177,7 @@ def test_yfinance_live_exchange_rate_provider_exception_raised(
     lr_provider, ticker_info
 ):
     ticker_info(yfinance.exceptions.YFException)
-    with pytest.raises(DataProviderError):
+    with pytest.raises(RequestError):
         lr_provider.get_rate(USD, GBP)
 
 
@@ -234,7 +235,7 @@ def test_yfinance_historical_exchange_rate_provider_exception_raised(
     hr_provider, history_mocker
 ):
     history_mocker(yfinance.exceptions.YFException)
-    with pytest.raises(DataProviderError):
+    with pytest.raises(RequestError):
         hr_provider.get_rate(GBP, USD, date(2024, 1, 1))
 
 
@@ -246,5 +247,5 @@ def test_yfinance_historical_exchange_rate_provider_rate_not_found(
         index=[datetime(2024, 1, 1)],
     )
     history_mocker(rates)
-    with pytest.raises(DataProviderError):
+    with pytest.raises(DataNotFoundError):
         hr_provider.get_rate(GBP, USD, date(2024, 1, 2))

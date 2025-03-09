@@ -8,8 +8,8 @@ from moneyed import GBP, USD, Money
 from investir.config import config
 from investir.exceptions import IncompleteRecordsError, InvestirError
 from investir.findata import (
-    DataProviderError,
     FinancialData,
+    RequestError,
     SecurityInfo,
     Split,
     YahooFinanceLiveExchangeRateProvider,
@@ -1357,7 +1357,7 @@ def test_get_holding_value_when_price_or_fx_rate_not_available(
         quantity=Decimal("10.0"),
     )
 
-    taxcalc = make_tax_calculator([order], price=DataProviderError)
+    taxcalc = make_tax_calculator([order], price=RequestError)
     assert taxcalc.get_holding_value(ISIN("X")) is None
 
 

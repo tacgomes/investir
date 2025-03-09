@@ -10,7 +10,10 @@ import yfinance
 from moneyed import Currency, Money
 
 from investir.config import config
-from investir.findata.dataprovider import DataProviderError
+from investir.findata.dataprovider import (
+    DataNotFoundError,
+    RequestError,
+)
 from investir.findata.types import SecurityInfo, Split
 from investir.typing import ISIN
 
@@ -44,7 +47,7 @@ class YahooFinanceSecurityInfoProvider:
             name = yf_data.info["shortName"]
         except Exception as ex:
             logger.debug("Exception from yfinance: %s", repr(ex))
-            raise DataProviderError(f"Failed to fetch information for {isin}") from None
+            raise RequestError(f"Failed to fetch information for {isin}") from None
 
         splits = [
             Split(pd_date.to_pydatetime(), Decimal(ratio))
@@ -68,7 +71,7 @@ class YahooFinanceSecurityInfoProvider:
             currency = yf_data.info["currency"]
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
-            raise DataProviderError(f"Failed to fetch last price for {isin}") from None
+            raise RequestError(f"Failed to fetch last price for {isin}") from None
 
         if currency == "GBp":
             currency = "GBP"
@@ -120,7 +123,7 @@ class YahooFinanceLiveExchangeRateProvider:
             rate = Decimal(yf_data.info["bid"])
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
-            raise DataProviderError(
+            raise RequestError(
                 f"Failed to fetch exchange rate for "
                 f"{base.name} ({base.code}) to {quote.name} ({quote.code})"
             ) from None
@@ -159,7 +162,7 @@ class YahooFinanceHistoricalExchangeRateProvider:
             rates = ticker.history(start=str(rate_date))
         except Exception as e:
             logger.debug("Exception from yfinance: %s", repr(e))
-            raise DataProviderError(
+            raise RequestError(
                 f"Failed to fetch exchange rate for "
                 f"{base.name} ({base.code}) to "
                 f"{quote.name} ({quote.code})"
@@ -173,7 +176,7 @@ class YahooFinanceHistoricalExchangeRateProvider:
         self._save_cache()
 
         if (rate := self._find_rate(base, quote, rate_date)) is None:
-            raise DataProviderError(
+            raise DataNotFoundError(
                 f"Exchange rate not found: {base.code}-{quote.code}"
             )
 

@@ -13,7 +13,10 @@ from moneyed import Currency
 
 from investir.config import config
 from investir.const import CURRENCY_CODES
-from investir.findata.dataprovider import DataProviderError
+from investir.findata.dataprovider import (
+    DataNotFoundError,
+    RequestError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +60,14 @@ class HmrcMonthlyExhangeRateProvider:
                         self._cache.setdefault(key, {})[currency_code] = currency_rate
         except URLError as e:
             logger.debug("Exception from urllib: %s", repr(e))
-            raise DataProviderError(
+            raise RequestError(
                 f"Failed to fetch exchange rates file ({filename}): {e}"
             ) from None
 
         self._save_cache()
 
         if (rate := self._find_rate(base, quote, rate_date)) is None:
-            raise DataProviderError(
+            raise DataNotFoundError(
                 f"Exchange rate not found: {base.code}-{quote.code}"
             )
 
