@@ -149,19 +149,15 @@ def parse(input_files: Sequence[Path]) -> TransactionHistory:
 def make_output_generator(
     trhistory: TransactionHistory, ctx: typer.Context
 ) -> OutputGenerator:
-    security_info_provider = None
-    live_rates_provider = None
-    historical_rates_provider: HistoricalExchangeRateProvider | None = None
+    security_info_provider = YahooFinanceSecurityInfoProvider()
+    live_rates_provider = YahooFinanceLiveExchangeRateProvider()
+    historical_rates_provider: HistoricalExchangeRateProvider
 
-    if not config.offline:
-        security_info_provider = YahooFinanceSecurityInfoProvider()
-        live_rates_provider = YahooFinanceLiveExchangeRateProvider()
-
-        match ctx.params.get("rates_provider"):
-            case RatesProvider.YAHOO_FINANCE:
-                historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
-            case RatesProvider.HMRC_MONTHLY:  # pragma: no cover
-                historical_rates_provider = HmrcMonthlyExhangeRateProvider()
+    match ctx.params.get("rates_provider"):
+        case RatesProvider.YAHOO_FINANCE | None:
+            historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
+        case RatesProvider.HMRC_MONTHLY:  # pragma: no cover
+            historical_rates_provider = HmrcMonthlyExhangeRateProvider()
 
     findata = FinancialData(
         security_info_provider, live_rates_provider, historical_rates_provider
