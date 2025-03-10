@@ -20,6 +20,10 @@ class DataNotFoundError(ProviderError):
     pass
 
 
+class CacheMissError(ProviderError):
+    pass
+
+
 class SecurityInfoProvider(Protocol):
     def get_info(
         self, isin: ISIN, name: str = "", refresh_date: datetime | None = None

@@ -8,7 +8,9 @@ import pytest
 import yfinance
 from moneyed import GBP, USD, Money
 
+from investir.config import config
 from investir.findata import (
+    CacheMissError,
     DataNotFoundError,
     RequestError,
     Split,
@@ -155,11 +157,17 @@ def test_yfinance_security_info_provider_price_in_GBp(si_provider, ticker_info):
     assert si_provider.get_price(ISIN("AMZN-ISIN")) == Money("15.50", GBP)
 
 
-def test_yfinance_security_info_provider_exception_raised(si_provider, ticker_info):
+def test_yfinance_security_info_provider_with_error(si_provider, ticker_info):
     ticker_info(yfinance.exceptions.YFException)
     with pytest.raises(RequestError):
         si_provider.get_info(ISIN("AMZN-ISIN"))
     with pytest.raises(RequestError):
+        si_provider.get_price(ISIN("AMZN-ISIN"))
+
+    config.offline = True
+    with pytest.raises(CacheMissError):
+        si_provider.get_info(ISIN("AMZN-ISIN"))
+    with pytest.raises(CacheMissError):
         si_provider.get_price(ISIN("AMZN-ISIN"))
 
 
@@ -173,11 +181,13 @@ def test_yfinance_live_exchange_rate_provider(lr_provider, ticker_info):
     assert info_mock.call_count == 1
 
 
-def test_yfinance_live_exchange_rate_provider_exception_raised(
-    lr_provider, ticker_info
-):
+def test_yfinance_live_exchange_rate_provider_with_error(lr_provider, ticker_info):
     ticker_info(yfinance.exceptions.YFException)
     with pytest.raises(RequestError):
+        lr_provider.get_rate(USD, GBP)
+
+    config.offline = True
+    with pytest.raises(CacheMissError):
         lr_provider.get_rate(USD, GBP)
 
 
@@ -231,7 +241,7 @@ def test_yfinance_historical_exchange_rate_provider(
     assert mock.call_count == 0
 
 
-def test_yfinance_historical_exchange_rate_provider_exception_raised(
+def test_yfinance_historical_exchange_rate_provider_with_request_error(
     hr_provider, history_mocker
 ):
     history_mocker(yfinance.exceptions.YFException)
@@ -239,7 +249,7 @@ def test_yfinance_historical_exchange_rate_provider_exception_raised(
         hr_provider.get_rate(GBP, USD, date(2024, 1, 1))
 
 
-def test_yfinance_historical_exchange_rate_provider_rate_not_found(
+def test_yfinance_historical_exchange_rate_provider_with_data_not_found_error(
     hr_provider, history_mocker
 ):
     rates = pd.DataFrame(
@@ -248,4 +258,12 @@ def test_yfinance_historical_exchange_rate_provider_rate_not_found(
     )
     history_mocker(rates)
     with pytest.raises(DataNotFoundError):
+        hr_provider.get_rate(GBP, USD, date(2024, 1, 2))
+
+
+def test_yfinance_historical_exchange_rate_provider_with_cache_miss_error(
+    hr_provider, history_mocker
+):
+    config.offline = True
+    with pytest.raises(CacheMissError):
         hr_provider.get_rate(GBP, USD, date(2024, 1, 2))

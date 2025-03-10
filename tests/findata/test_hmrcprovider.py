@@ -8,7 +8,9 @@ from urllib.error import URLError
 import pytest
 from moneyed import EUR, GBP, USD
 
+from investir.config import config
 from investir.findata import (
+    CacheMissError,
     DataNotFoundError,
     HmrcMonthlyExhangeRateProvider,
     RequestError,
@@ -83,7 +85,7 @@ def test_hmrc_historical_exchange_rate_provider(provider, urlopen_mocker):
     assert mock.call_count == 0
 
 
-def test_hmrc_historical_exchange_rate_provider_exception_raised(
+def test_hmrc_historical_exchange_rate_provider_with_request_error(
     provider, urlopen_mocker
 ):
     urlopen_mocker(URLError("Some error"))
@@ -91,9 +93,17 @@ def test_hmrc_historical_exchange_rate_provider_exception_raised(
         provider.get_rate(GBP, USD, date(2024, 1, 1))
 
 
-def test_hmrc_historical_exchange_rate_provider_rate_not_found(
+def test_hmrc_historical_exchange_rate_provider_with_data_not_found_error(
     provider, urlopen_mocker
 ):
     urlopen_mocker("USD,1.24")
     with pytest.raises(DataNotFoundError):
+        provider.get_rate(GBP, EUR, date(2024, 1, 1))
+
+
+def test_hmrc_historical_exchange_rate_provider_with_cache_miss_error(
+    provider, urlopen_mocker
+):
+    config.offline = True
+    with pytest.raises(CacheMissError):
         provider.get_rate(GBP, EUR, date(2024, 1, 1))

@@ -1,4 +1,5 @@
 from investir.findata.dataprovider import (
+    CacheMissError,
     DataNotFoundError,
     HistoricalExchangeRateProvider,
     LiveExchangeRateProvider,
@@ -16,6 +17,7 @@ from investir.findata.yahoofinanceprovider import (
 )
 
 __all__ = [
+    "CacheMissError",
     "DataNotFoundError",
     "FinancialData",
     "HistoricalExchangeRateProvider",
