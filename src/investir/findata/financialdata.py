@@ -5,6 +5,7 @@ from decimal import Decimal
 from moneyed import Currency, Money
 
 from investir.findata.dataprovider import (
+    CacheMissError,
     HistoricalExchangeRateProvider,
     LiveExchangeRateProvider,
     ProviderError,
@@ -33,6 +34,8 @@ class FinancialData:
         if self._security_info_provider is not None:
             try:
                 return self._security_info_provider.get_info(isin, name, refresh_date)
+            except CacheMissError:
+                pass
             except ProviderError as ex:
                 logger.warning(str(ex))
 
@@ -42,6 +45,8 @@ class FinancialData:
         if self._security_info_provider is not None:
             try:
                 return self._security_info_provider.get_price(isin, name)
+            except CacheMissError:
+                pass
             except ProviderError as ex:
                 logger.warning(str(ex))
 
@@ -55,6 +60,8 @@ class FinancialData:
                 return self._live_rates_provider.get_rate(base, quote)
             if rate_date is not None and self._historical_rates_provider is not None:
                 return self._historical_rates_provider.get_rate(base, quote, rate_date)
+        except CacheMissError:
+            pass
         except ProviderError as ex:
             logger.warning(str(ex))
 

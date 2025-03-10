@@ -11,6 +11,7 @@ from moneyed import Currency, Money
 
 from investir.config import config
 from investir.findata.dataprovider import (
+    CacheMissError,
     DataNotFoundError,
     RequestError,
 )
@@ -40,6 +41,9 @@ class YahooFinanceSecurityInfoProvider:
             if refresh_date is None or info.last_updated >= refresh_date:
                 return info
 
+        if config.offline:
+            raise CacheMissError
+
         logger.info("Fetching information for %s - %s", isin, name)
 
         try:
@@ -62,6 +66,9 @@ class YahooFinanceSecurityInfoProvider:
     def get_price(self, isin: ISIN, name: str = "") -> Money:
         if cached_price := self._prices.get(isin):
             return cached_price
+
+        if config.offline:
+            raise CacheMissError
 
         logger.info("Fetching last price for %s - %s", isin, name)
 
@@ -118,6 +125,9 @@ class YahooFinanceLiveExchangeRateProvider:
         if rate := self._rates.get((base, quote)):
             return rate
 
+        if config.offline:
+            raise CacheMissError
+
         try:
             yf_data = yfinance.Ticker(make_symbol(base, quote))
             rate = Decimal(yf_data.info["bid"])
@@ -156,6 +166,9 @@ class YahooFinanceHistoricalExchangeRateProvider:
 
         if rate := self._find_rate(base, quote, rate_date):
             return rate
+
+        if config.offline:
+            raise CacheMissError
 
         try:
             ticker = yfinance.Ticker(make_symbol(base, quote))

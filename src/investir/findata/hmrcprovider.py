@@ -14,6 +14,7 @@ from moneyed import Currency
 from investir.config import config
 from investir.const import CURRENCY_CODES
 from investir.findata.dataprovider import (
+    CacheMissError,
     DataNotFoundError,
     RequestError,
 )
@@ -45,6 +46,9 @@ class HmrcMonthlyExhangeRateProvider:
 
         if rate := self._find_rate(base, quote, rate_date):
             return rate
+
+        if config.offline:
+            raise CacheMissError
 
         filename = date_to_filename(rate_date)
         url = f"{TRADE_TARIFF_URL}{filename}"
