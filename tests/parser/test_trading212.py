@@ -97,11 +97,11 @@ CASH_INTEREST: Final = {
 }
 
 
-@pytest.fixture(name="create_parser")
-def fixture_create_parser(tmp_path) -> Callable:
+@pytest.fixture
+def make_parser(tmp_path) -> Callable:
     config.reset()
 
-    def _create_parser(
+    def _wrapper(
         rows: Sequence[Mapping[str, str]], legacy_fields: bool = False
     ) -> Trading212Parser:
         csv_file = tmp_path / "transactions.csv"
@@ -115,22 +115,22 @@ def fixture_create_parser(tmp_path) -> Callable:
             writer.writerows(rows)
         return Trading212Parser(csv_file)
 
-    return _create_parser
+    return _wrapper
 
 
-@pytest.fixture(name="create_parser_format_unrecognised")
-def fixture_create_parser_format_unrecognised(tmp_path) -> Callable:
-    def _create_parser(fields: Sequence[str]):
+@pytest.fixture
+def make_parser_format_unrecognised(tmp_path) -> Callable:
+    def _make_parser(fields: Sequence[str]):
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=fields)
             writer.writeheader()
         return Trading212Parser(csv_file)
 
-    return _create_parser
+    return _make_parser
 
 
-def test_parser_happy_path(create_parser):
+def test_parser_happy_path(make_parser):
     deposit = {
         "Action": "Deposit",
         "Time": TIMESTAMP,
@@ -150,7 +150,7 @@ def test_parser_happy_path(create_parser):
     spending_cashback = {"Action": "Spending cashback"}
     currency_conversion = {"Action": "Currency conversion"}
 
-    parser = create_parser(
+    parser = make_parser(
         [
             ACQUISITION,
             DISPOSAL,
@@ -217,7 +217,7 @@ def test_parser_happy_path(create_parser):
     assert interest.total == sterling("4.65")
 
 
-def test_parser_different_buy_sell_actions(create_parser):
+def test_parser_different_buy_sell_actions(make_parser):
     acquisition1 = dict(ACQUISITION)  # Market buy
 
     acquisition2 = dict(ACQUISITION)
@@ -234,7 +234,7 @@ def test_parser_different_buy_sell_actions(create_parser):
     disposal3 = dict(DISPOSAL)
     disposal3["Action"] = "Stop sell"
 
-    parser = create_parser(
+    parser = make_parser(
         [acquisition1, acquisition2, acquisition3, disposal1, disposal2, disposal3]
     )
 
@@ -246,7 +246,7 @@ def test_parser_different_buy_sell_actions(create_parser):
     assert orders[3] == orders[4] == orders[5]
 
 
-def test_parser_different_dividends_actions(create_parser):
+def test_parser_different_dividends_actions(make_parser):
     dividend1 = dict(DIVIDEND)  # Dividend (Ordinary)
 
     dividend2 = dict(DIVIDEND)
@@ -258,7 +258,7 @@ def test_parser_different_dividends_actions(create_parser):
     dividend4 = dict(DIVIDEND)
     dividend4["Action"] = "Dividend (Dividends paid by foreign corporations)"
 
-    parser = create_parser([dividend1, dividend2, dividend3, dividend4])
+    parser = make_parser([dividend1, dividend2, dividend3, dividend4])
 
     parser_result = parser.parse()
     assert len(parser_result.dividends) == 4
@@ -267,13 +267,13 @@ def test_parser_different_dividends_actions(create_parser):
     assert dividends[0] == dividends[1] == dividends[2] == dividends[3]
 
 
-def test_parser_different_interest_actions(create_parser):
+def test_parser_different_interest_actions(make_parser):
     interest1 = dict(CASH_INTEREST)
 
     interest2 = dict(CASH_INTEREST)
     interest2["Action"] = "Lending interest"
 
-    parser = create_parser([interest1, interest2])
+    parser = make_parser([interest1, interest2])
 
     parser_result = parser.parse()
     assert len(parser_result.interest) == 2
@@ -282,7 +282,7 @@ def test_parser_different_interest_actions(create_parser):
     assert interest[0] == interest[1]
 
 
-def test_parser_different_fee_types(create_parser):
+def test_parser_different_fee_types(make_parser):
     order1 = dict(ACQUISITION)
     del order1["Stamp duty (GBP)"]
     order1["Total"] = "1333.40"
@@ -301,7 +301,7 @@ def test_parser_different_fee_types(create_parser):
     order2["Finra fee"] = "4.0"
     order2["Currency (Finra fee)"] = "GBP"
 
-    parser = create_parser([order1, order2])
+    parser = make_parser([order1, order2])
 
     parser_result = parser.parse()
     assert len(parser_result.orders) == 2
@@ -315,7 +315,7 @@ def test_parser_different_fee_types(create_parser):
     assert order.fees.total == sterling("9.3")
 
 
-def test_parser_legacy_fields(create_parser):
+def test_parser_legacy_fields(make_parser):
     acquisition = {
         "Action": "Market buy",
         "Time": TIMESTAMP,
@@ -332,7 +332,7 @@ def test_parser_legacy_fields(create_parser):
         "Finra fee (GBP)": "4.0",
     }
 
-    parser = create_parser([acquisition], legacy_fields=True)
+    parser = make_parser([acquisition], legacy_fields=True)
     assert parser.can_parse()
 
     parser_result = parser.parse()
@@ -343,9 +343,9 @@ def test_parser_legacy_fields(create_parser):
     assert order.fees.total == sterling("9.3")
 
 
-def test_parser_cannot_parse(create_parser_format_unrecognised):
+def test_parser_cannot_parse(make_parser_format_unrecognised):
     # An unsupported field was found
-    parser = create_parser_format_unrecognised(
+    parser = make_parser_format_unrecognised(
         [*Trading212Parser.FIELDS, "Unknown Field"]
     )
     assert parser.can_parse() is False
@@ -354,21 +354,21 @@ def test_parser_cannot_parse(create_parser_format_unrecognised):
     fields = list(Trading212Parser.FIELDS)
     fields.remove("Total")
     fields.remove("Total (GBP)")
-    parser = create_parser_format_unrecognised(fields)
+    parser = make_parser_format_unrecognised(fields)
     assert parser.can_parse() is False
 
     # Action or Time fields are missing
     for field in ["Action", "Time"]:
         fields = list(Trading212Parser.FIELDS)
         fields.remove(field)
-        parser = create_parser_format_unrecognised(fields)
+        parser = make_parser_format_unrecognised(fields)
         assert parser.can_parse() is False, f"{field} field test failed"
 
 
-def test_parser_invalid_transaction_type(create_parser):
+def test_parser_invalid_transaction_type(make_parser):
     order = dict(ACQUISITION)
     order["Action"] = "NOT-VALID"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(TransactionTypeError):
         parser.parse()
@@ -377,78 +377,78 @@ def test_parser_invalid_transaction_type(create_parser):
     parser.parse()
 
 
-def test_parser_order_too_old(create_parser):
+def test_parser_order_too_old(make_parser):
     order = dict(ACQUISITION)
     order["Time"] = "2008-04-05T09:00:00.000Z"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(OrderDateError):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_stamp_duty_reserve_tax_non_zero(create_parser):
+def test_parser_stamp_duty_and_stamp_duty_reserve_tax_non_zero(make_parser):
     order = dict(ACQUISITION)
     order["Stamp duty reserve tax (GBP)"] = "5.2"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_finra_fee_non_zero(create_parser):
+def test_parser_stamp_duty_and_finra_fee_non_zero(make_parser):
     order = dict(ACQUISITION)
     order["Finra fee"] = "1.2"
     order["Currency (Finra fee)"] = "GBP"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_sec_fee_non_zero(create_parser):
+def test_parser_stamp_duty_and_sec_fee_non_zero(make_parser):
     order = dict(ACQUISITION)
     order["Transaction fee"] = "1.2"
     order["Currency (Transaction fee)"] = "USD"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_currency_conversion_fee_different_than_total_currency(create_parser):
+def test_parser_currency_conversion_fee_different_than_total_currency(make_parser):
     order = dict(ACQUISITION)
     order["Total"] = "1326.20"
     order["Currency conversion fee"] = "1.2"
     order["Currency (Currency conversion fee)"] = "USD"
     del order["Stamp duty (GBP)"]
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(TypeError):
         parser.parse()
 
 
-def test_parser_dividend_tax_withheld_in_different_currency(create_parser):
+def test_parser_dividend_tax_withheld_in_different_currency(make_parser):
     dividend = dict(DIVIDEND)
     dividend["Currency (Withholding tax)"] = "EUR"
-    parser = create_parser([dividend])
+    parser = make_parser([dividend])
     assert parser.can_parse()
     with pytest.raises(ParseError):
         parser.parse()
 
 
-def test_parser_calculated_amount_mismatch(create_parser):
+def test_parser_calculated_amount_mismatch(make_parser):
     order = dict(ACQUISITION)
     order["Total"] = "7.5"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
         parser.parse()
 
 
-def test_parser_dividend_with_conversion_fee(create_parser):
+def test_parser_dividend_with_conversion_fee(make_parser):
     dividend = dict(DIVIDEND)
     dividend["Currency conversion fee"] = "1.2"
-    parser = create_parser([dividend])
+    parser = make_parser([dividend])
     assert parser.can_parse()
     with pytest.raises(ParseError):
         parser.parse()

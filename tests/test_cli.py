@@ -20,9 +20,9 @@ TEST_DIR = PROJECT_DIR / "tests" / "test_cli"
 EX_OK = getattr(os, "EX_OK", 0)
 
 
-@pytest.fixture(name="execute")
-def _execute(tmp_path) -> Callable:
-    def _execute(
+@pytest.fixture
+def execute(tmp_path) -> Callable:
+    def _wrapper(
         args: Sequence[str],
         quiet: bool = True,
         verbose: bool = False,
@@ -48,7 +48,7 @@ def _execute(tmp_path) -> Callable:
         runner = CliRunner(mix_stderr=False)
         return runner.invoke(app, [*opts, *args])
 
-    return _execute
+    return _wrapper
 
 
 test_data1 = [

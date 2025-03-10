@@ -64,11 +64,11 @@ DIVIDEND: Final = {
 }
 
 
-@pytest.fixture(name="create_parser")
-def fixture_create_parser(tmp_path) -> Callable:
+@pytest.fixture
+def make_parser(tmp_path) -> Callable:
     config.reset()
 
-    def _create_parser(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
+    def _wrapper(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=FreetradeParser.FIELDS)
@@ -76,11 +76,11 @@ def fixture_create_parser(tmp_path) -> Callable:
             writer.writerows(rows)
         return FreetradeParser(csv_file)
 
-    return _create_parser
+    return _wrapper
 
 
-@pytest.fixture(name="create_parser_format_unrecognised")
-def fixture_create_parser_format_unrecognised(tmp_path) -> FreetradeParser:
+@pytest.fixture
+def make_parser_format_unrecognised(tmp_path) -> FreetradeParser:
     csv_file = tmp_path / "transactions.csv"
     with csv_file.open("w", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=("Field1", "Field2"))
@@ -94,7 +94,7 @@ def fixture_create_parser_format_unrecognised(tmp_path) -> FreetradeParser:
     return FreetradeParser(csv_file)
 
 
-def test_parser_happy_path(create_parser):
+def test_parser_happy_path(make_parser):
     acquisition = ACQUISITION
     disposal = DISPOSAL
     dividend = DIVIDEND
@@ -123,7 +123,7 @@ def test_parser_happy_path(create_parser):
     monthly_statement = {"Type": "MONTHLY_STATEMENT"}
     tax_certificate = {"Type": "TAX_CERTIFICATE"}
 
-    parser = create_parser(
+    parser = make_parser(
         [
             acquisition,
             disposal,
@@ -187,15 +187,15 @@ def test_parser_happy_path(create_parser):
     assert interest.total == sterling("4.65")
 
 
-def test_parser_cannot_parse(create_parser_format_unrecognised):
-    parser = create_parser_format_unrecognised
+def test_parser_cannot_parse(make_parser_format_unrecognised):
+    parser = make_parser_format_unrecognised
     assert parser.can_parse() is False
 
 
-def test_parser_invalid_transaction_type(create_parser):
+def test_parser_invalid_transaction_type(make_parser):
     order = dict(ACQUISITION)
     order["Type"] = "NOT-VALID"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(TransactionTypeError):
         parser.parse()
@@ -204,46 +204,46 @@ def test_parser_invalid_transaction_type(create_parser):
     parser.parse()
 
 
-def test_parser_invalid_buy_sell(create_parser):
+def test_parser_invalid_buy_sell(make_parser):
     order = dict(ACQUISITION)
     order["Buy / Sell"] = "NOT-VALID"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(TransactionTypeError):
         parser.parse()
 
 
-def test_parser_stamp_duty_and_fx_fee_non_zero(create_parser):
+def test_parser_stamp_duty_and_fx_fee_non_zero(make_parser):
     order = dict(ACQUISITION)
     order["FX Fee Amount"] = "1.2"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
         parser.parse()
 
 
-def test_parser_order_too_old(create_parser):
+def test_parser_order_too_old(make_parser):
     order = dict(ACQUISITION)
     order["Timestamp"] = "2008-04-05T09:00:00.000Z"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(OrderDateError):
         parser.parse()
 
 
-def test_parser_order_calculated_amount_mismatch(create_parser):
+def test_parser_order_calculated_amount_mismatch(make_parser):
     order = dict(ACQUISITION)
     order["Total Amount"] = "7.5"
-    parser = create_parser([order])
+    parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
         parser.parse()
 
 
-def test_parser_dividend_calculated_amount_mismatch(create_parser):
+def test_parser_dividend_calculated_amount_mismatch(make_parser):
     dividend = dict(DIVIDEND)
     dividend["Total Amount"] = "2.50"
-    parser = create_parser([dividend])
+    parser = make_parser([dividend])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
         parser.parse()
