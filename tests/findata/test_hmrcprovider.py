@@ -11,14 +11,14 @@ from moneyed import EUR, GBP, USD
 from investir.findata import DataProviderError, HmrcMonthlyExhangeRateProvider
 
 
-@pytest.fixture(name="provider")
-def _provider(tmp_path):
+@pytest.fixture
+def provider(tmp_path):
     return HmrcMonthlyExhangeRateProvider(cache_file=tmp_path / "rates.json")
 
 
-@pytest.fixture(name="urlopen_mocker")
-def _urlopen_mocker(mocker) -> Callable:
-    def _method(response: str | Exception) -> None:
+@pytest.fixture
+def urlopen_mocker(mocker) -> Callable:
+    def _wrapper(response: str | Exception) -> None:
         side_effect = response
         if isinstance(response, str):
             header = bytes("Currency Code,Currency Units per £1\n", "utf-8")
@@ -41,7 +41,7 @@ def _urlopen_mocker(mocker) -> Callable:
 
         return mock
 
-    return _method
+    return _wrapper
 
 
 def test_hmrc_historical_exchange_rate_provider(provider, urlopen_mocker):

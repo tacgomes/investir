@@ -22,9 +22,9 @@ from investir.typing import ISIN, Ticker
 from investir.utils import sterling
 
 
-@pytest.fixture(name="make_tax_calculator")
-def _make_tax_calculator(mocker, tmp_path) -> Callable:
-    def _method(
+@pytest.fixture
+def make_tax_calculator(mocker, tmp_path) -> Callable:
+    def _wrapper(
         orders: Sequence[Order],
         splits: Sequence[Split] | None = None,
         price: Money | Exception | None = None,
@@ -60,7 +60,7 @@ def _make_tax_calculator(mocker, tmp_path) -> Callable:
 
         return TaxCalculator(trhistory, findata)
 
-    return _method
+    return _wrapper
 
 
 def test_section_104_disposal(make_tax_calculator):

@@ -18,50 +18,50 @@ from investir.findata import (
 from investir.typing import ISIN
 
 
-@pytest.fixture(name="si_provider")
-def _si_provider(tmp_path):
+@pytest.fixture
+def si_provider(tmp_path):
     return YahooFinanceSecurityInfoProvider(cache_file=tmp_path / "securities.yaml")
 
 
-@pytest.fixture(name="lr_provider")
-def _lr_provider(tmp_path):
+@pytest.fixture
+def lr_provider(tmp_path):
     return YahooFinanceLiveExchangeRateProvider()
 
 
-@pytest.fixture(name="hr_provider")
-def _hr_provider(tmp_path):
+@pytest.fixture
+def hr_provider(tmp_path):
     return YahooFinanceHistoricalExchangeRateProvider(
         cache_file=tmp_path / "rates.json"
     )
 
 
-@pytest.fixture(name="ticker_info")
-def _ticker_info(mocker) -> Callable:
-    def _method(info: Mapping[str, Any] | Exception) -> None:
+@pytest.fixture
+def ticker_info(mocker) -> Callable:
+    def _wrapper(info: Mapping[str, Any] | Exception) -> None:
         return mocker.patch(
             "yfinance.Ticker.info",
             return_value=info,
             new_callable=mocker.PropertyMock,
         )
 
-    return _method
+    return _wrapper
 
 
 @pytest.fixture(name="ticker_splits")
 def _ticker_splits(mocker) -> Callable:
-    def _method(splits: pd.Series | None = None) -> None:
+    def _wrapper(splits: pd.Series | None = None) -> None:
         return mocker.patch(
             "yfinance.Ticker.splits",
             return_value=splits,
             new_callable=mocker.PropertyMock,
         )
 
-    return _method
+    return _wrapper
 
 
 @pytest.fixture(name="history_mocker")
 def _history_mocker(mocker) -> Callable:
-    def _method(response: pd.DataFrame | Exception | None = None) -> None:
+    def _wrapper(response: pd.DataFrame | Exception | None = None) -> None:
         side_effect = response
         if isinstance(response, pd.DataFrame):
             side_effect = [response]  # type: ignore[assignment]
@@ -73,7 +73,7 @@ def _history_mocker(mocker) -> Callable:
 
         return mock
 
-    return _method
+    return _wrapper
 
 
 def test_yfinance_security_info_provider_get_info(

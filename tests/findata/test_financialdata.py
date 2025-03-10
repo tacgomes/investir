@@ -26,9 +26,9 @@ class DataProviderMocks(NamedTuple):
     get_rate_historical: Mock
 
 
-@pytest.fixture(name="make_financial_data")
-def _make_financial_data(mocker) -> Callable:
-    def _method(
+@pytest.fixture
+def make_financial_data(mocker) -> Callable:
+    def _wrapper(
         security_info: SecurityInfo | Exception | None = None,
         price: Money | Exception | None = None,
         live_rate: Decimal | Exception | None = None,
@@ -59,7 +59,7 @@ def _make_financial_data(mocker) -> Callable:
 
         return findata, mocks
 
-    return _method
+    return _wrapper
 
 
 def test_get_security_info(make_financial_data):
