@@ -96,13 +96,13 @@ class Section104Holding:
         self.cost -= cost
 
 
-def calculate_capital_gains(func: FuncType) -> FuncType:
-    def _decorator(self, *args, **kwargs):
+def lazycalc(func: FuncType) -> FuncType:
+    def _wrapper(self, *args, **kwargs):
         if not self._capital_gains and not self._holdings:
             self._calculate_capital_gains()
         return func(self, *args, **kwargs)
 
-    return cast(FuncType, _decorator)
+    return cast(FuncType, _wrapper)
 
 
 class TaxCalculator:
@@ -114,7 +114,7 @@ class TaxCalculator:
         self._holdings: dict[ISIN, Section104Holding] = {}
         self._capital_gains: dict[TaxYear, list[CapitalGain]] = defaultdict(list)
 
-    @calculate_capital_gains
+    @lazycalc
     def capital_gains(self, tax_year: TaxYear | None = None) -> Sequence[CapitalGain]:
         if tax_year is not None:
             return self._capital_gains.get(tax_year, [])
@@ -122,15 +122,15 @@ class TaxCalculator:
         return [cg for cg_group in self._capital_gains.values() for cg in cg_group]
 
     @property
-    @calculate_capital_gains
+    @lazycalc
     def holdings(self) -> Sequence[Section104Holding]:
         return list(self._holdings.values())
 
-    @calculate_capital_gains
+    @lazycalc
     def holding(self, isin: ISIN) -> Section104Holding | None:
         return self._holdings.get(isin)
 
-    @calculate_capital_gains
+    @lazycalc
     def get_holding_value(self, isin: ISIN) -> Decimal | None:
         holding = self._holdings[isin]
         security_name = self._trhistory.get_security_name(isin) or ""
@@ -141,7 +141,7 @@ class TaxCalculator:
 
         return None
 
-    @calculate_capital_gains
+    @lazycalc
     def disposal_years(self) -> Sequence[TaxYear]:
         return list(self._capital_gains.keys())
 
