@@ -59,7 +59,6 @@ FilesArg = Annotated[
     typer.Argument(
         exists=True,
         dir_okay=False,
-        readable=True,
         help="CSV files with the account activity.",
         show_default=False,
     ),
@@ -214,7 +213,6 @@ def main_callback(
     cache_dir: Annotated[
         Path,
         typer.Option(
-            dir_okay=True,
             file_okay=False,
             help=(
                 "Location where to store cache files with securities information "
