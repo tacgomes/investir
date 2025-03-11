@@ -156,7 +156,7 @@ class YahooFinanceLiveExchangeRateProvider:
 
 
 class YahooFinanceHistoricalExchangeRateProvider:
-    def __init__(self, cache_file: Path | None = None):
+    def __init__(self, cache_file: Path | None = None) -> None:
         self._cache: dict[str, dict[str, str]] = {}
         self._cache_file = cache_file or config.cache_dir / "yahoo-finance-rates.json"
         self._cache_loaded = False
