@@ -9,6 +9,7 @@ from investir.findata.dataprovider import (
 )
 from investir.findata.financialdata import FinancialData
 from investir.findata.hmrcprovider import HmrcMonthlyExhangeRateProvider
+from investir.findata.localprovider import LocalHistoricalExchangeRateProvider
 from investir.findata.types import SecurityInfo, Split
 from investir.findata.yahoofinanceprovider import (
     YahooFinanceHistoricalExchangeRateProvider,
@@ -23,6 +24,7 @@ __all__ = [
     "HistoricalExchangeRateProvider",
     "HmrcMonthlyExhangeRateProvider",
     "LiveExchangeRateProvider",
+    "LocalHistoricalExchangeRateProvider",
     "ProviderError",
     "RequestError",
     "SecurityInfo",
