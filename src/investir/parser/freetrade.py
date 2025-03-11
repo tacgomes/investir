@@ -1,6 +1,6 @@
-import csv
 import logging
 from collections.abc import Mapping
+from csv import DictReader
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
@@ -76,7 +76,7 @@ class FreetradeParser:
 
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
-            reader = csv.DictReader(file)
+            reader = DictReader(file)
             return tuple(reader.fieldnames or []) == self.FIELDS
 
     def parse(self) -> ParsingResult:
@@ -91,7 +91,7 @@ class FreetradeParser:
         }
 
         with self._csv_file.open(encoding="utf-8") as file:
-            reader = csv.DictReader(file)
+            reader = DictReader(file)
 
             # Freetrade transactions are ordered from most recent to
             # oldest but we want the order ID to increase from the

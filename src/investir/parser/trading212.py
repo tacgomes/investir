@@ -1,6 +1,6 @@
-import csv
 import logging
 from collections.abc import Mapping
+from csv import DictReader
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -99,7 +99,7 @@ class Trading212Parser:
 
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
-            reader = csv.DictReader(file)
+            reader = DictReader(file)
             fieldnames = reader.fieldnames or []
 
         if any(f not in self.FIELDS for f in fieldnames):
@@ -136,7 +136,7 @@ class Trading212Parser:
         }
 
         with self._csv_file.open(encoding="utf-8") as file:
-            for row in csv.DictReader(file):
+            for row in DictReader(file):
                 tr_type = row["Action"]
 
                 if tr_type not in parse_fn:
