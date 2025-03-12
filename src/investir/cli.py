@@ -16,6 +16,7 @@ from investir.findata import (
     FinancialData,
     HistoricalExchangeRateProvider,
     HmrcMonthlyExhangeRateProvider,
+    LocalHistoricalExchangeRateProvider,
     YahooFinanceHistoricalExchangeRateProvider,
     YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
@@ -87,7 +88,18 @@ IncludeFxFeesOpt = Annotated[
 
 RatesProviderOpt = Annotated[
     RatesProvider,
-    typer.Option("--rates-provider", "-p", help="Historical exchange rates provider."),
+    typer.Option(
+        "--rates-provider",
+        help="Online provider for historical exchange rates. "
+        "This option is ignored if --rates-file is also used.",
+    ),
+]
+
+RatesFileOpt = Annotated[
+    Optional[Path],
+    typer.Option(
+        exists=True, dir_okay=False, help="File with historical exchange rates."
+    ),
 ]
 
 OutputFormatOpt = Annotated[
@@ -152,11 +164,16 @@ def make_output_generator(
     live_rates_provider = YahooFinanceLiveExchangeRateProvider()
     historical_rates_provider: HistoricalExchangeRateProvider
 
-    match ctx.params.get("rates_provider"):
-        case RatesProvider.YAHOO_FINANCE | None:
-            historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
-        case RatesProvider.HMRC_MONTHLY:  # pragma: no cover
-            historical_rates_provider = HmrcMonthlyExhangeRateProvider()
+    if (rates_file := ctx.params.get("rates_file")) is not None:  # pragma: no cover
+        historical_rates_provider = LocalHistoricalExchangeRateProvider(
+            Path(rates_file)
+        )
+    else:
+        match ctx.params.get("rates_provider"):
+            case RatesProvider.YAHOO_FINANCE | None:
+                historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
+            case RatesProvider.HMRC_MONTHLY:  #  pragma: no cover
+                historical_rates_provider = HmrcMonthlyExhangeRateProvider()
 
     findata = FinancialData(
         security_info_provider, live_rates_provider, historical_rates_provider
@@ -364,6 +381,7 @@ def capital_gains_command(
     include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
     rates_provider: RatesProviderOpt = RatesProvider.YAHOO_FINANCE,
+    rates_file: RatesFileOpt = None,
 ) -> None:
     """
     Show capital gains report.
@@ -399,6 +417,7 @@ def holdings_command(
     include_fx_fees: IncludeFxFeesOpt = config.include_fx_fees,
     format: OutputFormatOpt = OutputFormat.TEXT,
     rates_provider: RatesProviderOpt = RatesProvider.YAHOO_FINANCE,
+    rates_file: RatesFileOpt = None,
 ) -> None:
     """
     Show current holdings.
