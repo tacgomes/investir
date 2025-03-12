@@ -260,28 +260,28 @@ def test_holdings_no_results(execute):
     assert result.exit_code == EX_OK
 
 
-def test_verbosity_mutually_exclusive_filters(execute):
+def test_quiet_and_verbose_options_are_mutually_exclusive(execute):
     result = execute(["--quiet", "--verbose", "orders", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
-def test_orders_command_mutually_exclusive_filters(execute):
+def test_acquisitions_and_disposals_options_are_mutually_exclusive(execute):
     result = execute(["orders", "--acquisitions", "--disposals", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
-def test_transfers_command_mutually_exclusive_filters(execute):
+def test_deposits_and_withdrawals_options_are_mutually_exclusive(execute):
     result = execute(["transfers", "--deposits", "--withdrawals", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
     assert result.exit_code != EX_OK
 
 
-def test_capital_gains_command_mutually_exclusive_filters(execute):
+def test_gains_and_losses_options_are_mutually_exclusive(execute):
     result = execute(["capital-gains", "--gains", "--losses", DATA_FILE1])
     assert not result.stdout
     assert "Usage:" in result.stderr
