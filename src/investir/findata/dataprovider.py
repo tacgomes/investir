@@ -4,11 +4,12 @@ from typing import Protocol
 
 from moneyed import Currency, Money
 
+from investir.exceptions import InvestirError
 from investir.findata.types import SecurityInfo
 from investir.typing import ISIN
 
 
-class ProviderError(Exception):
+class ProviderError(InvestirError):
     pass
 
 
