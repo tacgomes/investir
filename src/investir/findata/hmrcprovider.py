@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib import request
 from urllib.error import URLError
 
-from moneyed import Currency
+from moneyed import GBP, Currency
 
 from investir.config import config
 from investir.const import CURRENCY_CODES
@@ -83,11 +83,14 @@ class HmrcMonthlyExhangeRateProvider:
         key = date_to_key(rate_date)
         rates = self._cache.get(key, {})
 
-        if base.code == "GBP":
+        if base == GBP:
             if rate := rates.get(quote.code):
                 return Decimal(rate)
-        elif rate := rates.get(base.code):
-            return Decimal("1.0") / Decimal(rate)
+        elif quote == GBP:
+            if rate := rates.get(base.code):
+                return Decimal("1.0") / Decimal(rate)
+        else:
+            raise ValueError("Either 'base' or 'quote' must be 'GBP'")
 
         return None
 

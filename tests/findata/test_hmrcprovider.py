@@ -101,9 +101,12 @@ def test_hmrc_historical_exchange_rate_provider_with_data_not_found_error(
         provider.get_rate(GBP, EUR, date(2024, 1, 1))
 
 
-def test_hmrc_historical_exchange_rate_provider_with_cache_miss_error(
-    provider, urlopen_mocker
-):
+def test_hmrc_historical_exchange_rate_provider_with_cache_miss_error(provider):
     config.offline = True
     with pytest.raises(CacheMissError):
         provider.get_rate(GBP, EUR, date(2024, 1, 1))
+
+
+def test_hmrc_historical_exchange_rate_provider_with_invalid_arguments(provider):
+    with pytest.raises(ValueError):
+        provider.get_rate(USD, EUR, date(2024, 1, 1))
