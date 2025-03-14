@@ -6,14 +6,11 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, TypeAlias, TypeVar, cast
 
-from moneyed import Money
+from moneyed import GBP, Money
 
 from investir.config import config
 from investir.const import BASE_CURRENCY
-from investir.exceptions import (
-    IncompleteRecordsError,
-    InvestirError,
-)
+from investir.exceptions import IncompleteRecordsError, InvestirError
 from investir.findata import FinancialData
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TransactionHistory
@@ -148,14 +145,17 @@ class TaxCalculator:
     def _calculate_capital_gains(self) -> None:
         logger.info("Calculating capital gains")
 
-        self._validate_orders()
-
         orders = self._trhistory.orders
 
         # Exclude forex fees from the "total" and "fees" fields if the
         # include_fx_fees setting is false.
         if config.include_fx_fees is False:
             orders = [self._exclude_fx_fees(o) for o in orders]
+
+        # Convert acquisitions not paid in pound sterling or disposals
+        # not received in pound sterling to use monetary values in this
+        # currency.
+        orders = [self._convert_to_sterling(o) for o in orders]
 
         # Normalise the orders by retroactively adjusting their share
         # quantity for any eventual share sub-division or share
@@ -194,16 +194,6 @@ class TaxCalculator:
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.isin)
             )
 
-    def _validate_orders(self) -> None:
-        for order in self._trhistory.orders:
-            if (
-                order.total.currency != BASE_CURRENCY
-                or order.fees.total.currency != BASE_CURRENCY
-            ):
-                raise InvestirError(
-                    f"Orders with a non-GBP total are not supported: {order}"
-                )
-
     def _exclude_fx_fees(self, order: Order) -> Order:
         if order.fees.forex:
             if isinstance(order, Acquisition):
@@ -216,6 +206,35 @@ class TaxCalculator:
                 total=total,
                 fees=replace(order.fees, forex=None),
                 notes="FX fees removed from order {order.number}",
+            )
+
+        return order
+
+    def _convert_to_sterling(self, order: Order) -> Order:
+        def convert(m):
+            if m is None:
+                return m
+            if (m := self._findata.convert_money(m, GBP, order.date)) is None:
+                raise InvestirError(
+                    f"Failed to get historical exchange rate for "
+                    f"GBP-{order.total.currency} on {order.date}"
+                )
+            return m
+
+        if (order.total.currency, order.fees.total.currency) != (GBP, GBP):
+            total = convert(order.total)
+            fees = replace(
+                order.fees,
+                stamp_duty=convert(order.fees.stamp_duty),
+                forex=convert(order.fees.forex),
+                finra=convert(order.fees.finra),
+                sec=convert(order.fees.sec),
+            )
+            return replace(
+                order,
+                total=total,
+                fees=fees,
+                notes="Conversion to sterling from order {order.number}",
             )
 
         return order
