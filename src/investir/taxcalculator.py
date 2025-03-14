@@ -84,16 +84,16 @@ class CapitalGain:
 @dataclass
 class Section104Holding:
     isin: ISIN
-    quantity: Decimal
     cost: Decimal
+    quantity: Decimal
 
-    def increase(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
-        self.quantity += quantity
+    def add(self, cost: Decimal, quantity: Decimal) -> None:
         self.cost += cost
+        self.quantity += quantity
 
-    def decrease(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
-        self.quantity -= quantity
+    def remove(self, cost: Decimal, quantity: Decimal) -> None:
         self.cost -= cost
+        self.quantity -= quantity
 
 
 def lazycalc(func: FuncType) -> FuncType:
@@ -150,15 +150,17 @@ class TaxCalculator:
 
         self._validate_orders()
 
-        # First normalise the orders by retroactively adjusting their
-        # share quantity for any eventual share sub-division or share
-        # consolidation event.
-        orders = self._normalise_orders(self._trhistory.orders)
+        orders = self._trhistory.orders
 
-        # Exclude forex fees from the "total" and "fees" fields if the
-        # include_fx_fees setting is false.
+        # Exclude forex fees from the `total` and `fees` fields if
+        # necessary.
         if config.include_fx_fees is False:
-            orders = self._exclude_unallowable_costs(orders)
+            orders = [self._exclude_fx_fees(o) for o in orders]
+
+        # Normalise the orders by retroactively adjusting their share
+        # quantity for any eventual share sub-division or share
+        # consolidation event.
+        orders = [self._normalise_quantity(o) for o in orders]
 
         # Group together orders that have the same isin, date and type.
         same_day = self._group_same_day(orders)
@@ -202,34 +204,27 @@ class TaxCalculator:
                     f"Orders with a non-GBP total are not supported: {order}"
                 )
 
-    def _normalise_orders(self, orders: Sequence[Order]) -> Sequence[Order]:
-        return [
-            o.adjust_quantity(
-                self._findata.get_security_info(o.isin, o.name, o.timestamp).splits
-            )
-            for o in orders
-        ]
-
-    def _exclude_unallowable_costs(self, orders: Sequence[Order]) -> Sequence[Order]:
-        new_orders = []
-        for order in orders:
-            if order.fees.forex:
-                if isinstance(order, Acquisition):
-                    total = order.total - order.fees.forex
-                else:
-                    total = order.total + order.fees.forex
-
-                new_orders.append(
-                    replace(
-                        order,
-                        total=total,
-                        fees=replace(order.fees, forex=None),
-                        notes="FX fees removed from order {order.number}",
-                    )
-                )
+    def _exclude_fx_fees(self, order: Order) -> Order:
+        if order.fees.forex:
+            if isinstance(order, Acquisition):
+                total = order.total - order.fees.forex
             else:
-                new_orders.append(order)
-        return new_orders
+                total = order.total + order.fees.forex
+
+            return replace(
+                order,
+                total=total,
+                fees=replace(order.fees, forex=None),
+                notes="Forex fees removed from order {order.number}",
+            )
+
+        return order
+
+    def _normalise_quantity(self, order: Order) -> Order:
+        security_info = self._findata.get_security_info(
+            order.isin, order.name, order.timestamp
+        )
+        return order.adjust_quantity(security_info.splits)
 
     def _group_same_day(self, orders: Sequence[Order]) -> GroupDict:
         same_day = defaultdict(list)
@@ -310,16 +305,16 @@ class TaxCalculator:
 
             if isinstance(order, Acquisition):
                 if holding is not None:
-                    holding.increase(order.date, order.quantity, order.total.amount)
+                    holding.add(order.total.amount, order.quantity)
                 else:
                     self._holdings[isin] = Section104Holding(
-                        isin, order.quantity, order.total.amount
+                        isin, order.total.amount, order.quantity
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:
                     allowable_cost = holding.cost * order.quantity / holding.quantity
 
-                    holding.decrease(order.date, order.quantity, allowable_cost)
+                    holding.remove(allowable_cost, order.quantity)
 
                     if holding.quantity < 0.0:
                         raise_or_warn(
