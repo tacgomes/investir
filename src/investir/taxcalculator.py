@@ -84,16 +84,16 @@ class CapitalGain:
 @dataclass
 class Section104Holding:
     isin: ISIN
-    quantity: Decimal
     cost: Decimal
+    quantity: Decimal
 
-    def increase(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
-        self.quantity += quantity
+    def add(self, cost: Decimal, quantity: Decimal) -> None:
         self.cost += cost
+        self.quantity += quantity
 
-    def decrease(self, _date: date, quantity: Decimal, cost: Decimal) -> None:
-        self.quantity -= quantity
+    def remove(self, cost: Decimal, quantity: Decimal) -> None:
         self.cost -= cost
+        self.quantity -= quantity
 
 
 def lazycalc(func: FuncType) -> FuncType:
@@ -305,16 +305,16 @@ class TaxCalculator:
 
             if isinstance(order, Acquisition):
                 if holding is not None:
-                    holding.increase(order.date, order.quantity, order.total.amount)
+                    holding.add(order.total.amount, order.quantity)
                 else:
                     self._holdings[isin] = Section104Holding(
-                        isin, order.quantity, order.total.amount
+                        isin, order.total.amount, order.quantity
                     )
             elif isinstance(order, Disposal):
                 if holding is not None:
                     allowable_cost = holding.cost * order.quantity / holding.quantity
 
-                    holding.decrease(order.date, order.quantity, allowable_cost)
+                    holding.remove(allowable_cost, order.quantity)
 
                     if holding.quantity < 0.0:
                         raise_or_warn(
