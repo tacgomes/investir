@@ -1,12 +1,36 @@
 import operator
+from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
-from functools import reduce
+from functools import partial, reduce
 from typing import no_type_check
 
 from moneyed import Currency, Money
 
 from investir.const import BASE_CURRENCY
+
+ArithmeticFn = Callable[[Money | None, Money | None], Money | None]
+ScalarFn = Callable[[Money | None], Money | None]
+
+
+def arithmetic_op(fn: ArithmeticFn, a: "Fees", b: "Fees") -> "Fees":
+    return Fees(
+        stamp_duty=fn(a.stamp_duty, b.stamp_duty),
+        forex=fn(a.forex, b.forex),
+        finra=fn(a.finra, b.finra),
+        sec=fn(a.sec, b.sec),
+        default_currency=a.default_currency,
+    )
+
+
+def scalar_op(fn: ScalarFn, fees: "Fees") -> "Fees":
+    return Fees(
+        stamp_duty=fn(fees.stamp_duty),
+        forex=fn(fees.forex),
+        finra=fn(fees.finra),
+        sec=fn(fees.sec),
+        default_currency=fees.default_currency,
+    )
 
 
 @no_type_check
@@ -73,38 +97,14 @@ class Fees:
         return self.default_currency.zero
 
     def __add__(self: "Fees", other: "Fees") -> "Fees":
-        return Fees(
-            stamp_duty=add(self.stamp_duty, other.stamp_duty),
-            forex=add(self.forex, other.forex),
-            finra=add(self.finra, other.finra),
-            sec=add(self.sec, other.sec),
-            default_currency=self.default_currency,
-        )
+        return arithmetic_op(add, self, other)
 
     def __sub__(self: "Fees", other: "Fees") -> "Fees":
-        return Fees(
-            stamp_duty=sub(self.stamp_duty, other.stamp_duty),
-            forex=sub(self.forex, other.forex),
-            finra=sub(self.finra, other.finra),
-            sec=sub(self.sec, other.sec),
-            default_currency=self.default_currency,
-        )
+        return arithmetic_op(sub, self, other)
 
     def __mul__(self: "Fees", val: Decimal) -> "Fees":
-        return Fees(
-            stamp_duty=mul(self.stamp_duty, val),
-            forex=mul(self.forex, val),
-            finra=mul(self.finra, val),
-            sec=mul(self.sec, val),
-            default_currency=self.default_currency,
-        )
+        return scalar_op(partial(mul, v=val), self)
 
     @no_type_check
     def __truediv__(self: "Fees", val: Decimal) -> "Fees":
-        return Fees(
-            stamp_duty=div(self.stamp_duty, val),
-            forex=div(self.forex, val),
-            finra=div(self.finra, val),
-            sec=div(self.sec, val),
-            default_currency=self.default_currency,
-        )
+        return scalar_op(partial(div, v=val), self)
