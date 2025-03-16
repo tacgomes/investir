@@ -6,14 +6,12 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, TypeAlias, TypeVar, cast
 
-from moneyed import Money
+from moneyed import GBP, Money
 
 from investir.config import config
 from investir.const import BASE_CURRENCY
-from investir.exceptions import (
-    IncompleteRecordsError,
-    InvestirError,
-)
+from investir.exceptions import IncompleteRecordsError, InvestirError
+from investir.fees import scalar_op
 from investir.findata import FinancialData
 from investir.transaction import Acquisition, Disposal, Order
 from investir.trhistory import TransactionHistory
@@ -148,9 +146,11 @@ class TaxCalculator:
     def _calculate_capital_gains(self) -> None:
         logger.info("Calculating capital gains")
 
-        self._validate_orders()
-
         orders = self._trhistory.orders
+
+        # Convert acquisitions and disposals not realised in pound
+        # sterling to use monetary values specified in this currency.
+        orders = [self._convert_to_sterling(o) for o in orders]
 
         # Exclude forex fees from the `total` and `fees` fields if
         # necessary.
@@ -194,15 +194,34 @@ class TaxCalculator:
                 events, key=lambda te: (te.disposal.timestamp, te.disposal.isin)
             )
 
-    def _validate_orders(self) -> None:
-        for order in self._trhistory.orders:
-            if (
-                order.total.currency != BASE_CURRENCY
-                or order.fees.total.currency != BASE_CURRENCY
-            ):
+    def _convert_to_sterling(self, order: Order) -> Order:
+        def convert(m):
+            if m is None:
+                return m
+            if (new_m := self._findata.convert_money(m, GBP, order.date)) is None:
                 raise InvestirError(
-                    f"Orders with a non-GBP total are not supported: {order}"
+                    f"Failed to get historical exchange rate for "
+                    f"GBP-{m.currency} on {order.date}"
                 )
+            return new_m
+
+        try:
+            fees_currency = order.fees.total.currency
+        except TypeError:
+            # Multiple fees in different currencies: conversion needed.
+            fees_currency = None
+
+        if (order.total.currency, fees_currency) != (GBP, GBP):
+            total = convert(order.total)
+            fees = scalar_op(convert, order.fees)
+            return replace(
+                order,
+                total=total,
+                fees=fees,
+                notes="Conversion to sterling from order {order.number}",
+            )
+
+        return order
 
     def _exclude_fx_fees(self, order: Order) -> Order:
         if order.fees.forex:
