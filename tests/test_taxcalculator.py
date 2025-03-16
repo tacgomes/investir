@@ -12,6 +12,7 @@ from investir.findata import (
     RequestError,
     SecurityInfo,
     Split,
+    YahooFinanceHistoricalExchangeRateProvider,
     YahooFinanceLiveExchangeRateProvider,
     YahooFinanceSecurityInfoProvider,
 )
@@ -28,7 +29,8 @@ def make_tax_calculator(mocker, tmp_path) -> Callable:
         orders: Sequence[Order],
         splits: Sequence[Split] | None = None,
         price: Money | Exception | None = None,
-        fx_rate: Decimal | Exception | None = None,
+        live_rate: Decimal | Exception | None = None,
+        historical_rates: Sequence[Decimal] | Exception | None = None,
     ) -> TaxCalculator:
         if splits is None:
             splits = []
@@ -37,7 +39,7 @@ def make_tax_calculator(mocker, tmp_path) -> Callable:
 
         security_info_provider = YahooFinanceSecurityInfoProvider()
         live_rates_provider = YahooFinanceLiveExchangeRateProvider()
-        historical_rates_provider = None
+        historical_rates_provider = YahooFinanceHistoricalExchangeRateProvider()
 
         mocker.patch.object(
             security_info_provider,
@@ -49,7 +51,10 @@ def make_tax_calculator(mocker, tmp_path) -> Callable:
             "get_price",
             side_effect=[price],
         )
-        mocker.patch.object(live_rates_provider, "get_rate", side_effect=[fx_rate])
+        mocker.patch.object(live_rates_provider, "get_rate", side_effect=[live_rate])
+        mocker.patch.object(
+            historical_rates_provider, "get_rate", side_effect=historical_rates
+        )
 
         trhistory = TransactionHistory(orders=orders)
         findata = FinancialData(
@@ -667,6 +672,108 @@ def test_integrity_disposing_more_than_acquired(make_tax_calculator):
     taxcalc.capital_gains()
 
 
+def test_capital_gains_on_orders_not_realised_in_pound_sterling(make_tax_calculator):
+    order1 = Acquisition(
+        datetime(2015, 4, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=Money("1000.0", "USD"),
+        quantity=Decimal("10.0"),
+        fees=Fees(finra=Money("0.5", "USD")),
+    )
+
+    order2 = Disposal(
+        datetime(2018, 9, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=Money("1500.0", "USD"),
+        quantity=Decimal("5.0"),
+        fees=Fees(finra=Money("0.6", "USD")),
+    )
+
+    taxcalc = make_tax_calculator(
+        [order1, order2],
+        historical_rates=[
+            Decimal("0.775"),
+            Decimal("0.775"),
+            Decimal("0.76"),
+            Decimal("0.76"),
+        ],
+    )
+
+    capital_gains = taxcalc.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    assert cg.cost == Decimal("387.9560")
+    assert cg.quantity == Decimal("5.0")
+    assert cg.gain_loss == Decimal("752.5000")
+
+    holding = taxcalc.holding(Ticker("X"))
+    assert holding.cost == Decimal("387.5")
+    assert holding.quantity == Decimal("5.0")
+
+    taxcalc = make_tax_calculator(
+        [order1, order2],
+        historical_rates=RequestError,
+    )
+
+    with pytest.raises(InvestirError):
+        taxcalc.capital_gains()
+
+
+def test_capital_gains_on_orders_not_realised_in_pound_sterling_when_rate_not_available(
+    make_tax_calculator,
+):
+    order = Acquisition(
+        datetime(2015, 4, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=Money("1000.0", "USD"),
+        quantity=Decimal("10.0"),
+    )
+
+    taxcalc = make_tax_calculator(
+        [order],
+        historical_rates=RequestError,
+    )
+
+    with pytest.raises(InvestirError):
+        taxcalc.capital_gains()
+
+
+def test_capital_gains_on_orders_with_fees_in_different_currencies(make_tax_calculator):
+    order1 = Acquisition(
+        datetime(2015, 4, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=sterling("1000.0"),
+        quantity=Decimal("10.0"),
+    )
+
+    order2 = Disposal(
+        datetime(2018, 9, 1, tzinfo=timezone.utc),
+        isin=ISIN("X"),
+        total=sterling("1500.0"),
+        quantity=Decimal("5.0"),
+        fees=Fees(finra=Money("1.5", "USD"), sec=Money("2.4", "EUR")),
+    )
+
+    taxcalc = make_tax_calculator(
+        [order1, order2],
+        historical_rates=[
+            Decimal("0.775"),
+            Decimal("0.854"),
+        ],
+    )
+
+    capital_gains = taxcalc.capital_gains()
+    assert len(capital_gains) == 1
+
+    cg = capital_gains[0]
+    # Disposal fees are added to the cost. So
+    # Cost (GBP) = 500 + (1.5 * 0.775) + (2.4 * 0.854)
+    assert cg.cost == Decimal("503.2121")
+    assert cg.quantity == Decimal("5.0")
+    assert cg.gain_loss == Decimal("1000.0")
+
+
 def test_capital_gains_on_orders_with_forex_fees_excluded(
     make_tax_calculator,
 ):
@@ -824,7 +931,7 @@ def test_get_holding_value_with_currency_conversion(make_tax_calculator):
     taxcalc = make_tax_calculator(
         [order],
         price=Money("15.0", USD),
-        fx_rate=Decimal("0.75"),
+        live_rate=Decimal("0.75"),
     )
     assert taxcalc.get_holding_value(ISIN("X")) == Decimal("112.5")
 
@@ -842,32 +949,6 @@ def test_get_holding_value_when_price_or_fx_rate_not_available(
 
     taxcalc = make_tax_calculator([order], price=RequestError)
     assert taxcalc.get_holding_value(ISIN("X")) is None
-
-
-def test_orders_realised_not_in_gbp_are_not_allowed(make_tax_calculator):
-    order1 = Acquisition(
-        datetime(2015, 4, 1, tzinfo=timezone.utc),
-        isin=ISIN("LOBS"),
-        total=Money("4150.0", "USD"),
-        quantity=Decimal("1000.0"),
-        fees=Fees(stamp_duty=sterling("150.0")),
-    )
-
-    order2 = Acquisition(
-        datetime(2018, 9, 1, tzinfo=timezone.utc),
-        isin=ISIN("LOBS"),
-        total=sterling("2130.0"),
-        quantity=Decimal("500.0"),
-        fees=Fees(finra=Money("80.0", "USD")),
-    )
-
-    taxcalc = make_tax_calculator([order1])
-    with pytest.raises(InvestirError):
-        taxcalc.capital_gains()
-
-    taxcalc = make_tax_calculator([order2])
-    with pytest.raises(InvestirError):
-        taxcalc.capital_gains()
 
 
 #######################################################################
