@@ -15,14 +15,26 @@ allocation weight and unrealised gain/loss for open positions, share
 buying and selling orders placed, dividends paid out, interest on cash
 earned, and cash deposits or withdrawals made.
 
-A CSV file with your account activity is required as input. This file
-can be exported from your investment platform. Presently, only
-_Freetrade_ and _Trading 212_ are supported, but the project modularity
-facilitates adding support for more.
+A comma-separated values (CSV) file with your account activity is
+required as input. This file can be exported from your investment
+platform(s) of choice. At the moment, only _Freetrade_ and _Trading 212_
+are supported, but the structure of the codebase facilitates adding
+support for additional brokers.
 
-The Yahoo Finance API can be used to find the share sub-division or
-share consolidation events executed for a given corporation, and that
-information is considered when calculating the capital gains.
+Yahoo Finance is queried to find the share sub-division and share
+consolidation events executed for a given company, and that information
+is taken into account when calculating the capital gains.
+
+Share sub-division or share consolidation events executed for a given
+company are queried from Yahoo Finance, and this information is taken
+into account when calculating the capital gains.
+
+Capital gains can also be calculated for orders not realised in pound
+sterling. In this case, it is necessary to convert the monetary values
+to sterling first. The historical exchange rates used in these
+conversions can be sourced from Yahoo Finance, the [exchange rates][hmrc-rates]
+published by HMRC each month, or a local comma-separated values (CSV)
+file.
 
 ## Disclaimer 🔥
 
@@ -191,6 +203,28 @@ $ investir transfers data/freetrade.csv
 > output based on several criteria. Use the `--help` option for any
 > command for a description of all the available options.
 
+## Exchange Rates File
+
+The historical exchange rates used to convert monetary values to
+sterling can be sourced from a local comma-separated values (CSV) file.
+The following example should be self-explanatory regarding the format
+that is required:
+
+    Date,Currency,Rate
+    2025-03-17,USD,1.293198
+    2025-03-17,EUR,1.188523
+    ...
+
+To create a file with exchange rates sourced from Google Finance, on any
+cell of a Google Sheets spreadsheet, enter the following formula and
+then download the spreadsheet as a comma-separated values file:
+
+    =QUERY(GOOGLEFINANCE("GBPUSD", "close", "01/01/2020", TODAY()), "select Col1, 'USD', Col2 label 'USD' 'Currency', Col2 'Rate'")
+
+This formula will populate the spreadsheet with the `GBP` to `USD`
+exchange rates from the beginning of 2020 up to the present date. The
+formula can be adjusted to provide rates for other currencies as well.
+
 ## Hacking
 
 To modify **Investir** and evaluate the changes, clone this repository and
@@ -205,19 +239,6 @@ execute an [editable install]:
 > [!NOTE]
 > Linters and test packages used by this project will also be installed.
 
-## Limitations ⚠️
-
-* No special handling takes place for the accumulation class of shares
-  for an investment fund, where income from dividends or interest are
-  automatically reinvested back into the fund. This means that in
-  practice you might have to pay more tax on your income and less tax on
-  capital gains when you sell the fund than what is reported.
-
-* Multi-currency accounts in Trading 212 are partially supported. It is
-  possible to view orders, dividends, interest and transfers whose total
-  is not in pound sterling, but it is not possible to calculate capital
-  gains tax at the moment.
-
 [ci-badge]: https://github.com/tacgomes/investir/actions/workflows/ci.yml/badge.svg
 [coverage-badge]: https://codecov.io/github/tacgomes/investir/graph/badge.svg?token=I0HHSSD83O
 [version-badge]: https://img.shields.io/pypi/v/investir.svg
@@ -230,5 +251,6 @@ execute an [editable install]:
 [license-url]: https://github.com/tacgomes/investir/blob/master/LICENSE
 
 [share identification rules]: https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg51560
+[hmrc-rates]: https://www.trade-tariff.service.gov.uk/exchange_rates
 [virtual environment]: https://docs.python.org/3/library/venv.html
 [editable install]: https://setuptools.pypa.io/en/latest/userguide/development_mode.html
