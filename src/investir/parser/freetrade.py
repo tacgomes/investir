@@ -65,7 +65,24 @@ class FreetradeParser:
         "Dividend Net Distribution Amount",
         "Dividend Withheld Tax Percentage",
         "Dividend Withheld Tax Amount",
+        "Stock Split Ex Date",
+        "Stock Split Pay Date",
+        "Stock Split New ISIN",
+        "Stock Split Rate of Share Outturn From",
+        "Stock Split Rate of Share Outturn To",
+        "Stock Split Maintain Holding of Initial ISIN",
+        "Stock Split New Share Quantity",
+        "Stock Split Rate of Cash Outturn Amount",
+        "Stock Split Rate of Cash Outturn Currency",
+        "Stock Split Cash Outturn Received Amount",
+        "Stock Split Has Fractional Payout",
+        "Stock Split Rate of Fractional Payout Amount",
+        "Stock Split Rate of Fractional Payout Currency",
+        "Stock Split Fractional Payout Cash Received Amount",
+        "Stock Split Fractional Payout Cash Received Currency",
     )
+
+    REQUIRED: Final = ("Type", "Timestamp", "Total Amount", "Account Currency")
 
     def __init__(self, csv_file: Path) -> None:
         self._csv_file = csv_file
@@ -77,7 +94,12 @@ class FreetradeParser:
     def can_parse(self) -> bool:
         with self._csv_file.open(encoding="utf-8") as file:
             reader = DictReader(file)
-            return tuple(reader.fieldnames or []) == self.FIELDS
+            fieldnames = reader.fieldnames or []
+
+        if any(f not in self.FIELDS for f in fieldnames):
+            return False
+
+        return all(f in fieldnames for f in self.REQUIRED)
 
     def parse(self) -> ParsingResult:
         parse_fn = {
