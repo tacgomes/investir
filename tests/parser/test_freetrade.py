@@ -66,10 +66,12 @@ DIVIDEND: Final = {
 
 @pytest.fixture
 def make_parser(tmp_path) -> Callable:
-    def _wrapper(rows: Sequence[Mapping[str, str]]) -> FreetradeParser:
+    def _wrapper(
+        rows: Sequence[Mapping[str, str]], fields: Sequence[str] | None = None
+    ) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=FreetradeParser.FIELDS)
+            writer = csv.DictWriter(file, fieldnames=fields or FreetradeParser.FIELDS)
             writer.writeheader()
             writer.writerows(rows)
         return FreetradeParser(csv_file)
@@ -183,6 +185,36 @@ def test_parser_happy_path(make_parser):
     interest = parser_result.interest[0]
     assert interest.timestamp == TIMESTAMP
     assert interest.total == sterling("4.65")
+
+
+def test_parser_legacy_export(make_parser):
+    new_fields = set(
+        [
+            "Stock Split Ex Date",
+            "Stock Split Pay Date",
+            "Stock Split New ISIN",
+            "Stock Split Rate of Share Outturn From",
+            "Stock Split Rate of Share Outturn To",
+            "Stock Split Maintain Holding of Initial ISIN",
+            "Stock Split New Share Quantity",
+            "Stock Split Rate of Cash Outturn Amount",
+            "Stock Split Rate of Cash Outturn Currency",
+            "Stock Split Cash Outturn Received Amount",
+            "Stock Split Has Fractional Payout",
+            "Stock Split Rate of Fractional Payout Amount",
+            "Stock Split Rate of Fractional Payout Currency",
+            "Stock Split Fractional Payout Cash Received Amount",
+            "Stock Split Fractional Payout Cash Received Currency",
+        ]
+    )
+
+    legacy_fields = [
+        field for field in FreetradeParser.FIELDS if field not in new_fields
+    ]
+
+    parser = make_parser([ACQUISITION], legacy_fields)
+    assert parser.can_parse()
+    assert len(parser.parse().orders) == 1
 
 
 def test_parser_cannot_parse(make_parser_format_unrecognised):
