@@ -80,18 +80,15 @@ def make_parser(tmp_path) -> Callable:
 
 
 @pytest.fixture
-def make_parser_format_unrecognised(tmp_path) -> FreetradeParser:
-    csv_file = tmp_path / "transactions.csv"
-    with csv_file.open("w", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=("Field1", "Field2"))
-        writer.writeheader()
-        writer.writerow(
-            {
-                "Field1": "A",
-                "Field2": "B",
-            }
-        )
-    return FreetradeParser(csv_file)
+def make_parser_with_custom_fields(tmp_path) -> Callable:
+    def _wrapper(fields: Sequence[str]):
+        csv_file = tmp_path / "transactions.csv"
+        with csv_file.open("w", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=fields)
+            writer.writeheader()
+        return FreetradeParser(csv_file)
+
+    return _wrapper
 
 
 def test_parser_happy_path(make_parser):
@@ -217,8 +214,11 @@ def test_parser_legacy_export(make_parser):
     assert len(parser.parse().orders) == 1
 
 
-def test_parser_cannot_parse(make_parser_format_unrecognised):
-    parser = make_parser_format_unrecognised
+def test_parser_cannot_parse(make_parser_with_custom_fields):
+    fields = list(FreetradeParser.FIELDS)
+    fields.remove("Total Amount")
+
+    parser = make_parser_with_custom_fields(fields)
     assert parser.can_parse() is False
 
 
