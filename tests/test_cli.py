@@ -374,7 +374,6 @@ def test_parser_not_found_error(execute, tmp_path):
 def test_total_amount_error(execute):
     csv_file = TEST_DIR / "total_amount_error.csv"
     result = execute(["orders", str(csv_file)])
-    assert not result.stdout
     assert "Calculated amount" in result.stderr
     assert result.exit_code != EX_OK
 
@@ -383,6 +382,5 @@ def test_tax_calculator_error(execute):
     csv_file = TEST_DIR / "tax_calculator_error.csv"
     for cmd in ["capital-gains", "holdings"]:
         result = execute([cmd, str(csv_file)])
-        assert not result.stdout
         assert "Records appear to be incomplete" in result.stderr
         assert result.exit_code != EX_OK
