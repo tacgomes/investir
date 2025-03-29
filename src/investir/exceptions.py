@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from pathlib import Path
 
@@ -9,17 +9,26 @@ class InvestirError(Exception):
     pass
 
 
+class SkippableError(InvestirError):
+    pass
+
+
+class FieldUnkownError(SkippableError):
+    def __init__(self, fields: Sequence[str]) -> None:
+        super().__init__(f"Unknown fields found: {', '.join(fields)}'")
+
+
 class ParseError(InvestirError):
     def __init__(self, file: Path, row: Mapping[str, str], message: str) -> None:
         super().__init__(f"{file}: {message} on row {row}")
 
 
-class TransactionTypeError(ParseError):
+class TransactionTypeError(ParseError, SkippableError):
     def __init__(self, file: Path, row: Mapping[str, str], tr_type: str) -> None:
         super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
 
 
-class CalculatedAmountError(ParseError):
+class CalculatedAmountError(ParseError, SkippableError):
     def __init__(
         self,
         file: Path,
@@ -51,7 +60,7 @@ class OrderDateError(ParseError):
         )
 
 
-class IncompleteRecordsError(InvestirError):
+class IncompleteRecordsError(SkippableError):
     def __init__(self, isin: ISIN, name: str) -> None:
         super().__init__(
             f"Records appear to be incomplete for {name} ({isin}): "
