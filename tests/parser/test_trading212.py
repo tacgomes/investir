@@ -117,15 +117,15 @@ def make_parser(tmp_path) -> Callable:
 
 
 @pytest.fixture
-def make_parser_format_unrecognised(tmp_path) -> Callable:
-    def _make_parser(fields: Sequence[str]):
+def make_parser_with_custom_fields(tmp_path) -> Callable:
+    def _wrapper(fields: Sequence[str]):
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=fields)
             writer.writeheader()
         return Trading212Parser(csv_file)
 
-    return _make_parser
+    return _wrapper
 
 
 def test_parser_happy_path(make_parser):
@@ -341,25 +341,23 @@ def test_parser_legacy_fields(make_parser):
     assert order.fees.total == sterling("9.3")
 
 
-def test_parser_cannot_parse(make_parser_format_unrecognised):
+def test_parser_cannot_parse(make_parser_with_custom_fields):
     # An unsupported field was found
-    parser = make_parser_format_unrecognised(
-        [*Trading212Parser.FIELDS, "Unknown Field"]
-    )
+    parser = make_parser_with_custom_fields([*Trading212Parser.FIELDS, "Unknown Field"])
     assert parser.can_parse() is False
 
     # Total field is missing
     fields = list(Trading212Parser.FIELDS)
     fields.remove("Total")
     fields.remove("Total (GBP)")
-    parser = make_parser_format_unrecognised(fields)
+    parser = make_parser_with_custom_fields(fields)
     assert parser.can_parse() is False
 
     # Action or Time fields are missing
     for field in ["Action", "Time"]:
         fields = list(Trading212Parser.FIELDS)
         fields.remove(field)
-        parser = make_parser_format_unrecognised(fields)
+        parser = make_parser_with_custom_fields(fields)
         assert parser.can_parse() is False, f"{field} field test failed"
 
 
