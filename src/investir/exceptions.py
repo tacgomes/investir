@@ -6,10 +6,12 @@ from investir.typing import ISIN, Ticker
 
 
 class InvestirError(Exception):
-    pass
+    skippable = False
 
 
 class FieldUnknownError(InvestirError):
+    skippable = True
+
     def __init__(self, fields: Sequence[str]) -> None:
         super().__init__(f"Unknown fields found: {', '.join(fields)}'")
 
@@ -20,11 +22,15 @@ class ParseError(InvestirError):
 
 
 class TransactionTypeError(ParseError):
+    skippable = True
+
     def __init__(self, file: Path, row: Mapping[str, str], tr_type: str) -> None:
         super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
 
 
 class CalculatedAmountError(ParseError):
+    skippable = True
+
     def __init__(
         self,
         file: Path,
@@ -57,6 +63,8 @@ class OrderDateError(ParseError):
 
 
 class IncompleteRecordsError(InvestirError):
+    skippable = True
+
     def __init__(self, isin: ISIN, name: str) -> None:
         super().__init__(
             f"Records appear to be incomplete for {name} ({isin}): "

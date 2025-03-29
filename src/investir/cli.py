@@ -108,8 +108,11 @@ OutputFormatOpt = Annotated[
 ]
 
 
-def abort(message: str) -> None:
-    logger.critical(message)
+def abort(msg: InvestirError | str) -> None:
+    logger.critical(str(msg))
+    if isinstance(msg, InvestirError) and msg.skippable:
+        option = typer.style("--no-strict", fg=typer.colors.CYAN, bold=True)
+        print(f"\nUse the {option} option to ignore this error.")
     raise typer.Exit(code=1)
 
 
@@ -125,7 +128,8 @@ def parse(input_files: Sequence[Path]) -> TransactionHistory:
             try:
                 result = parser.parse()
             except InvestirError as ex:
-                abort(str(ex))
+                abort(ex)
+
             logger.info(
                 "Parsed: "
                 "%s orders, %s dividend payments, %s transfers, %s interest payments",
@@ -403,7 +407,7 @@ def capital_gains_command(
         outputter = make_output_generator(parse(files), ctx)
         outputter.show_capital_gains(format, tax_year, ticker, gains_only, losses_only)
     except InvestirError as ex:
-        abort((str(ex)))
+        abort(ex)
 
 
 @app.command("holdings")
@@ -430,7 +434,7 @@ def holdings_command(
         outputter = make_output_generator(parse(files), ctx)
         outputter.show_holdings(format, ticker, show_gain_loss)
     except InvestirError as ex:
-        abort((str(ex)))
+        abort(ex)
 
 
 def main() -> None:
