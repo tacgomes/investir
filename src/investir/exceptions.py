@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from pathlib import Path
 
@@ -7,6 +7,11 @@ from investir.typing import ISIN, Ticker
 
 class InvestirError(Exception):
     pass
+
+
+class FieldUnknownError(InvestirError):
+    def __init__(self, fields: Sequence[str]) -> None:
+        super().__init__(f"Unknown fields found: {', '.join(fields)}'")
 
 
 class ParseError(InvestirError):

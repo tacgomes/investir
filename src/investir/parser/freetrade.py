@@ -13,6 +13,7 @@ from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
+    FieldUnknownError,
     OrderDateError,
     TransactionTypeError,
 )
@@ -96,9 +97,6 @@ class FreetradeParser:
             reader = DictReader(file)
             fieldnames = reader.fieldnames or []
 
-        if any(f not in self.FIELDS for f in fieldnames):
-            return False
-
         return all(f in fieldnames for f in self.REQUIRED)
 
     def parse(self) -> ParsingResult:
@@ -114,6 +112,12 @@ class FreetradeParser:
 
         with self._csv_file.open(encoding="utf-8") as file:
             reader = DictReader(file)
+
+            unknown_fields = [
+                f for f in reader.fieldnames or [] if f not in self.FIELDS
+            ]
+            if unknown_fields:
+                raise_or_warn(FieldUnknownError(unknown_fields))
 
             # Freetrade transactions are ordered from most recent to
             # oldest but we want the order ID to increase from the

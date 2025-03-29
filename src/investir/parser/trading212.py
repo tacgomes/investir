@@ -13,6 +13,7 @@ from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
+    FieldUnknownError,
     OrderDateError,
     ParseError,
     TransactionTypeError,
@@ -102,9 +103,6 @@ class Trading212Parser:
             reader = DictReader(file)
             fieldnames = reader.fieldnames or []
 
-        if any(f not in self.FIELDS for f in fieldnames):
-            return False
-
         if "Action" not in fieldnames or "Time" not in fieldnames:
             return False
 
@@ -136,7 +134,15 @@ class Trading212Parser:
         }
 
         with self._csv_file.open(encoding="utf-8") as file:
-            for row in DictReader(file):
+            reader = DictReader(file)
+
+            unknown_fields = [
+                f for f in reader.fieldnames or [] if f not in self.FIELDS
+            ]
+            if unknown_fields:
+                raise_or_warn(FieldUnknownError(unknown_fields))
+
+            for row in reader:
                 tr_type = row["Action"]
 
                 if tr_type not in parse_fn:

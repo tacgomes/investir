@@ -10,6 +10,7 @@ from investir.config import config
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
+    FieldUnknownError,
     OrderDateError,
     TransactionTypeError,
 )
@@ -214,12 +215,22 @@ def test_parser_legacy_export(make_parser):
     assert len(parser.parse().orders) == 1
 
 
-def test_parser_cannot_parse(make_parser_with_custom_fields):
+def test_parser_with_missing_required_field(make_parser_with_custom_fields):
     fields = list(FreetradeParser.FIELDS)
     fields.remove("Total Amount")
-
     parser = make_parser_with_custom_fields(fields)
     assert parser.can_parse() is False
+
+
+def test_parser_with_unknown_field(make_parser_with_custom_fields):
+    parser = make_parser_with_custom_fields([*FreetradeParser.FIELDS, "Unknown field"])
+    assert parser.can_parse() is True
+
+    with pytest.raises(FieldUnknownError):
+        parser.parse()
+
+    config.strict = False
+    parser.parse()
 
 
 def test_parser_invalid_transaction_type(make_parser):
