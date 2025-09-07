@@ -1,11 +1,8 @@
-import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar
 
 from investir.parser.types import Parser
-
-logger = logging.getLogger(__name__)
 
 
 class ParserFactory:
@@ -20,11 +17,10 @@ class ParserFactory:
         return _wrapper
 
     @classmethod
-    def create_parser(cls, csv_file: Path) -> Parser | None:
+    def create_parser(cls, csv_file: Path) -> tuple[Parser, str] | tuple[None, None]:
         for parser_name, parser_class in cls._parsers.items():
             parser = parser_class(csv_file)
             if parser.can_parse():
-                logger.info("Found parser: %s", parser_name)
-                return parser
+                return parser, parser_name
 
-        return None
+        return None, None

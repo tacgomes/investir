@@ -123,15 +123,16 @@ def parse(input_files: Sequence[Path]) -> TransactionHistory:
     interest = []
 
     for path in input_files:
-        logger.info("Parsing input file: %s", path)
-        if parser := ParserFactory.create_parser(path):
+        parser, parser_name = ParserFactory.create_parser(path)
+        if parser:
+            logger.info("Parsing '%s' with %s parser", path, parser_name)
             try:
                 result = parser.parse()
             except InvestirError as ex:
                 abort(ex)
 
             logger.info(
-                "Parsed: "
+                "Parsed "
                 "%s orders, %s dividend payments, %s transfers, %s interest payments",
                 len(result.orders),
                 len(result.dividends),
@@ -144,7 +145,7 @@ def parse(input_files: Sequence[Path]) -> TransactionHistory:
             transfers += result.transfers
             interest += result.interest
         else:
-            abort(f"Unable to find a parser for {path}")
+            abort(f"Unable to find a parser for '{path}'")
 
     trhistory = TransactionHistory(
         orders=orders, dividends=dividends, transfers=transfers, interest=interest
