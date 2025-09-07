@@ -18,10 +18,6 @@ class Parser(Protocol):
     def __init__(self, csv_file: Path) -> None:
         pass
 
-    @staticmethod
-    def name() -> str:
-        pass
-
     def can_parse(self) -> bool:
         pass
 
