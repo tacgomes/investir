@@ -151,13 +151,15 @@ def parse(input_files: Sequence[Path]) -> TransactionHistory:
         orders=orders, dividends=dividends, transfers=transfers, interest=interest
     )
 
-    logger.info(
-        "Total: %s orders, %s dividend payments, %s transfers, %s interest payments",
-        len(trhistory.orders),
-        len(trhistory.dividends),
-        len(trhistory.transfers),
-        len(trhistory.interest),
-    )
+    if len(input_files) >= 2:
+        logger.info(
+            "Total: "
+            "%s orders, %s dividend payments, %s transfers, %s interest payments",
+            len(trhistory.orders),
+            len(trhistory.dividends),
+            len(trhistory.transfers),
+            len(trhistory.interest),
+        )
 
     return trhistory
 
