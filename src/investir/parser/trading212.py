@@ -16,7 +16,7 @@ from investir.exceptions import (
     FieldUnknownError,
     OrderDateError,
     ParseError,
-    TransactionTypeError,
+    TransactionUnknownError,
 )
 from investir.fees import Fees
 from investir.parser.factory import ParserFactory
@@ -146,7 +146,7 @@ class Trading212Parser:
                 tr_type = row["Action"]
 
                 if tr_type not in parse_fn:
-                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
+                    raise_or_warn(TransactionUnknownError(self._csv_file, row, tr_type))
                     continue
 
                 if fn := parse_fn.get(tr_type):

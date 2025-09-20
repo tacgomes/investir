@@ -14,7 +14,7 @@ from investir.exceptions import (
     FieldUnknownError,
     OrderDateError,
     ParseError,
-    TransactionTypeError,
+    TransactionUnknownError,
 )
 from investir.parser.trading212 import Trading212Parser
 from investir.transaction import Acquisition, Disposal
@@ -374,7 +374,7 @@ def test_parser_invalid_transaction_type(make_parser):
     order["Action"] = "NOT-VALID"
     parser = make_parser([order])
     assert parser.can_parse()
-    with pytest.raises(TransactionTypeError):
+    with pytest.raises(TransactionUnknownError):
         parser.parse()
 
     config.strict = False
