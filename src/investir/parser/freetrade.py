@@ -15,7 +15,7 @@ from investir.exceptions import (
     FeesError,
     FieldUnknownError,
     OrderDateError,
-    TransactionTypeError,
+    TransactionUnknownError,
 )
 from investir.fees import Fees
 from investir.parser.factory import ParserFactory
@@ -128,7 +128,7 @@ class FreetradeParser:
                 tr_type = row["Type"]
 
                 if tr_type not in parse_fn:
-                    raise_or_warn(TransactionTypeError(self._csv_file, row, tr_type))
+                    raise_or_warn(TransactionUnknownError(self._csv_file, row, tr_type))
                     continue
 
                 if fn := parse_fn.get(tr_type):
@@ -159,7 +159,7 @@ class FreetradeParser:
         fx_fee = read_sterling(row["FX Fee Amount"])
 
         if action not in ("BUY", "SELL"):
-            raise TransactionTypeError(self._csv_file, row, action)
+            raise TransactionUnknownError(self._csv_file, row, action)
 
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)

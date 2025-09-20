@@ -21,11 +21,11 @@ class ParseError(InvestirError):
         super().__init__(f"{file}: {message} on row {row}")
 
 
-class TransactionTypeError(ParseError):
+class TransactionUnknownError(ParseError):
     skippable = True
 
     def __init__(self, file: Path, row: Mapping[str, str], tr_type: str) -> None:
-        super().__init__(file, row, f"Invalid type of transaction '({tr_type})'")
+        super().__init__(file, row, f"Unknown type of transaction '{tr_type}'")
 
 
 class CalculatedAmountError(ParseError):

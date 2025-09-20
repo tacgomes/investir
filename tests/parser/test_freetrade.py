@@ -12,7 +12,7 @@ from investir.exceptions import (
     FeesError,
     FieldUnknownError,
     OrderDateError,
-    TransactionTypeError,
+    TransactionUnknownError,
 )
 from investir.parser.freetrade import FreetradeParser
 from investir.transaction import Acquisition, Disposal
@@ -238,7 +238,7 @@ def test_parser_invalid_transaction_type(make_parser):
     order["Type"] = "NOT-VALID"
     parser = make_parser([order])
     assert parser.can_parse()
-    with pytest.raises(TransactionTypeError):
+    with pytest.raises(TransactionUnknownError):
         parser.parse()
 
     config.strict = False
@@ -250,7 +250,7 @@ def test_parser_invalid_buy_sell(make_parser):
     order["Buy / Sell"] = "NOT-VALID"
     parser = make_parser([order])
     assert parser.can_parse()
-    with pytest.raises(TransactionTypeError):
+    with pytest.raises(TransactionUnknownError):
         parser.parse()
 
 
