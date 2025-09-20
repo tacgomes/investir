@@ -25,6 +25,8 @@ TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
 LEGACY_FIELDS: Final = {
     "Total (GBP)",
+    "Stamp duty (GBP)",
+    "Stamp duty reserve tax (GBP)",
     "Currency conversion fee (GBP)",
     "Transaction fee (GBP)",
     "Finra fee (GBP)",
@@ -34,6 +36,10 @@ LEGACY_FIELDS: Final = {
 RECENT_FIELDS: Final = {
     "Total",
     "Currency (Total)",
+    "Stamp duty",
+    "Currency (Stamp duty)",
+    "Stamp duty reserve tax",
+    "Currency (Stamp duty reserve tax)",
     "Currency conversion fee",
     "Currency (Currency conversion fee)",
     "Finra fee",
@@ -55,7 +61,8 @@ ACQUISITION: Final = {
     "Exchange rate": "1.0",
     "Total": "1330.20",
     "Currency (Total)": "GBP",
-    "Stamp duty (GBP)": "5.2",
+    "Stamp duty": "5.2",
+    "Currency (Stamp duty)": "GBP",
 }
 
 DISPOSAL: Final = {
@@ -70,7 +77,8 @@ DISPOSAL: Final = {
     "Exchange rate": "1.0",
     "Total": "1111.85",
     "Currency (Total)": "GBP",
-    "Stamp duty (GBP)": "",
+    "Stamp duty": "",
+    "Currency (Stamp duty)": "",
     "Currency conversion fee": "6.4",
     "Currency (Currency conversion fee)": "GBP",
 }
@@ -257,13 +265,16 @@ def test_parser_different_dividends_actions(make_parser):
     dividend4 = dict(DIVIDEND)
     dividend4["Action"] = "Dividend (Dividends paid by foreign corporations)"
 
-    parser = make_parser([dividend1, dividend2, dividend3, dividend4])
+    dividend5 = dict(DIVIDEND)
+    dividend5["Action"] = "Dividend (Dividend manufactured payment)"
+
+    parser = make_parser([dividend1, dividend2, dividend3, dividend4, dividend5])
 
     parser_result = parser.parse()
-    assert len(parser_result.dividends) == 4
+    assert len(parser_result.dividends) == 5
 
     dividends = parser_result.dividends
-    assert dividends[0] == dividends[1] == dividends[2] == dividends[3]
+    assert all(dividends[0] == d for d in dividends[1:])
 
 
 def test_parser_different_interest_actions(make_parser):
@@ -283,14 +294,17 @@ def test_parser_different_interest_actions(make_parser):
 
 def test_parser_different_fee_types(make_parser):
     order1 = dict(ACQUISITION)
-    del order1["Stamp duty (GBP)"]
+    del order1["Stamp duty"]
+    del order1["Currency (Stamp duty)"]
     order1["Total"] = "1333.40"
-    order1["Stamp duty reserve tax (GBP)"] = "5.2"
+    order1["Stamp duty reserve tax"] = "5.2"
+    order1["Currency (Stamp duty reserve tax)"] = "GBP"
     order1["Currency conversion fee"] = "3.2"
     order1["Currency (Currency conversion fee)"] = "GBP"
 
     order2 = dict(ACQUISITION)
-    del order2["Stamp duty (GBP)"]
+    del order2["Stamp duty"]
+    del order2["Currency (Stamp duty)"]
     order2["Total"] = "1334.30"
     order2["Currency (Total)"] = "GBP"
     order2["Currency conversion fee"] = "3.2"
@@ -326,20 +340,39 @@ def test_parser_legacy_fields(make_parser):
         "Currency (Price / share)": "GBP",
         "Exchange rate": "1.0",
         "Total (GBP)": "1334.30",
-        "Currency conversion fee (GBP)": "3.2",
-        "Transaction fee (GBP)": "2.1",
-        "Finra fee (GBP)": "4.0",
     }
 
-    parser = make_parser([acquisition], legacy_fields=True)
+    acquisition1 = dict(acquisition)
+    acquisition1["Currency conversion fee (GBP)"] = "3.2"
+    acquisition1["Transaction fee (GBP)"] = "2.1"
+    acquisition1["Finra fee (GBP)"] = "4.0"
+    acquisition1["Total (GBP)"] = "1334.30"
+
+    acquisition2 = dict(acquisition)
+    acquisition2["Total (GBP)"] = "1327.50"
+    acquisition2["Stamp duty (GBP)"] = "2.5"
+
+    acquisition3 = dict(acquisition)
+    acquisition3["Total (GBP)"] = "1327.50"
+    acquisition3["Stamp duty reserve tax (GBP)"] = "2.5"
+
+    parser = make_parser([acquisition1, acquisition2, acquisition3], legacy_fields=True)
     assert parser.can_parse()
 
     parser_result = parser.parse()
-    assert len(parser_result.orders) == 1
+    assert len(parser_result.orders) == 3
 
     order = parser_result.orders[0]
     assert order.total == sterling("1334.30")
     assert order.fees.total == sterling("9.3")
+
+    order = parser_result.orders[1]
+    assert order.total == sterling("1327.50")
+    assert order.fees.total == sterling("2.5")
+
+    order = parser_result.orders[2]
+    assert order.total == sterling("1327.50")
+    assert order.fees.total == sterling("2.5")
 
 
 def test_parser_with_missing_required_field(make_parser_with_custom_fields):
@@ -392,7 +425,8 @@ def test_parser_order_too_old(make_parser):
 
 def test_parser_stamp_duty_and_stamp_duty_reserve_tax_non_zero(make_parser):
     order = dict(ACQUISITION)
-    order["Stamp duty reserve tax (GBP)"] = "5.2"
+    order["Stamp duty reserve tax"] = "5.2"
+    order["Currency (Stamp duty reserve tax)"] = "GBP"
     parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(FeesError):
@@ -424,7 +458,8 @@ def test_parser_currency_conversion_fee_different_than_total_currency(make_parse
     order["Total"] = "1326.20"
     order["Currency conversion fee"] = "1.2"
     order["Currency (Currency conversion fee)"] = "USD"
-    del order["Stamp duty (GBP)"]
+    del order["Stamp duty"]
+    del order["Currency (Stamp duty)"]
     parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(TypeError):

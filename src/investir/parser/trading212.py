@@ -30,7 +30,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
+from investir.utils import dict2str, raise_or_warn, read_decimal
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +65,10 @@ class Trading212Parser:
         "Withholding tax",
         "Currency (Withholding tax)",
         # Fees
-        "Stamp duty (GBP)",
-        "Stamp duty reserve tax (GBP)",
+        "Stamp duty",
+        "Currency (Stamp duty)",
+        "Stamp duty reserve tax",
+        "Currency (Stamp duty reserve tax)",
         "Currency conversion fee",
         "Currency (Currency conversion fee)",
         "Finra fee",
@@ -74,6 +76,8 @@ class Trading212Parser:
         "Transaction fee",
         "Currency (Transaction fee)",
         # Legacy
+        "Stamp duty (GBP)",
+        "Stamp duty reserve tax (GBP)",
         "Total (GBP)",
         "Currency conversion fee (GBP)",
         "Transaction fee (GBP)",
@@ -123,6 +127,7 @@ class Trading212Parser:
             "Dividend (Dividend)": self._parse_dividend,
             "Dividend (Dividends paid by us corporations)": self._parse_dividend,
             "Dividend (Dividends paid by foreign corporations)": self._parse_dividend,
+            "Dividend (Dividend manufactured payment)": self._parse_dividend,
             "Deposit": self._parse_transfer,
             "Withdrawal": self._parse_transfer,
             "Interest on cash": self._parse_interest,
@@ -183,8 +188,8 @@ class Trading212Parser:
         #       field titles would be in the CSV. The list of possible
         #       fees is available at:
         #       https://helpcentre.trading212.com/hc/en-us/articles/360007081637-What-are-the-applicable-stock-exchange-fees
-        stamp_duty = read_sterling(row.get("Stamp duty (GBP)"))
-        stamp_duty_reserve_tax = read_sterling(row.get("Stamp duty reserve tax (GBP)"))
+        stamp_duty = read_money(row, "Stamp duty")
+        stamp_duty_reserve_tax = read_money(row, "Stamp duty reserve tax")
         forex_fee = read_money(row, "Currency conversion fee")
         sec_fee = read_money(row, "Transaction fee")
         finra_fee = read_money(row, "Finra fee")
