@@ -52,6 +52,13 @@ def read_sterling(amount: str | None) -> Money | None:
     )
 
 
+def money(amount: Decimal | str, currency: str) -> Money:
+    if currency == "GBX":
+        return Money(amount=Decimal(amount) / 100, currency="GBP")
+    else:
+        return Money(amount=amount, currency=currency)
+
+
 def sterling(amount: str) -> Money:
     return Money(amount=amount, currency=GBP)
 
