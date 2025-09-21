@@ -35,9 +35,10 @@ from investir.utils import dict2str, raise_or_warn, read_decimal
 logger = logging.getLogger(__name__)
 
 
-def read_money(row: Mapping[str, str], amount_field: str) -> Money | None:
+def read_monetary_field(row: Mapping[str, str], amount_field: str) -> Money | None:
     if amount := row.get(amount_field, "").strip():
-        return Money(amount=amount, currency=row[f"Currency ({amount_field})"])
+        currency_field = f"Currency ({amount_field})"
+        return Money(amount=amount, currency=row[currency_field])
 
     if amount := row.get(f"{amount_field} (GBP)", "").strip():
         return Money(amount=amount, currency="GBP")
@@ -161,7 +162,7 @@ class Trading212Parser:
                     if timestamp.tzinfo is None:
                         timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-                    if (total := read_money(row, "Total")) is not None:
+                    if (total := read_monetary_field(row, "Total")) is not None:
                         fn(row, tr_type, timestamp, tr_id, total)
 
         return ParsingResult(
@@ -183,16 +184,11 @@ class Trading212Parser:
         price_share = Decimal(row["Price / share"])
         exchange_rate = read_decimal(row["Exchange rate"], default=Decimal("1.0"))
 
-        # TODO: The PTM levy fee and the French Financial Transaction
-        #       Tax (FRR) fee are not parsed as it is unclear what their
-        #       field titles would be in the CSV. The list of possible
-        #       fees is available at:
-        #       https://helpcentre.trading212.com/hc/en-us/articles/360007081637-What-are-the-applicable-stock-exchange-fees
-        stamp_duty = read_money(row, "Stamp duty")
-        stamp_duty_reserve_tax = read_money(row, "Stamp duty reserve tax")
-        forex_fee = read_money(row, "Currency conversion fee")
-        sec_fee = read_money(row, "Transaction fee")
-        finra_fee = read_money(row, "Finra fee")
+        stamp_duty = read_monetary_field(row, "Stamp duty")
+        stamp_duty_reserve_tax = read_monetary_field(row, "Stamp duty reserve tax")
+        forex_fee = read_monetary_field(row, "Currency conversion fee")
+        sec_fee = read_monetary_field(row, "Transaction fee")
+        finra_fee = read_monetary_field(row, "Finra fee")
 
         if timestamp < MIN_TIMESTAMP:
             raise OrderDateError(self._csv_file, row)
