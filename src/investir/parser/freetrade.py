@@ -29,7 +29,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal, read_sterling
+from investir.utils import dict2str, money, raise_or_warn, read_decimal, read_sterling
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ class FreetradeParser:
 
                 if fn := parse_fn.get(tr_type):
                     timestamp = parse_timestamp(row["Timestamp"])
-                    total = Money(Decimal(row["Total Amount"]), row["Account Currency"])
+                    total = money(row["Total Amount"], row["Account Currency"])
 
                     fn(row, tr_type, timestamp, total)
 

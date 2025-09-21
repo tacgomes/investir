@@ -11,6 +11,7 @@ from investir.utils import (
     boldify,
     date_to_tax_year,
     dict2str,
+    money,
     multifilter,
     raise_or_warn,
     read_decimal,
@@ -64,6 +65,11 @@ def test_read_decimal():
     assert read_decimal("0.0") == Decimal("0.0")
     assert read_decimal("2.5") == Decimal("2.5")
     assert read_decimal("", Decimal("2.7")) == Decimal("2.7")
+
+
+def test_money():
+    assert money("1.2", "GBP") == Money("1.2", "GBP")
+    assert money("56.2", "GBX") == Money("0.562", "GBP")
 
 
 def test_read_sterling():

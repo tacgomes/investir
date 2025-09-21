@@ -30,7 +30,7 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, raise_or_warn, read_decimal
+from investir.utils import dict2str, money, raise_or_warn, read_decimal
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +38,10 @@ logger = logging.getLogger(__name__)
 def read_monetary_field(row: Mapping[str, str], amount_field: str) -> Money | None:
     if amount := row.get(amount_field, "").strip():
         currency_field = f"Currency ({amount_field})"
-        return Money(amount=amount, currency=row[currency_field])
+        return money(amount=amount, currency=row[currency_field])
 
     if amount := row.get(f"{amount_field} (GBP)", "").strip():
-        return Money(amount=amount, currency="GBP")
+        return money(amount=amount, currency="GBP")
 
     return None
 
@@ -264,20 +264,12 @@ class Trading212Parser:
         isin = row["ISIN"]
         ticker = row["Ticker"]
         name = row["Name"]
-        currency_price_share = row["Currency (Price / share)"]
         withholding_tax = read_decimal(row["Withholding tax"])
         currency_withholding_tax = row["Currency (Withholding tax)"]
         fx_conversion_fee = row["Currency conversion fee"]
 
         if fx_conversion_fee:
             raise ParseError(self._csv_file, row, "Dividend with conversion fee")
-
-        if currency_price_share != currency_withholding_tax:
-            raise ParseError(
-                self._csv_file,
-                row,
-                "Currency is different for share price and tax withheld",
-            )
 
         self._dividends.append(
             Dividend(
@@ -286,7 +278,7 @@ class Trading212Parser:
                 ticker=Ticker(ticker),
                 name=name,
                 total=total,
-                withheld=Money(withholding_tax, currency_withholding_tax),
+                withheld=money(withholding_tax, currency_withholding_tax),
                 tr_id=tr_id,
             )
         )

@@ -466,15 +466,6 @@ def test_parser_currency_conversion_fee_different_than_total_currency(make_parse
         parser.parse()
 
 
-def test_parser_dividend_tax_withheld_in_different_currency(make_parser):
-    dividend = dict(DIVIDEND)
-    dividend["Currency (Withholding tax)"] = "EUR"
-    parser = make_parser([dividend])
-    assert parser.can_parse()
-    with pytest.raises(ParseError):
-        parser.parse()
-
-
 def test_parser_calculated_amount_mismatch(make_parser):
     order = dict(ACQUISITION)
     order["Total"] = "7.5"
