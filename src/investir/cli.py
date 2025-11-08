@@ -33,11 +33,6 @@ from investir.typing import TaxYear, Ticker
 logger = logging.getLogger(__name__)
 
 
-class OrderedCommands(typer.core.TyperGroup):
-    def list_commands(self, ctx: click.Context) -> list[str]:
-        return list(self.commands.keys())
-
-
 class MutuallyExclusiveOption(click.exceptions.UsageError):
     def __init__(self, opt1: str, opt2: str) -> None:
         super().__init__(f"Option {opt1} cannot be used together with option {opt2}")
@@ -49,7 +44,6 @@ class RatesProvider(str, Enum):
 
 
 app = typer.Typer(
-    cls=OrderedCommands,
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
     pretty_exceptions_enable=False,
