@@ -46,7 +46,7 @@ class RatesProvider(str, Enum):
 app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
-    pretty_exceptions_enable=False,
+    pretty_exceptions_show_locals=False,
 )
 
 FilesArg = Annotated[
