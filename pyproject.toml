@@ -17,7 +17,7 @@ dependencies = [
 ]
 optional-dependencies.lint = [
   "mypy ~= 1.18.0",
-  "ruff ~= 0.9.0",
+  "ruff ~= 0.14.0",
 ]
 optional-dependencies.test = [
   "pandas == 2.2.3",
@@ -80,6 +80,7 @@ lint.select = [
     "RUF", # Ruff
 ]
 lint.ignore = [
+  "PLC0415",  # Import should be at the top-level of a file
   "PLR2004",  # Magic value used in comparison.
   "PLR0913",  # Too many arguments in function definition.
 ]
