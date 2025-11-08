@@ -12,7 +12,7 @@ def utcnow() -> datetime:
 
 
 @dataclass
-class Split(yaml.YAMLObject):
+class Split(yaml.YAMLObject):  # noqa: PLW1641
     date_effective: datetime
     ratio: Decimal
     yaml_tag = "!split"
