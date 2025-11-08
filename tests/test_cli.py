@@ -337,6 +337,7 @@ def test_default_verbosity(execute):
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
 )
+@pytest.mark.filterwarnings("ignore: ChainedAssignmentError")
 def test_capital_gains_with_splits_downloaded_from_internet(execute):
     data_file = str(TEST_DIR / "orders_with_share_splits.csv")
     result = execute(["capital-gains", data_file], offline=False)
@@ -350,6 +351,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
     sys.version_info < (3, 13),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
 )
+@pytest.mark.filterwarnings("ignore: ChainedAssignmentError")
 def test_holdings_with_unrealised_gain_loss_calculated(execute):
     result = execute(
         ["holdings", "--show-gain-loss", "--ticker", "MSFT", DATA_FILE1], offline=False
