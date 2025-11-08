@@ -12,7 +12,7 @@ dependencies = [
   "prettytable ~= 3.10.0",
   "python-dateutil ~= 2.9.0",
   "PyYAML ~= 6.0.0",
-  "typer ~= 0.15.3",
+  "typer ~= 0.20.0",
   "yfinance ~= 0.2.54",
 ]
 optional-dependencies.lint = [
