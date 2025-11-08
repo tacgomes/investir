@@ -49,13 +49,13 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 
-FilesArg = Annotated[
+CsvArg = Annotated[
     list[Path],
     typer.Argument(
         exists=True,
         dir_okay=False,
-        help="CSV files with the account activity.",
-        show_default=False,
+        metavar="CSV...",
+        hidden=True,
     ),
 ]
 
@@ -277,7 +277,7 @@ def main_callback(
 @app.command("orders")
 def orders_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
     acquisitions_only: Annotated[
@@ -308,7 +308,7 @@ def orders_command(
 @app.command("dividends")
 def dividends_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     tax_year: TaxYearOpt = None,
     ticker: TickerOpt = None,
     format: OutputFormatOpt = OutputFormat.TEXT,
@@ -324,7 +324,7 @@ def dividends_command(
 @app.command("transfers")
 def transfers_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     tax_year: TaxYearOpt = None,
     deposits_only: Annotated[
         bool, typer.Option("--deposits", help="Show only deposits.")
@@ -355,7 +355,7 @@ def transfers_command(
 @app.command("interest")
 def interest_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     tax_year: TaxYearOpt = None,
     format: OutputFormatOpt = OutputFormat.TEXT,
 ) -> None:
@@ -370,7 +370,7 @@ def interest_command(
 @app.command("capital-gains")
 def capital_gains_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     gains_only: Annotated[
         bool, typer.Option("--gains", help="Show only capital gains.")
     ] = False,
@@ -410,7 +410,7 @@ def capital_gains_command(
 @app.command("holdings")
 def holdings_command(
     ctx: typer.Context,
-    files: FilesArg,
+    files: CsvArg,
     ticker: TickerOpt = None,
     show_gain_loss: Annotated[
         bool, typer.Option("--show-gain-loss", help="Show unrealised gain/loss.")
