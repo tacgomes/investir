@@ -334,7 +334,7 @@ def test_default_verbosity(execute):
 
 @pytest.mark.network
 @pytest.mark.skipif(
-    sys.version_info < (3, 13),
+    sys.version_info < (3, 14),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
 )
 @pytest.mark.filterwarnings("ignore: ChainedAssignmentError")
@@ -348,7 +348,7 @@ def test_capital_gains_with_splits_downloaded_from_internet(execute):
 
 @pytest.mark.network
 @pytest.mark.skipif(
-    sys.version_info < (3, 13),
+    sys.version_info < (3, 14),
     reason="Skipping test to avoid hitting API limits for Yahoo Finance",
 )
 @pytest.mark.filterwarnings("ignore: ChainedAssignmentError")
