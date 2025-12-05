@@ -15,7 +15,7 @@ from investir.exceptions import (
     TransactionUnknownError,
 )
 from investir.parser.freetrade import FreetradeParser
-from investir.transaction import Acquisition, Disposal
+from investir.transaction import Acquisition, Disposal, FreeShare
 from investir.typing import ISIN, Ticker
 from investir.utils import sterling
 
@@ -288,3 +288,33 @@ def test_parser_dividend_calculated_amount_mismatch(make_parser):
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
         parser.parse()
+
+
+def test_parser_free_share(make_parser):
+    free_share = {
+        "Title": "ChipMOS TECH ADR",
+        "Type": "FREESHARE_ORDER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "11.88",
+        "Ticker": "IMOS",
+        "ISIN": "US16965P2020",
+        "Quantity": "1.00",
+        "Order ID": "MQ7MF265KZEE",
+    }
+
+    parser = make_parser([free_share])
+    assert parser.can_parse()
+
+    parser_result = parser.parse()
+    assert len(parser_result.orders) == 1
+
+    order = parser_result.orders[0]
+    assert isinstance(order, FreeShare)
+    assert order.timestamp == TIMESTAMP
+    assert order.isin == ISIN("US16965P2020")
+    assert order.ticker == Ticker("IMOS")
+    assert order.name == "ChipMOS TECH ADR"
+    assert order.total == sterling("11.88")
+    assert order.quantity == Decimal("1.00")
+    assert order.tr_id == "MQ7MF265KZEE"
