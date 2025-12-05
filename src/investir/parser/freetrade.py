@@ -24,6 +24,7 @@ from investir.transaction import (
     Acquisition,
     Disposal,
     Dividend,
+    FreeShare,
     Interest,
     Order,
     Transfer,
@@ -102,6 +103,7 @@ class FreetradeParser:
     def parse(self) -> ParsingResult:
         parse_fn = {
             "ORDER": self._parse_order,
+            "FREESHARE_ORDER": self._parse_free_share,
             "DIVIDEND": self._parse_dividend,
             "TOP_UP": self._parse_transfer,
             "WITHDRAWAL": self._parse_transfer,
@@ -195,6 +197,39 @@ class FreetradeParser:
                 total=total,
                 quantity=quantity,
                 fees=fees,
+                tr_id=order_id,
+            )
+        )
+
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
+
+    def _parse_free_share(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total: Money,
+    ) -> None:
+        title = row["Title"]
+        ticker = row["Ticker"]
+        isin = row["ISIN"]
+        quantity = Decimal(row["Quantity"])
+        order_id = row["Order ID"]
+
+        if timestamp < MIN_TIMESTAMP:
+            raise OrderDateError(self._csv_file, row)
+
+        # Free shares should have zero cost (total should be zero or close to zero)
+        # but we accept the actual total from the CSV in case there are any fees
+        self._orders.append(
+            FreeShare(
+                timestamp,
+                isin=ISIN(isin),
+                ticker=Ticker(ticker) if ticker else None,
+                name=title,
+                total=total,
+                quantity=quantity,
+                fees=Fees(default_currency=total.currency),
                 tr_id=order_id,
             )
         )
