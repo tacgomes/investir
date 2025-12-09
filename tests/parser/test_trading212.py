@@ -478,6 +478,7 @@ def test_parser_calculated_amount_mismatch(make_parser):
 def test_parser_dividend_with_conversion_fee(make_parser):
     dividend = dict(DIVIDEND)
     dividend["Currency conversion fee"] = "1.2"
+    dividend["Currency (Currency conversion fee)"] = "USD"
     parser = make_parser([dividend])
     assert parser.can_parse()
     with pytest.raises(ParseError):
