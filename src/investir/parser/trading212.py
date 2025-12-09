@@ -266,9 +266,9 @@ class Trading212Parser:
         name = row["Name"]
         withholding_tax = read_decimal(row["Withholding tax"])
         currency_withholding_tax = row["Currency (Withholding tax)"]
-        fx_conversion_fee = row["Currency conversion fee"]
+        forex_fee = read_monetary_field(row, "Currency conversion fee")
 
-        if fx_conversion_fee:
+        if forex_fee:
             raise ParseError(self._csv_file, row, "Dividend with conversion fee")
 
         self._dividends.append(
