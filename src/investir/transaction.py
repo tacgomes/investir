@@ -140,6 +140,13 @@ class Acquisition(Order):
 
 
 @dataclass(frozen=True)
+class FreeShare(Acquisition):
+    """Free shares awarded by the broker with zero cost basis."""
+
+    pass
+
+
+@dataclass(frozen=True)
 class Disposal(Order):
     @property
     def gross_proceeds(self) -> Money:
