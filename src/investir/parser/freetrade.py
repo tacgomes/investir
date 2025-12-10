@@ -107,6 +107,7 @@ class FreetradeParser:
             "DIVIDEND": self._parse_dividend,
             "TOP_UP": self._parse_transfer,
             "WITHDRAWAL": self._parse_transfer,
+            "INTERNAL_TRANSFER": self._parse_internal_transfer,
             "INTEREST_FROM_CASH": self._parse_interest,
             "MONTHLY_STATEMENT": None,
             "TAX_CERTIFICATE": None,
@@ -294,6 +295,17 @@ class FreetradeParser:
             total = -abs(total)
 
         self._transfers.append(Transfer(timestamp, total))
+
+        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+
+    def _parse_internal_transfer(
+        self,
+        row: Mapping[str, str],
+        tr_type: str,
+        timestamp: datetime,
+        total: Money,
+    ):
+        self._transfers.append(Transfer(timestamp, -total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 
