@@ -216,16 +216,13 @@ class FreetradeParser:
         quantity = Decimal(row["Quantity"])
         order_id = row["Order ID"]
 
-        if timestamp < MIN_TIMESTAMP:
-            raise OrderDateError(self._csv_file, row)
-
         # Free shares should have zero cost (total should be zero or close to zero)
         # but we accept the actual total from the CSV in case there are any fees
         self._orders.append(
             FreeShare(
                 timestamp,
                 isin=ISIN(isin),
-                ticker=Ticker(ticker) if ticker else None,
+                ticker=Ticker(ticker),
                 name=title,
                 total=total,
                 quantity=quantity,
