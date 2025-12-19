@@ -305,7 +305,14 @@ class FreetradeParser:
         timestamp: datetime,
         total: Money,
     ):
-        self._transfers.append(Transfer(timestamp, -total))
+        title = row["Title"]
+        # Check if transfer is "to" an account (outbound) or "from" an account (inbound)
+        # "Internal Transfer to ISA" -> negative (money leaving)
+        # "Internal Transfer from GIA" -> positive (money coming in)
+        if title.startswith("Internal Transfer to"):
+            total = -abs(total)
+
+        self._transfers.append(Transfer(timestamp, total))
 
         logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
 

@@ -320,9 +320,10 @@ def test_parser_free_share(make_parser):
     assert order.tr_id == "MQ7MF265KZEE"
 
 
-def test_parser_internal_transfer_outbound(make_parser):
+def test_parser_internal_transfer_inbound(make_parser):
+    """Test internal transfer into account (e.g., from GIA to ISA)."""
     internal_transfer = {
-        "Title": "Internal Transfer to ISA",
+        "Title": "Internal Transfer from GIA",
         "Type": "INTERNAL_TRANSFER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
@@ -337,17 +338,17 @@ def test_parser_internal_transfer_outbound(make_parser):
 
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
-    assert transfer.total == sterling("-10000.00")
+    assert transfer.total == sterling("10000.00")
 
 
-def test_parser_internal_transfer_inbound(make_parser):
-    """Test internal transfer out of account (e.g., ISA to GIA)."""
+def test_parser_internal_transfer_outbound(make_parser):
+    """Test internal transfer out of account (e.g., to ISA)."""
     internal_transfer = {
-        "Title": "Internal Transfer from ISA",
+        "Title": "Internal Transfer to ISA",
         "Type": "INTERNAL_TRANSFER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "-5000.00",
+        "Total Amount": "5000.00",
     }
 
     parser = make_parser([internal_transfer])
@@ -358,4 +359,37 @@ def test_parser_internal_transfer_inbound(make_parser):
 
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
+    assert transfer.total == sterling("-5000.00")
+
+
+def test_parser_internal_transfer_mixed(make_parser):
+    """Test both inbound and outbound internal transfers."""
+    transfer_to_isa = {
+        "Title": "Internal Transfer to ISA",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "10000.00",
+    }
+
+    transfer_from_gia = {
+        "Title": "Internal Transfer from GIA",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "5000.00",
+    }
+
+    parser = make_parser([transfer_to_isa, transfer_from_gia])
+    assert parser.can_parse()
+
+    parser_result = parser.parse()
+    assert len(parser_result.transfers) == 2
+
+    transfer = parser_result.transfers[0]
+    assert transfer.timestamp == TIMESTAMP
     assert transfer.total == sterling("5000.00")
+
+    transfer = parser_result.transfers[1]
+    assert transfer.timestamp == TIMESTAMP
+    assert transfer.total == sterling("-10000.00")
