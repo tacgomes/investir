@@ -14,6 +14,7 @@ from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
     FieldUnknownError,
+    InvestirError,
     OrderDateError,
     TransactionUnknownError,
 )
@@ -309,8 +310,12 @@ class FreetradeParser:
         # Check if transfer is "to" an account (outbound) or "from" an account (inbound)
         # "Internal Transfer to ISA" -> negative (money leaving)
         # "Internal Transfer from GIA" -> positive (money coming in)
-        if title.startswith("Internal Transfer to"):
+        if title.startswith("Internal Transfer from"):
+            pass
+        elif title.startswith("Internal Transfer to"):
             total = -abs(total)
+        else:
+            raise_or_warn(InvestirError(f"Unknown internal transfer type: {title}"))
 
         self._transfers.append(Transfer(timestamp, total))
 

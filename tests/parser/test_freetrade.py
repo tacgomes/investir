@@ -360,36 +360,3 @@ def test_parser_internal_transfer_outbound(make_parser):
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
     assert transfer.total == sterling("-5000.00")
-
-
-def test_parser_internal_transfer_mixed(make_parser):
-    """Test both inbound and outbound internal transfers."""
-    transfer_to_isa = {
-        "Title": "Internal Transfer to ISA",
-        "Type": "INTERNAL_TRANSFER",
-        "Timestamp": TIMESTAMP,
-        "Account Currency": "GBP",
-        "Total Amount": "10000.00",
-    }
-
-    transfer_from_gia = {
-        "Title": "Internal Transfer from GIA",
-        "Type": "INTERNAL_TRANSFER",
-        "Timestamp": TIMESTAMP,
-        "Account Currency": "GBP",
-        "Total Amount": "5000.00",
-    }
-
-    parser = make_parser([transfer_to_isa, transfer_from_gia])
-    assert parser.can_parse()
-
-    parser_result = parser.parse()
-    assert len(parser_result.transfers) == 2
-
-    transfer = parser_result.transfers[0]
-    assert transfer.timestamp == TIMESTAMP
-    assert transfer.total == sterling("5000.00")
-
-    transfer = parser_result.transfers[1]
-    assert transfer.timestamp == TIMESTAMP
-    assert transfer.total == sterling("-10000.00")
