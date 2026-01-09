@@ -11,6 +11,7 @@ from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
     FieldUnknownError,
+    InvestirError,
     OrderDateError,
     TransactionUnknownError,
 )
@@ -360,3 +361,23 @@ def test_parser_internal_transfer_outbound(make_parser):
     transfer = parser_result.transfers[0]
     assert transfer.timestamp == TIMESTAMP
     assert transfer.total == sterling("-5000.00")
+
+
+def test_parser_internal_transfer_unknown_type(make_parser):
+    """Test internal transfer with unknown title format."""
+    internal_transfer = {
+        "Title": "Internal Transfer Unknown",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "1000.00",
+    }
+
+    parser = make_parser([internal_transfer])
+    assert parser.can_parse()
+
+    with pytest.raises(InvestirError):
+        parser.parse()
+
+    config.strict = False
+    parser.parse()
