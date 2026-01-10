@@ -13,7 +13,7 @@ dependencies = [
   "python-dateutil ~= 2.9.0",
   "PyYAML ~= 6.0.0",
   "typer ~= 0.20.0",
-  "yfinance ~= 0.2.54",
+  "yfinance ~= 1.0",
 ]
 optional-dependencies.lint = [
   "mypy ~= 1.18.0",
