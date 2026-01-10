@@ -152,6 +152,8 @@ def test_parser_happy_path(make_parser):
         "Currency (Total)": "GBP",
     }
 
+    stock_split_open = {"Action": "Stock split open"}
+    stock_split_close = {"Action": "Stock split close"}
     result_adjustment = {"Action": "Result adjustment"}
     card_debit = {"Action": "Card debit"}
     spending_cashback = {"Action": "Spending cashback"}
@@ -165,6 +167,8 @@ def test_parser_happy_path(make_parser):
             deposit,
             withdrawal,
             CASH_INTEREST,
+            stock_split_open,
+            stock_split_close,
             result_adjustment,
             card_debit,
             spending_cashback,

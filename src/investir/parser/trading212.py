@@ -133,6 +133,8 @@ class Trading212Parser:
             "Withdrawal": self._parse_transfer,
             "Interest on cash": self._parse_interest,
             "Lending interest": self._parse_interest,
+            "Stock split open": None,
+            "Stock split close": None,
             "Result adjustment": None,
             "Card debit": None,
             "Spending cashback": None,
