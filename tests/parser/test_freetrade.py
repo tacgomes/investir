@@ -11,6 +11,7 @@ from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
     FieldUnknownError,
+    InvestirError,
     OrderDateError,
     TransactionUnknownError,
 )
@@ -318,3 +319,65 @@ def test_parser_free_share(make_parser):
     assert order.total == sterling("11.88")
     assert order.quantity == Decimal("1.00")
     assert order.tr_id == "MQ7MF265KZEE"
+
+
+def test_parser_internal_transfer_inbound(make_parser):
+    """Test internal transfer into account (e.g., from GIA to ISA)."""
+    internal_transfer = {
+        "Title": "Internal Transfer from GIA",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "10000.00",
+    }
+
+    parser = make_parser([internal_transfer])
+    assert parser.can_parse()
+
+    parser_result = parser.parse()
+    assert len(parser_result.transfers) == 1
+
+    transfer = parser_result.transfers[0]
+    assert transfer.timestamp == TIMESTAMP
+    assert transfer.total == sterling("10000.00")
+
+
+def test_parser_internal_transfer_outbound(make_parser):
+    """Test internal transfer out of account (e.g., to ISA)."""
+    internal_transfer = {
+        "Title": "Internal Transfer to ISA",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "5000.00",
+    }
+
+    parser = make_parser([internal_transfer])
+    assert parser.can_parse()
+
+    parser_result = parser.parse()
+    assert len(parser_result.transfers) == 1
+
+    transfer = parser_result.transfers[0]
+    assert transfer.timestamp == TIMESTAMP
+    assert transfer.total == sterling("-5000.00")
+
+
+def test_parser_internal_transfer_unknown_type(make_parser):
+    """Test internal transfer with unknown title format."""
+    internal_transfer = {
+        "Title": "Internal Transfer Unknown",
+        "Type": "INTERNAL_TRANSFER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "1000.00",
+    }
+
+    parser = make_parser([internal_transfer])
+    assert parser.can_parse()
+
+    with pytest.raises(InvestirError):
+        parser.parse()
+
+    config.strict = False
+    parser.parse()
