@@ -121,9 +121,11 @@ class Trading212Parser:
             "Market buy": self._parse_order,
             "Limit buy": self._parse_order,
             "Stop buy": self._parse_order,
+            "Stop limit buy": self._parse_order,
             "Market sell": self._parse_order,
             "Limit sell": self._parse_order,
             "Stop sell": self._parse_order,
+            "Stop limit sell": self._parse_order,
             "Dividend (Ordinary)": self._parse_dividend,
             "Dividend (Dividend)": self._parse_dividend,
             "Dividend (Dividends paid by us corporations)": self._parse_dividend,
@@ -225,7 +227,7 @@ class Trading212Parser:
         order_class: type[Order] = Acquisition
         fees_total = fees.total
 
-        if tr_type in ("Market sell", "Limit sell", "Stop sell"):
+        if tr_type in ("Market sell", "Limit sell", "Stop sell", "Stop limit sell"):
             order_class = Disposal
             fees_total *= -1
 

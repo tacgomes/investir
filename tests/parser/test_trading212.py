@@ -237,6 +237,9 @@ def test_parser_different_buy_sell_actions(make_parser):
     acquisition3 = dict(ACQUISITION)
     acquisition3["Action"] = "Stop buy"
 
+    acquisition4 = dict(ACQUISITION)
+    acquisition4["Action"] = "Stop limit buy"
+
     disposal1 = dict(DISPOSAL)  # Market sell
 
     disposal2 = dict(DISPOSAL)
@@ -245,16 +248,28 @@ def test_parser_different_buy_sell_actions(make_parser):
     disposal3 = dict(DISPOSAL)
     disposal3["Action"] = "Stop sell"
 
+    disposal4 = dict(DISPOSAL)
+    disposal4["Action"] = "Stop limit sell"
+
     parser = make_parser(
-        [acquisition1, acquisition2, acquisition3, disposal1, disposal2, disposal3]
+        [
+            acquisition1,
+            acquisition2,
+            acquisition3,
+            acquisition4,
+            disposal1,
+            disposal2,
+            disposal3,
+            disposal4,
+        ]
     )
 
     parser_result = parser.parse()
-    assert len(parser_result.orders) == 6
+    assert len(parser_result.orders) == 8
 
     orders = parser_result.orders
-    assert orders[0] == orders[1] == orders[2]
-    assert orders[3] == orders[4] == orders[5]
+    assert orders[0] == orders[1] == orders[2] == orders[3]
+    assert orders[4] == orders[5] == orders[6] == orders[7]
 
 
 def test_parser_different_dividends_actions(make_parser):
