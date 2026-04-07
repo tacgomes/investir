@@ -36,6 +36,15 @@ from investir.utils import dict2str, money, raise_or_warn, read_decimal, read_st
 logger = logging.getLogger(__name__)
 
 
+def read_field_with_fallback(
+    row: Mapping[str, str], newer_field: str, legacy_field: str
+) -> str:
+    if newer_field in row:
+        return row[newer_field]
+
+    return row[legacy_field]
+
+
 @ParserFactory.register("Freetrade")
 class FreetradeParser:
     FIELDS: Final = (
@@ -43,31 +52,35 @@ class FreetradeParser:
         "Type",
         "Timestamp",
         "Account Currency",
-        "Total Amount",
+        "Total Amount in Account Currency",
         "Buy / Sell",
         "Ticker",
         "ISIN",
         "Price per Share in Account Currency",
         "Stamp Duty",
         "Quantity",
-        "Venue",
         "Order ID",
-        "Order Type",
-        "Instrument Currency",
-        "Total Shares Amount",
         "Price per Share",
         "FX Rate",
         "Base FX Rate",
-        "FX Fee (BPS)",
         "FX Fee Amount",
-        "Dividend Ex Date",
-        "Dividend Pay Date",
         "Dividend Eligible Quantity",
         "Dividend Amount Per Share",
-        "Dividend Gross Distribution Amount",
-        "Dividend Net Distribution Amount",
         "Dividend Withheld Tax Percentage",
         "Dividend Withheld Tax Amount",
+        # Legacy
+        "Total Amount",
+        "Total Shares Amount",
+        # Ignored
+        "Venue",
+        "Order Type",
+        "Instrument Currency",
+        "Total Amount in Instrument Currency",
+        "FX Fee (BPS)",
+        "Dividend Ex Date",
+        "Dividend Pay Date",
+        "Dividend Gross Distribution Amount",
+        "Dividend Net Distribution Amount",
         "Stock Split Ex Date",
         "Stock Split Pay Date",
         "Stock Split New ISIN",
@@ -85,7 +98,7 @@ class FreetradeParser:
         "Stock Split Fractional Payout Cash Received Currency",
     )
 
-    REQUIRED: Final = ("Type", "Timestamp", "Total Amount", "Account Currency")
+    REQUIRED: Final = ("Type", "Timestamp", "Account Currency")
 
     def __init__(self, csv_file: Path) -> None:
         self._csv_file = csv_file
@@ -98,6 +111,12 @@ class FreetradeParser:
         with self._csv_file.open(encoding="utf-8") as file:
             reader = DictReader(file)
             fieldnames = reader.fieldnames or []
+
+        if (
+            "Total Amount in Account Currency" not in fieldnames
+            and "Total Amount" not in fieldnames
+        ):
+            return False
 
         return all(f in fieldnames for f in self.REQUIRED)
 
@@ -137,7 +156,10 @@ class FreetradeParser:
 
                 if fn := parse_fn.get(tr_type):
                     timestamp = parse_timestamp(row["Timestamp"])
-                    total = money(row["Total Amount"], row["Account Currency"])
+                    total_str = read_field_with_fallback(
+                        row, "Total Amount", "Total Amount in Account Currency"
+                    )
+                    total = money(total_str, row["Account Currency"])
 
                     fn(row, tr_type, timestamp, total)
 
