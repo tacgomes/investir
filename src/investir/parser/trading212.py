@@ -96,6 +96,8 @@ class Trading212Parser:
         "Merchant category",
     )
 
+    REQUIRED: Final = ("Action", "Time")
+
     def __init__(self, csv_file: Path) -> None:
         self._csv_file = csv_file
         self._orders: list[Order] = []
@@ -108,13 +110,10 @@ class Trading212Parser:
             reader = DictReader(file)
             fieldnames = reader.fieldnames or []
 
-        if "Action" not in fieldnames or "Time" not in fieldnames:
-            return False
-
         if "Total" not in fieldnames and "Total (GBP)" not in fieldnames:
             return False
 
-        return True
+        return all(f in fieldnames for f in self.REQUIRED)
 
     def parse(self) -> ParsingResult:
         parse_fn = {
