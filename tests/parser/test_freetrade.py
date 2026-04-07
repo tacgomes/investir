@@ -22,12 +22,37 @@ from investir.utils import sterling
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
 
+LEGACY_FIELDS: Final = {
+    "Total Amount",
+    "Total Shares Amount",
+}
+
+RECENT_FIELDS: Final = {
+    "Total Amount in Account Currency",
+    "Total Amount in Instrument Currency",
+    "Stock Split Ex Date",
+    "Stock Split Pay Date",
+    "Stock Split New ISIN",
+    "Stock Split Rate of Share Outturn From",
+    "Stock Split Rate of Share Outturn To",
+    "Stock Split Maintain Holding of Initial ISIN",
+    "Stock Split New Share Quantity",
+    "Stock Split Rate of Cash Outturn Amount",
+    "Stock Split Rate of Cash Outturn Currency",
+    "Stock Split Cash Outturn Received Amount",
+    "Stock Split Has Fractional Payout",
+    "Stock Split Rate of Fractional Payout Amount",
+    "Stock Split Rate of Fractional Payout Currency",
+    "Stock Split Fractional Payout Cash Received Amount",
+    "Stock Split Fractional Payout Cash Received Currency",
+}
+
 ACQUISITION: Final = {
     "Title": "Amazon",
     "Type": "ORDER",
     "Timestamp": TIMESTAMP,
     "Account Currency": "GBP",
-    "Total Amount": "1330.20",
+    "Total Amount in Account Currency": "1330.20",
     "Buy / Sell": "BUY",
     "Ticker": "AMZN",
     "ISIN": "AMZN-ISIN",
@@ -41,7 +66,7 @@ DISPOSAL: Final = {
     "Type": "ORDER",
     "Timestamp": TIMESTAMP,
     "Account Currency": "GBP",
-    "Total Amount": "1111.85",
+    "Total Amount in Account Currency": "1111.85",
     "Buy / Sell": "SELL",
     "Ticker": "SWKS",
     "ISIN": "SWKS-ISIN",
@@ -55,7 +80,7 @@ DIVIDEND: Final = {
     "Type": "DIVIDEND",
     "Timestamp": TIMESTAMP,
     "Account Currency": "GBP",
-    "Total Amount": "2.47",
+    "Total Amount in Account Currency": "2.47",
     "Ticker": "SWKS",
     "ISIN": "SWKS-ISIN",
     "Base FX Rate": "0.75440000",
@@ -69,11 +94,15 @@ DIVIDEND: Final = {
 @pytest.fixture
 def make_parser(tmp_path) -> Callable:
     def _wrapper(
-        rows: Sequence[Mapping[str, str]], fields: Sequence[str] | None = None
+        rows: Sequence[Mapping[str, str]], legacy_fields: bool = False
     ) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=fields or FreetradeParser.FIELDS)
+            if not legacy_fields:
+                field_names = set(FreetradeParser.FIELDS) - LEGACY_FIELDS
+            else:
+                field_names = set(FreetradeParser.FIELDS) - RECENT_FIELDS
+            writer = csv.DictWriter(file, fieldnames=field_names)
             writer.writeheader()
             writer.writerows(rows)
         return FreetradeParser(csv_file)
@@ -102,21 +131,21 @@ def test_parser_happy_path(make_parser):
         "Type": "TOP_UP",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "1000.00",
+        "Total Amount in Account Currency": "1000.00",
     }
 
     withdrawal = {
         "Type": "WITHDRAWAL",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "500.25",
+        "Total Amount in Account Currency": "500.25",
     }
 
     interest = {
         "Type": "INTEREST_FROM_CASH",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "4.65",
+        "Total Amount in Account Currency": "4.65",
     }
 
     monthly_statement = {"Type": "MONTHLY_STATEMENT"}
@@ -186,41 +215,39 @@ def test_parser_happy_path(make_parser):
     assert interest.total == sterling("4.65")
 
 
-def test_parser_legacy_export(make_parser):
-    new_fields = set(
-        [
-            "Stock Split Ex Date",
-            "Stock Split Pay Date",
-            "Stock Split New ISIN",
-            "Stock Split Rate of Share Outturn From",
-            "Stock Split Rate of Share Outturn To",
-            "Stock Split Maintain Holding of Initial ISIN",
-            "Stock Split New Share Quantity",
-            "Stock Split Rate of Cash Outturn Amount",
-            "Stock Split Rate of Cash Outturn Currency",
-            "Stock Split Cash Outturn Received Amount",
-            "Stock Split Has Fractional Payout",
-            "Stock Split Rate of Fractional Payout Amount",
-            "Stock Split Rate of Fractional Payout Currency",
-            "Stock Split Fractional Payout Cash Received Amount",
-            "Stock Split Fractional Payout Cash Received Currency",
-        ]
-    )
+def test_parser_legacy_fields(make_parser):
+    acquisition: Final = {
+        "Title": "Amazon",
+        "Type": "ORDER",
+        "Timestamp": TIMESTAMP,
+        "Account Currency": "GBP",
+        "Total Amount": "1330.20",
+        "Total Shares Amount": "0.0",
+        "Buy / Sell": "BUY",
+        "Ticker": "AMZN",
+        "ISIN": "AMZN-ISIN",
+        "Price per Share in Account Currency": "132.5",
+        "Stamp Duty": "5.2",
+        "Quantity": "10.0",
+    }
 
-    legacy_fields = [
-        field for field in FreetradeParser.FIELDS if field not in new_fields
-    ]
-
-    parser = make_parser([ACQUISITION], legacy_fields)
+    parser = make_parser([acquisition], legacy_fields=True)
     assert parser.can_parse()
     assert len(parser.parse().orders) == 1
 
 
 def test_parser_with_missing_required_field(make_parser_with_custom_fields):
     fields = list(FreetradeParser.FIELDS)
+    fields.remove("Total Amount in Account Currency")
     fields.remove("Total Amount")
     parser = make_parser_with_custom_fields(fields)
     assert parser.can_parse() is False
+
+    for field in ["Type", "Timestamp", "Account Currency"]:
+        fields = list(FreetradeParser.FIELDS)
+        fields.remove(field)
+        parser = make_parser_with_custom_fields(fields)
+        assert parser.can_parse() is False, f"{field} field test failed"
 
 
 def test_parser_with_unknown_field(make_parser_with_custom_fields):
@@ -275,7 +302,7 @@ def test_parser_order_too_old(make_parser):
 
 def test_parser_order_calculated_amount_mismatch(make_parser):
     order = dict(ACQUISITION)
-    order["Total Amount"] = "7.5"
+    order["Total Amount in Account Currency"] = "7.5"
     parser = make_parser([order])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
@@ -284,7 +311,7 @@ def test_parser_order_calculated_amount_mismatch(make_parser):
 
 def test_parser_dividend_calculated_amount_mismatch(make_parser):
     dividend = dict(DIVIDEND)
-    dividend["Total Amount"] = "2.50"
+    dividend["Total Amount in Account Currency"] = "2.50"
     parser = make_parser([dividend])
     assert parser.can_parse()
     with pytest.raises(CalculatedAmountError):
@@ -297,7 +324,7 @@ def test_parser_free_share(make_parser):
         "Type": "FREESHARE_ORDER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "11.88",
+        "Total Amount in Account Currency": "11.88",
         "Ticker": "IMOS",
         "ISIN": "US16965P2020",
         "Quantity": "1.00",
@@ -328,7 +355,7 @@ def test_parser_internal_transfer_inbound(make_parser):
         "Type": "INTERNAL_TRANSFER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "10000.00",
+        "Total Amount in Account Currency": "10000.00",
     }
 
     parser = make_parser([internal_transfer])
@@ -349,7 +376,7 @@ def test_parser_internal_transfer_outbound(make_parser):
         "Type": "INTERNAL_TRANSFER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "5000.00",
+        "Total Amount in Account Currency": "5000.00",
     }
 
     parser = make_parser([internal_transfer])
@@ -370,7 +397,7 @@ def test_parser_internal_transfer_unknown_type(make_parser):
         "Type": "INTERNAL_TRANSFER",
         "Timestamp": TIMESTAMP,
         "Account Currency": "GBP",
-        "Total Amount": "1000.00",
+        "Total Amount in Account Currency": "1000.00",
     }
 
     parser = make_parser([internal_transfer])
