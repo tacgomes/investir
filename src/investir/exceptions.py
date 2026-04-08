@@ -13,7 +13,7 @@ class FieldUnknownError(InvestirError):
     skippable = True
 
     def __init__(self, fields: Sequence[str]) -> None:
-        super().__init__(f"Unknown fields found: {', '.join(fields)}'")
+        super().__init__(f"Unknown fields found: {', '.join(fields)}")
 
 
 class ParseError(InvestirError):
