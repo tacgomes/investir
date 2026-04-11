@@ -216,7 +216,7 @@ def test_parser_happy_path(make_parser):
 
 
 def test_parser_legacy_fields(make_parser):
-    acquisition: Final = {
+    acquisition = {
         "Title": "Amazon",
         "Type": "ORDER",
         "Timestamp": TIMESTAMP,
