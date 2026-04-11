@@ -20,7 +20,7 @@ from investir.exceptions import (
 )
 from investir.fees import Fees
 from investir.parser.factory import ParserFactory
-from investir.parser.types import ParsingResult
+from investir.parser.parser import ParsingResult
 from investir.transaction import (
     Acquisition,
     Disposal,

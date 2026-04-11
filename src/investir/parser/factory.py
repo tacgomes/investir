@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar
 
-from investir.parser.types import Parser
+from investir.parser.parser import Parser
 
 
 class ParserFactory:
