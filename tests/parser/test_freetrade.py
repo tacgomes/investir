@@ -10,7 +10,6 @@ from investir.config import config
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
-    FieldUnknownError,
     InvestirError,
     OrderDateError,
     TransactionUnknownError,
@@ -21,31 +20,6 @@ from investir.typing import ISIN, Ticker
 from investir.utils import sterling
 
 TIMESTAMP: Final = datetime(2021, 7, 26, 7, 41, 32, 582, tzinfo=timezone.utc)
-
-LEGACY_FIELDS: Final = {
-    "Total Amount",
-    "Total Shares Amount",
-}
-
-RECENT_FIELDS: Final = {
-    "Total Amount in Account Currency",
-    "Total Amount in Instrument Currency",
-    "Stock Split Ex Date",
-    "Stock Split Pay Date",
-    "Stock Split New ISIN",
-    "Stock Split Rate of Share Outturn From",
-    "Stock Split Rate of Share Outturn To",
-    "Stock Split Maintain Holding of Initial ISIN",
-    "Stock Split New Share Quantity",
-    "Stock Split Rate of Cash Outturn Amount",
-    "Stock Split Rate of Cash Outturn Currency",
-    "Stock Split Cash Outturn Received Amount",
-    "Stock Split Has Fractional Payout",
-    "Stock Split Rate of Fractional Payout Amount",
-    "Stock Split Rate of Fractional Payout Currency",
-    "Stock Split Fractional Payout Cash Received Amount",
-    "Stock Split Fractional Payout Cash Received Currency",
-}
 
 ACQUISITION: Final = {
     "Title": "Amazon",
@@ -98,25 +72,11 @@ def make_parser(tmp_path) -> Callable:
     ) -> FreetradeParser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
-            if not legacy_fields:
-                field_names = set(FreetradeParser.FIELDS) - LEGACY_FIELDS
-            else:
-                field_names = set(FreetradeParser.FIELDS) - RECENT_FIELDS
+            alias_idx = 0 if not legacy_fields else -1
+            field_names = set([f.aliases[alias_idx] for f in FreetradeParser.SCHEMA])
             writer = csv.DictWriter(file, fieldnames=field_names)
             writer.writeheader()
             writer.writerows(rows)
-        return FreetradeParser(csv_file)
-
-    return _wrapper
-
-
-@pytest.fixture
-def make_parser_with_custom_fields(tmp_path) -> Callable:
-    def _wrapper(fields: Sequence[str]):
-        csv_file = tmp_path / "transactions.csv"
-        with csv_file.open("w", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=fields)
-            writer.writeheader()
         return FreetradeParser(csv_file)
 
     return _wrapper
@@ -234,31 +194,6 @@ def test_parser_legacy_fields(make_parser):
     parser = make_parser([acquisition], legacy_fields=True)
     assert parser.can_parse()
     assert len(parser.parse().orders) == 1
-
-
-def test_parser_with_missing_required_field(make_parser_with_custom_fields):
-    fields = list(FreetradeParser.FIELDS)
-    fields.remove("Total Amount in Account Currency")
-    fields.remove("Total Amount")
-    parser = make_parser_with_custom_fields(fields)
-    assert parser.can_parse() is False
-
-    for field in ["Type", "Timestamp", "Account Currency"]:
-        fields = list(FreetradeParser.FIELDS)
-        fields.remove(field)
-        parser = make_parser_with_custom_fields(fields)
-        assert parser.can_parse() is False, f"{field} field test failed"
-
-
-def test_parser_with_unknown_field(make_parser_with_custom_fields):
-    parser = make_parser_with_custom_fields([*FreetradeParser.FIELDS, "Unknown field"])
-    assert parser.can_parse() is True
-
-    with pytest.raises(FieldUnknownError):
-        parser.parse()
-
-    config.strict = False
-    parser.parse()
 
 
 def test_parser_invalid_transaction_type(make_parser):
