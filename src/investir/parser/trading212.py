@@ -1,6 +1,4 @@
 import logging
-from collections.abc import Mapping
-from csv import DictReader
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -13,14 +11,14 @@ from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
-    FieldUnknownError,
     OrderDateError,
     ParseError,
     TransactionUnknownError,
 )
 from investir.fees import Fees
 from investir.parser.factory import ParserFactory
-from investir.parser.parser import ParsingResult
+from investir.parser.parser import Field as F
+from investir.parser.parser import ParserBase, ParsingResult, Row
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -30,90 +28,79 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, money, raise_or_warn, read_decimal
+from investir.utils import money, raise_or_warn, read_decimal
 
 logger = logging.getLogger(__name__)
 
 
-def read_monetary_field(row: Mapping[str, str], amount_field: str) -> Money | None:
-    if amount := row.get(amount_field, "").strip():
+def read_monetary_field(row: Row, amount_field: str) -> Money | None:
+    if amount := row.data.get(amount_field, "").strip():
         currency_field = f"Currency ({amount_field})"
         return money(amount=amount, currency=row[currency_field])
 
-    if amount := row.get(f"{amount_field} (GBP)", "").strip():
+    if amount := row.data.get(f"{amount_field} (GBP)", "").strip():
         return money(amount=amount, currency="GBP")
 
     return None
 
 
 @ParserFactory.register("Trading212")
-class Trading212Parser:
-    FIELDS: Final = (
-        "Action",
-        "Time",
-        "Notes",
-        "ID",
-        "ISIN",
-        "Ticker",
-        "Name",
-        "No. of shares",
-        "Price / share",
-        "Currency (Price / share)",
-        "Exchange rate",
-        "Total",
-        "Currency (Total)",
+class Trading212Parser(ParserBase):
+    SCHEMA: Final = (
+        F("Action", required=True),
+        F("Time", required=True),
+        F("Notes"),
+        F("ID"),
+        F("ISIN"),
+        F("Ticker"),
+        F("Name"),
+        F("No. of shares"),
+        F("Price / share"),
+        F("Currency (Price / share)"),
+        F("Exchange rate"),
+        F("Total"),
+        F("Currency (Total)"),
         # Dividend
-        "Withholding tax",
-        "Currency (Withholding tax)",
+        F("Withholding tax"),
+        F("Currency (Withholding tax)"),
         # Fees
-        "Stamp duty",
-        "Currency (Stamp duty)",
-        "Stamp duty reserve tax",
-        "Currency (Stamp duty reserve tax)",
-        "Currency conversion fee",
-        "Currency (Currency conversion fee)",
-        "Finra fee",
-        "Currency (Finra fee)",
-        "Transaction fee",
-        "Currency (Transaction fee)",
+        F("Stamp duty"),
+        F("Currency (Stamp duty)"),
+        F("Stamp duty reserve tax"),
+        F("Currency (Stamp duty reserve tax)"),
+        F("Currency conversion fee"),
+        F("Currency (Currency conversion fee)"),
+        F("Finra fee"),
+        F("Currency (Finra fee)"),
+        F("Transaction fee"),
+        F("Currency (Transaction fee)"),
         # Legacy
-        "Stamp duty (GBP)",
-        "Stamp duty reserve tax (GBP)",
-        "Total (GBP)",
-        "Currency conversion fee (GBP)",
-        "Transaction fee (GBP)",
-        "Finra fee (GBP)",
-        # Ignored
-        "Result",
-        "Currency (Result)",
-        "Charge amount (GBP)",
-        "Deposit fee (GBP)",
-        "Currency conversion from amount",
-        "Currency (Currency conversion from amount)",
-        "Currency conversion to amount",
-        "Currency (Currency conversion to amount)",
-        "Merchant name",
-        "Merchant category",
+        F("Stamp duty (GBP)"),
+        F("Stamp duty reserve tax (GBP)"),
+        F("Total (GBP)"),
+        F("Currency conversion fee (GBP)"),
+        F("Transaction fee (GBP)"),
+        F("Finra fee (GBP)"),
+        # Not used
+        F("Result"),
+        F("Currency (Result)"),
+        F("Charge amount (GBP)"),
+        F("Deposit fee (GBP)"),
+        F("Currency conversion from amount"),
+        F("Currency (Currency conversion from amount)"),
+        F("Currency conversion to amount"),
+        F("Currency (Currency conversion to amount)"),
+        F("Merchant name"),
+        F("Merchant category"),
     )
 
-    REQUIRED: Final = ("Action", "Time")
-
     def __init__(self, csv_file: Path) -> None:
-        self._csv_file = csv_file
-        self._orders: list[Order] = []
-        self._dividends: list[Dividend] = []
-        self._transfers: list[Transfer] = []
-        self._interest: list[Interest] = []
+        super().__init__(csv_file, self.SCHEMA)
 
     def can_parse(self) -> bool:
-        with self._csv_file.open(encoding="utf-8") as file:
-            reader = DictReader(file)
-            fieldnames = reader.fieldnames or []
-
-        if "Total" not in fieldnames and "Total (GBP)" not in fieldnames:
-            return False
-
-        return all(f in fieldnames for f in self.REQUIRED)
+        return super().can_parse() and (
+            "Total" in self.field_names or "Total (GBP)" in self.field_names
+        )
 
     def parse(self) -> ParsingResult:
         parse_fn = {
@@ -142,39 +129,32 @@ class Trading212Parser:
             "Currency conversion": None,
         }
 
-        with self._csv_file.open(encoding="utf-8") as file:
-            reader = DictReader(file)
+        self.validate_fields()
 
-            unknown_fields = [
-                f for f in reader.fieldnames or [] if f not in self.FIELDS
-            ]
-            if unknown_fields:
-                raise_or_warn(FieldUnknownError(unknown_fields))
+        for row in self.rows():
+            tr_type = row["Action"]
 
-            for row in reader:
-                tr_type = row["Action"]
+            if tr_type not in parse_fn:
+                raise_or_warn(
+                    TransactionUnknownError(self._csv_file, row.data, tr_type)
+                )
+                continue
 
-                if tr_type not in parse_fn:
-                    raise_or_warn(TransactionUnknownError(self._csv_file, row, tr_type))
-                    continue
+            if fn := parse_fn.get(tr_type):
+                timestamp = parse_timestamp(row["Time"])
+                tr_id = row["ID"]
 
-                if fn := parse_fn.get(tr_type):
-                    timestamp = parse_timestamp(row["Time"])
-                    tr_id = row["ID"]
+                if timestamp.tzinfo is None:
+                    timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-                    if timestamp.tzinfo is None:
-                        timestamp = timestamp.replace(tzinfo=timezone.utc)
+                if (total := read_monetary_field(row, "Total")) is not None:
+                    fn(row, tr_type, timestamp, tr_id, total)
 
-                    if (total := read_monetary_field(row, "Total")) is not None:
-                        fn(row, tr_type, timestamp, tr_id, total)
-
-        return ParsingResult(
-            self._orders, self._dividends, self._transfers, self._interest
-        )
+        return self.parsing_result()
 
     def _parse_order(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         tr_id: str,
@@ -194,20 +174,25 @@ class Trading212Parser:
         finra_fee = read_monetary_field(row, "Finra fee")
 
         if timestamp < MIN_TIMESTAMP:
-            raise OrderDateError(self._csv_file, row)
+            raise OrderDateError(self._csv_file, row.data)
 
         if stamp_duty and stamp_duty_reserve_tax:
             raise FeesError(
-                self._csv_file, row, "Stamp duty (GBP)", "Stamp duty reserve tax (GBP)"
+                self._csv_file,
+                row.data,
+                "Stamp duty (GBP)",
+                "Stamp duty reserve tax (GBP)",
             )
 
         stamp_duty = stamp_duty or stamp_duty_reserve_tax
 
         if stamp_duty and finra_fee:
-            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Finra fee")
+            raise FeesError(self._csv_file, row.data, "Stamp duty (GBP)", "Finra fee")
 
         if stamp_duty and sec_fee:
-            raise FeesError(self._csv_file, row, "Stamp duty (GBP)", "Transaction fee")
+            raise FeesError(
+                self._csv_file, row.data, "Stamp duty (GBP)", "Transaction fee"
+            )
 
         fees = Fees(
             stamp_duty=stamp_duty,
@@ -237,11 +222,11 @@ class Trading212Parser:
         if abs(calculated_total - total).amount > Decimal("0.01"):
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_total.amount
+                    self._csv_file, row.data, total.amount, calculated_total.amount
                 )
             )
 
-        self._orders.append(
+        self.add_order(
             order_class(
                 timestamp,
                 isin=ISIN(isin),
@@ -251,14 +236,13 @@ class Trading212Parser:
                 quantity=num_shares,
                 fees=fees,
                 tr_id=tr_id,
-            )
+            ),
+            row,
         )
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_dividend(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         tr_id: str,
@@ -272,9 +256,9 @@ class Trading212Parser:
         forex_fee = read_monetary_field(row, "Currency conversion fee")
 
         if forex_fee:
-            raise ParseError(self._csv_file, row, "Dividend with conversion fee")
+            raise ParseError(self._csv_file, row.data, "Dividend with conversion fee")
 
-        self._dividends.append(
+        self.add_dividend(
             Dividend(
                 timestamp,
                 isin=ISIN(isin),
@@ -283,14 +267,13 @@ class Trading212Parser:
                 total=total,
                 withheld=money(withholding_tax, currency_withholding_tax),
                 tr_id=tr_id,
-            )
+            ),
+            row,
         )
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
     def _parse_transfer(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         tr_id: str,
@@ -299,18 +282,14 @@ class Trading212Parser:
         if tr_type == "Withdrawal":
             total = -abs(total)
 
-        self._transfers.append(Transfer(timestamp, tr_id=tr_id, total=total))
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+        self.add_transfer(Transfer(timestamp, tr_id=tr_id, total=total), row)
 
     def _parse_interest(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         tr_id: str,
         total: Money,
     ):
-        self._interest.append(Interest(timestamp, tr_id=tr_id, total=total))
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
+        self.add_interest(Interest(timestamp, tr_id=tr_id, total=total), row)

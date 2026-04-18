@@ -1,6 +1,4 @@
 import logging
-from collections.abc import Mapping
-from csv import DictReader
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
@@ -13,14 +11,14 @@ from investir.const import MIN_TIMESTAMP
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
-    FieldUnknownError,
     InvestirError,
     OrderDateError,
     TransactionUnknownError,
 )
 from investir.fees import Fees
 from investir.parser.factory import ParserFactory
-from investir.parser.parser import ParsingResult
+from investir.parser.parser import Field as F
+from investir.parser.parser import ParserBase, ParsingResult, Row
 from investir.transaction import (
     Acquisition,
     Disposal,
@@ -31,94 +29,63 @@ from investir.transaction import (
     Transfer,
 )
 from investir.typing import ISIN, Ticker
-from investir.utils import dict2str, money, raise_or_warn, read_decimal, read_sterling
+from investir.utils import money, raise_or_warn, read_decimal, read_sterling
 
 logger = logging.getLogger(__name__)
 
 
-def read_field_with_fallback(
-    row: Mapping[str, str], newer_field: str, legacy_field: str
-) -> str:
-    if newer_field in row:
-        return row[newer_field]
-
-    return row[legacy_field]
-
-
 @ParserFactory.register("Freetrade")
-class FreetradeParser:
-    FIELDS: Final = (
-        "Title",
-        "Type",
-        "Timestamp",
-        "Account Currency",
-        "Total Amount in Account Currency",
-        "Buy / Sell",
-        "Ticker",
-        "ISIN",
-        "Price per Share in Account Currency",
-        "Stamp Duty",
-        "Quantity",
-        "Order ID",
-        "Price per Share",
-        "FX Rate",
-        "Base FX Rate",
-        "FX Fee Amount",
-        "Dividend Eligible Quantity",
-        "Dividend Amount Per Share",
-        "Dividend Withheld Tax Percentage",
-        "Dividend Withheld Tax Amount",
-        # Legacy
-        "Total Amount",
-        "Total Shares Amount",
-        # Ignored
-        "Venue",
-        "Order Type",
-        "Instrument Currency",
-        "Total Amount in Instrument Currency",
-        "FX Fee (BPS)",
-        "Dividend Ex Date",
-        "Dividend Pay Date",
-        "Dividend Gross Distribution Amount",
-        "Dividend Net Distribution Amount",
-        "Stock Split Ex Date",
-        "Stock Split Pay Date",
-        "Stock Split New ISIN",
-        "Stock Split Rate of Share Outturn From",
-        "Stock Split Rate of Share Outturn To",
-        "Stock Split Maintain Holding of Initial ISIN",
-        "Stock Split New Share Quantity",
-        "Stock Split Rate of Cash Outturn Amount",
-        "Stock Split Rate of Cash Outturn Currency",
-        "Stock Split Cash Outturn Received Amount",
-        "Stock Split Has Fractional Payout",
-        "Stock Split Rate of Fractional Payout Amount",
-        "Stock Split Rate of Fractional Payout Currency",
-        "Stock Split Fractional Payout Cash Received Amount",
-        "Stock Split Fractional Payout Cash Received Currency",
+class FreetradeParser(ParserBase):
+    SCHEMA: Final = (
+        F("Title"),
+        F("Type", required=True),
+        F("Timestamp", required=True),
+        F("Account Currency", required=True),
+        F("Total Amount in Account Currency", "Total Amount", required=True),
+        F("Buy / Sell"),
+        F("Ticker"),
+        F("ISIN"),
+        F("Price per Share in Account Currency"),
+        F("Stamp Duty"),
+        F("Quantity"),
+        F("Order ID"),
+        F("Price per Share"),
+        F("FX Rate"),
+        F("Base FX Rate"),
+        F("FX Fee Amount"),
+        F("Dividend Eligible Quantity"),
+        F("Dividend Amount Per Share"),
+        F("Dividend Withheld Tax Percentage"),
+        F("Dividend Withheld Tax Amount"),
+        # Not used
+        F("Venue"),
+        F("Order Type"),
+        F("Instrument Currency"),
+        F("Total Amount in Instrument Currency", "Total Shares Amount"),
+        F("FX Fee (BPS)"),
+        F("Dividend Ex Date"),
+        F("Dividend Pay Date"),
+        F("Dividend Gross Distribution Amount"),
+        F("Dividend Net Distribution Amount"),
+        F("Stock Split Ex Date"),
+        F("Stock Split Pay Date"),
+        F("Stock Split New ISIN"),
+        F("Stock Split Rate of Share Outturn From"),
+        F("Stock Split Rate of Share Outturn To"),
+        F("Stock Split Maintain Holding of Initial ISIN"),
+        F("Stock Split New Share Quantity"),
+        F("Stock Split Rate of Cash Outturn Amount"),
+        F("Stock Split Rate of Cash Outturn Currency"),
+        F("Stock Split Cash Outturn Received Amount"),
+        F("Stock Split Has Fractional Payout"),
+        F("Stock Split Rate of Fractional Payout Amount"),
+        F("Stock Split Rate of Fractional Payout Currency"),
+        F("Stock Split Fractional Payout Cash Received Amount"),
+        F("Stock Split Fractional Payout Cash Received Currency"),
     )
 
-    REQUIRED: Final = ("Type", "Timestamp", "Account Currency")
-
     def __init__(self, csv_file: Path) -> None:
-        self._csv_file = csv_file
-        self._orders: list[Order] = []
-        self._dividends: list[Dividend] = []
-        self._transfers: list[Transfer] = []
-        self._interest: list[Interest] = []
-
-    def can_parse(self) -> bool:
-        with self._csv_file.open(encoding="utf-8") as file:
-            reader = DictReader(file)
-            fieldnames = reader.fieldnames or []
-
-        if (
-            "Total Amount in Account Currency" not in fieldnames
-            and "Total Amount" not in fieldnames
-        ):
-            return False
-
-        return all(f in fieldnames for f in self.REQUIRED)
+        super().__init__(csv_file, self.SCHEMA)
 
     def parse(self) -> ParsingResult:
         parse_fn = {
@@ -133,43 +100,33 @@ class FreetradeParser:
             "TAX_CERTIFICATE": None,
         }
 
-        with self._csv_file.open(encoding="utf-8") as file:
-            reader = DictReader(file)
+        self.validate_fields()
 
-            unknown_fields = [
-                f for f in reader.fieldnames or [] if f not in self.FIELDS
-            ]
-            if unknown_fields:
-                raise_or_warn(FieldUnknownError(unknown_fields))
+        # Freetrade transactions are ordered from most recent to
+        # oldest but we want the order ID to increase from the
+        # oldest to the most recent.
+        for row in self.rows(reverse=True):
+            tr_type = row["Type"]
 
-            # Freetrade transactions are ordered from most recent to
-            # oldest but we want the order ID to increase from the
-            # oldest to the most recent.
-            rows = reversed(list(reader))
+            if tr_type not in parse_fn:
+                raise_or_warn(
+                    TransactionUnknownError(self._csv_file, row.data, tr_type)
+                )
+                continue
 
-            for row in rows:
-                tr_type = row["Type"]
+            if fn := parse_fn.get(tr_type):
+                timestamp = parse_timestamp(row["Timestamp"])
+                total = money(
+                    row["Total Amount in Account Currency"], row["Account Currency"]
+                )
 
-                if tr_type not in parse_fn:
-                    raise_or_warn(TransactionUnknownError(self._csv_file, row, tr_type))
-                    continue
+                fn(row, tr_type, timestamp, total)
 
-                if fn := parse_fn.get(tr_type):
-                    timestamp = parse_timestamp(row["Timestamp"])
-                    total_str = read_field_with_fallback(
-                        row, "Total Amount", "Total Amount in Account Currency"
-                    )
-                    total = money(total_str, row["Account Currency"])
-
-                    fn(row, tr_type, timestamp, total)
-
-        return ParsingResult(
-            self._orders, self._dividends, self._transfers, self._interest
-        )
+        return self.parsing_result()
 
     def _parse_order(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
@@ -185,13 +142,13 @@ class FreetradeParser:
         fx_fee = read_sterling(row["FX Fee Amount"])
 
         if action not in ("BUY", "SELL"):
-            raise TransactionUnknownError(self._csv_file, row, action)
+            raise TransactionUnknownError(self._csv_file, row.data, action)
 
         if timestamp < MIN_TIMESTAMP:
-            raise OrderDateError(self._csv_file, row)
+            raise OrderDateError(self._csv_file, row.data)
 
         if stamp_duty and fx_fee:
-            raise FeesError(self._csv_file, row, "Stamp Duty", "FX Fee Amount")
+            raise FeesError(self._csv_file, row.data, "Stamp Duty", "FX Fee Amount")
 
         fees = Fees(
             stamp_duty=stamp_duty, forex=fx_fee, default_currency=total.currency
@@ -208,11 +165,11 @@ class FreetradeParser:
         if calculated_total != total:
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_total.amount
+                    self._csv_file, row.data, total.amount, calculated_total.amount
                 )
             )
 
-        self._orders.append(
+        self.add_order(
             order_class(
                 timestamp,
                 isin=ISIN(isin),
@@ -222,14 +179,13 @@ class FreetradeParser:
                 quantity=quantity,
                 fees=fees,
                 tr_id=order_id,
-            )
+            ),
+            row,
         )
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_free_share(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
@@ -242,7 +198,7 @@ class FreetradeParser:
 
         # Free shares should have zero cost (total should be zero or close to zero)
         # but we accept the actual total from the CSV in case there are any fees
-        self._orders.append(
+        self.add_order(
             FreeShare(
                 timestamp,
                 isin=ISIN(isin),
@@ -252,14 +208,13 @@ class FreetradeParser:
                 quantity=quantity,
                 fees=Fees(default_currency=total.currency),
                 tr_id=order_id,
-            )
+            ),
+            row,
         )
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._orders[-1])
 
     def _parse_dividend(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
@@ -290,11 +245,11 @@ class FreetradeParser:
         if abs(total.amount - calculated_total) > Decimal("0.01"):
             raise_or_warn(
                 CalculatedAmountError(
-                    self._csv_file, row, total.amount, calculated_total
+                    self._csv_file, row.data, total.amount, calculated_total
                 )
             )
 
-        self._dividends.append(
+        self.add_dividend(
             Dividend(
                 timestamp,
                 isin=ISIN(isin),
@@ -302,14 +257,13 @@ class FreetradeParser:
                 name=title,
                 total=total,
                 withheld=Money(withheld_tax_amount * base_fx_rate, total.currency),
-            )
+            ),
+            row,
         )
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._dividends[-1])
 
     def _parse_transfer(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
@@ -317,13 +271,11 @@ class FreetradeParser:
         if tr_type == "WITHDRAWAL":
             total = -abs(total)
 
-        self._transfers.append(Transfer(timestamp, total))
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+        self.add_transfer(Transfer(timestamp, total), row)
 
     def _parse_internal_transfer(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
@@ -339,17 +291,13 @@ class FreetradeParser:
         else:
             raise_or_warn(InvestirError(f"Unknown internal transfer type: {title}"))
 
-        self._transfers.append(Transfer(timestamp, total))
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._transfers[-1])
+        self.add_transfer(Transfer(timestamp, total), row)
 
     def _parse_interest(
         self,
-        row: Mapping[str, str],
+        row: Row,
         tr_type: str,
         timestamp: datetime,
         total: Money,
     ):
-        self._interest.append(Interest(timestamp, total))
-
-        logger.debug("Parsed row %s as %s\n", dict2str(row), self._interest[-1])
+        self.add_interest(Interest(timestamp, total), row)

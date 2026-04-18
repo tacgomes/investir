@@ -11,7 +11,6 @@ from investir.config import config
 from investir.exceptions import (
     CalculatedAmountError,
     FeesError,
-    FieldUnknownError,
     OrderDateError,
     ParseError,
     TransactionUnknownError,
@@ -113,10 +112,11 @@ def make_parser(tmp_path) -> Callable:
     ) -> Trading212Parser:
         csv_file = tmp_path / "transactions.csv"
         with csv_file.open("w", encoding="utf-8") as file:
+            field_names = set([f.aliases[0] for f in Trading212Parser.SCHEMA])
             if not legacy_fields:
-                field_names = set(Trading212Parser.FIELDS) - LEGACY_FIELDS
+                field_names = field_names - LEGACY_FIELDS
             else:
-                field_names = set(Trading212Parser.FIELDS) - RECENT_FIELDS
+                field_names = field_names - RECENT_FIELDS
             writer = csv.DictWriter(file, fieldnames=field_names)
             writer.writeheader()
             writer.writerows(rows)
@@ -394,31 +394,12 @@ def test_parser_legacy_fields(make_parser):
     assert order.fees.total == sterling("2.5")
 
 
-def test_parser_with_missing_required_field(make_parser_with_custom_fields):
-    # Total field is missing
-    fields = list(Trading212Parser.FIELDS)
-    fields.remove("Total")
-    fields.remove("Total (GBP)")
-    parser = make_parser_with_custom_fields(fields)
+def test_parser_with_missing_total_field(make_parser_with_custom_fields):
+    field_names = set([f.aliases[0] for f in Trading212Parser.SCHEMA])
+    field_names.remove("Total")
+    field_names.remove("Total (GBP)")
+    parser = make_parser_with_custom_fields(field_names)
     assert parser.can_parse() is False
-
-    # Action or Time fields are missing
-    for field in ["Action", "Time"]:
-        fields = list(Trading212Parser.FIELDS)
-        fields.remove(field)
-        parser = make_parser_with_custom_fields(fields)
-        assert parser.can_parse() is False, f"{field} field test failed"
-
-
-def test_parser_with_unknown_field(make_parser_with_custom_fields):
-    parser = make_parser_with_custom_fields([*Trading212Parser.FIELDS, "Unknown field"])
-    assert parser.can_parse() is True
-
-    with pytest.raises(FieldUnknownError):
-        parser.parse()
-
-    config.strict = False
-    parser.parse()
 
 
 def test_parser_invalid_transaction_type(make_parser):
